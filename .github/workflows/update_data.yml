@@ -20,7 +20,7 @@ jobs:
 
       - name: Download CSV Files
         run: |
-          curl -L "https://data.city.kawasaki.jp/dataset/866d03f6-43e7-498c-8519-755d40908865/resource/46944e97-e85c-4a37-84a1-096057018399/download/shisetsu_ichiran.csv" -o area/kanagawa/kawasaki/kawasaki-barrierfree.csv
+          curl -L "https://www.city.kawasaki.jp/170/cmsfiles/contents/0000116/116229/141305_public_facility.csv" -o area/kanagawa/kawasaki/kawasaki-barrierfree.csv
 
       - name: Commit and Push
         run: |
