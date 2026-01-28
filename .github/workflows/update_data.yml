@@ -3,11 +3,13 @@ name: Open Data Auto Update
 on:
   schedule:
     - cron: '0 18 * * *' # 日本時間の午前3時に毎日実行
-  workflow_dispatch: # 手動実行用
+  workflow_dispatch: # 手動実行ボタンを出すための設定
 
 jobs:
   update-csv:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 書き込み権限を明示的に許可
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -25,5 +27,5 @@ jobs:
           git config --local user.name "PocketPortal-Bot"
           git config --local user.email "action@github.com"
           git add .
-          git commit -m "Auto-update Open Data: $(date +'%Y-%m-%d')" || true
+          git commit -m "Auto-update: $(date +'%Y-%m-%d')" || true
           git push
