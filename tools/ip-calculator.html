@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPアドレス ＆ サブネットマスク計算 | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Network Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">IPアドレス ＆ サブネット計算機</h1>
+            <p class="text-xs text-slate-500">ネットワークアドレス、ホスト範囲、ブロードキャストを一瞬で算出</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-3xl">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">IPアドレス</label>
+                    <input type="text" id="ip-input" value="192.168.1.1" oninput="calculate()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-mono outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">サブネット (CIDR)</label>
+                    <select id="cidr-input" onchange="calculate()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-mono outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                        </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400">ネットワークアドレス</span>
+                        <span id="res-net" class="font-mono font-bold text-blue-600 tracking-wider">---</span>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400">サブネットマスク</span>
+                        <span id="res-mask" class="font-mono font-bold text-slate-700 tracking-wider">---</span>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400">ホスト範囲 (利用可能)</span>
+                        <span id="res-range" class="font-mono font-bold text-slate-700 tracking-wider text-right text-sm">---</span>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400">ブロードキャストアドレス</span>
+                        <span id="res-broad" class="font-mono font-bold text-slate-700 tracking-wider">---</span>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400">最大ホスト数</span>
+                        <span id="res-hosts" class="font-bold text-slate-700 uppercase tracking-tighter">---</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-slate-900 rounded-3xl text-white">
+            <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-4 italic">Next Step for Engineer</p>
+            <a href="https://af.moshimo.com/..." target="_blank" class="block group">
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 group-hover:border-emerald-500 transition-all text-left flex items-center gap-4">
+                    <div class="text-3xl">📡</div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-white mb-1">CISCO / CCNA 学習機材</p>
+                        <p class="text-[10px] text-slate-400 leading-tight">中古ルーターやスイッチで、自宅にラボを構築しよう。</p>
+                    </div>
+                    <div class="text-slate-500 group-hover:text-emerald-400">→</div>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        // CIDR選択肢を生成
+        const select = document.getElementById('cidr-input');
+        for (let i = 32; i >= 1; i--) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `/${i}`;
+            if (i === 24) opt.selected = true;
+            select.appendChild(opt);
+        }
+
+        function ip2long(ip) {
+            return ip.split('.').reduce((long, octet) => (long << 8) + parseInt(octet, 10), 0) >>> 0;
+        }
+
+        function long2ip(long) {
+            return [ (long >>> 24) & 0xFF, (long >>> 16) & 0xFF, (long >>> 8) & 0xFF, long & 0xFF ].join('.');
+        }
+
+        function calculate() {
+            const ipStr = document.getElementById('ip-input').value;
+            const cidr = parseInt(document.getElementById('cidr-input').value);
+            
+            // 入力バリデーション
+            if (!/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ipStr)) return;
+
+            const ipLong = ip2long(ipStr);
+            const maskLong = (0xFFFFFFFF << (32 - cidr)) >>> 0;
+            const netLong = (ipLong & maskLong) >>> 0;
+            const broadLong = (netLong | ~maskLong) >>> 0;
+
+            document.getElementById('res-net').innerText = long2ip(netLong);
+            document.getElementById('res-mask').innerText = long2ip(maskLong);
+            document.getElementById('res-broad').innerText = long2ip(broadLong);
+            
+            const firstHost = netLong + 1;
+            const lastHost = broadLong - 1;
+
+            if (cidr >= 31) {
+                document.getElementById('res-range').innerText = "ホストなし (P2P)";
+                document.getElementById('res-hosts').innerText = "0";
+            } else {
+                document.getElementById('res-range').innerText = `${long2ip(firstHost)} - ${long2ip(lastHost)}`;
+                document.getElementById('res-hosts').innerText = (broadLong - netLong - 1).toLocaleString();
+            }
+        }
+
+        calculate();
+    </script>
+</body>
+</html>

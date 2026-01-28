@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PocketPortal | 暮らしを軽くする、自分だけのポータル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8fafc; }
+        .hero-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hero-card:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+    <header class="py-12 px-6 text-center">
+        <h1 class="text-4xl font-extrabold text-slate-900 tracking-tighter mb-2">PocketPortal</h1>
+        <p class="text-slate-500 text-sm">毎日の「知りたい」「測りたい」を1秒で解決</p>
+    </header>
+
+    <main class="container mx-auto px-6 max-w-4xl pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <a href="./area/index.html" class="hero-card group relative overflow-hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 block">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="text-9xl">🗾</span>
+                </div>
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-lg shadow-blue-200">📍</div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">地域・自治体マップ</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">川崎市をはじめ、全国のオープンデータを活用したバリアフリー・避難所マップ。</p>
+                    <span class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm">
+                        お出かけ先を探す <span class="group-hover:translate-x-2 transition-transform">→</span>
+                    </span>
+                </div>
+            </a>
+
+            <a href="./tools/index.html" class="hero-card group relative overflow-hidden bg-slate-900 p-8 rounded-[3rem] shadow-xl block text-white">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="text-9xl text-white">🛠️</span>
+                </div>
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-amber-400 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-lg shadow-amber-900/20">⚡</div>
+                    <h2 class="text-2xl font-bold mb-2">Web便利ツール集</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">計算機、文字数カウント、QR作成など、ビジネスや育児で今すぐ使える道具箱。</p>
+                    <span class="inline-flex items-center gap-2 text-amber-400 font-bold text-sm">
+                        ツールを使う <span class="group-hover:translate-x-2 transition-transform">→</span>
+                    </span>
+                </div>
+            </a>
+
+        </div>
+
+        <div class="mt-12 text-center">
+            <span class="inline-block bg-white px-4 py-2 rounded-full border border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Update: 川崎市子育てマップを自動更新中
+            </span>
+        </div>
+    </main>
+</body>
+</html>

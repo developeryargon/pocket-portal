@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat Mock Generator (Unofficial)</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --stroke:rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+
+      /* ==== theme variables (JS updates these) ==== */
+      --chatSolid:#8CABD8;      /* background color default */
+      --bubbleLbg:#FFFFFF;      /* left bubble background default */
+      --bubbleRbg:#9DE693;      /* right bubble background default */
+      --bubbleLtext:#000000;    /* left text default */
+      --bubbleRtext:#000000;    /* right text default */
+    }
+
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(59,130,246,.20), transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, rgba(16,185,129,.12), transparent 55%),
+        var(--bg);
+    }
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:16px;
+      padding:16px;
+      max-width: 1200px;
+      margin:0 auto;
+    }
+    @media (max-width: 960px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: rgba(17,24,39,.92);
+      border:1px solid var(--stroke);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0;
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:.02em;
+      padding:12px 14px;
+      border-bottom:1px solid var(--stroke);
+      background: rgba(2,6,23,.35);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .controls{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      overflow:hidden;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+      display:block;
+      margin-bottom:6px;
+    }
+
+    input[type="text"], textarea, select, input[type="date"], input[type="time"]{
+      width:100%;
+      box-sizing:border-box;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(2,6,23,.45);
+      color: var(--text);
+      outline:none;
+    }
+    textarea{ min-height: 80px; resize: vertical; }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row > div{ min-width:0; }
+
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; }
+    button{
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--stroke);
+      background: rgba(59,130,246,.18);
+      color:var(--text);
+      font-weight:800;
+    }
+    button.secondary{ background: rgba(148,163,184,.10); }
+    button.danger{ background: rgba(239,68,68,.18); }
+    small.hint{ color:var(--muted); line-height:1.4; }
+
+    .langbtn{
+      padding:8px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      background: rgba(148,163,184,.10);
+      white-space:nowrap;
+      font-weight:800;
+    }
+
+    /* ===== File input (custom) ===== */
+    .filewrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .fileNative{
+      position:absolute;
+      width:1px;height:1px;
+      opacity:0;
+      pointer-events:none;
+    }
+    .fileBtn{
+      flex:0 0 auto;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(148,163,184,.10);
+      color: var(--text);
+      font-weight:900;
+    }
+    .fileName{
+      flex:1 1 auto;
+      min-width:0;
+      font-size:12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      padding:6px 0;
+    }
+
+    /* group card inside controls */
+    .subcard{
+      padding:12px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background: rgba(2,6,23,.25);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    /* ====== phone preview ====== */
+    .phone{
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding:16px;
+    }
+    .screen{
+      width: 390px;
+      max-width: 100%;
+      background: #0b1220;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      position:relative;
+    }
+    .statusbar{
+      height: 24px;
+      background: rgba(255,255,255,.04);
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      gap:10px;
+    }
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .backMark{
+      font-weight:900;
+      font-size:16px;
+      opacity:.95;
+      display:none;
+      flex:0 0 auto;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:50%;
+      background: rgba(255,255,255,.12);
+      overflow:hidden;
+      flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .name{
+      font-weight:900;
+      font-size:14px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 210px;
+    }
+    .badge{
+      font-size:11px;
+      color: rgba(255,255,255,.75);
+      border:1px solid rgba(255,255,255,.16);
+      padding:4px 8px;
+      border-radius: 999px;
+      background: rgba(2,6,23,.35);
+      white-space:nowrap;
+      flex:0 0 auto;
+      font-weight:900;
+    }
+
+    /* chat background: solid color (chosen) */
+    .chatbg{
+      background: var(--chatSolid);
+      padding: 14px 12px 18px;
+      min-height: 620px;
+      overflow:auto;
+      max-height: 620px;
+      position:relative;
+    }
+
+    .watermark{
+      position:absolute;
+      left:12px; right:12px;
+      bottom:68px;
+      text-align:center;
+      font-size:11px;
+      color: rgba(255,255,255,.35);
+      pointer-events:none;
+      user-select:none;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      z-index:3;
+    }
+
+    /* messages */
+    .msg{
+      display:flex;
+      gap:8px;
+      margin: 10px 0;
+      align-items:flex-end;
+    }
+    .msg.left{ justify-content:flex-start; }
+    .msg.right{ justify-content:flex-end; }
+
+    .miniAvatar{
+      width:28px;height:28px;border-radius:50%;
+      background: rgba(255,255,255,.12);
+      overflow:hidden;
+      flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .miniAvatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .miniAvatar.spacer{
+      background: transparent;
+      border:1px solid transparent;
+    }
+
+    .metaCol{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 40px;
+      white-space:nowrap;
+      font-size:10px;
+      color: rgba(0,0,0,.55);
+      opacity:.9;
+      font-weight:800;
+    }
+    /* left meta should be on right side of bubble */
+    .msg.left .metaCol{
+      align-items:flex-start;
+      margin: 0 2px 2px 6px;
+    }
+    /* right meta should be on left side of bubble */
+    .msg.right .metaCol{
+      align-items:flex-end;
+      margin: 0 6px 2px 2px;
+    }
+
+    .bubble{
+      max-width: 78%;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border:1px solid rgba(0,0,0,.08);
+      line-height:1.35;
+      font-size:14px;
+      position:relative;
+      word-break: break-word;
+      overflow-wrap:anywhere;
+      font-weight:800;
+    }
+
+    /* bubble colors controlled by variables */
+    .msg.left .bubble{ background: var(--bubbleLbg); color: var(--bubbleLtext); }
+    .msg.right .bubble{ background: var(--bubbleRbg); color: var(--bubbleRtext); }
+
+    .bubble img{
+      max-width: 100%;
+      border-radius: 14px;
+      display:block;
+      margin-top:8px;
+      border:1px solid rgba(0,0,0,.10);
+    }
+
+    .read, .time{ font-size:10px; opacity:.95; }
+
+    /* center label as a message-like item in flow */
+    .centerRow{
+      display:flex;
+      justify-content:center; /* 左右中央 */
+      margin: 12px 0;
+    }
+    .centerPill{
+      max-width: 84%;
+      text-align:center;
+      padding:10px 14px;
+      border-radius: 999px;
+      font-weight:900;
+      font-size:14px;
+      letter-spacing:.02em;
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+    }
+    .centerPill.layout1{
+      background: rgba(107,114,128,.55);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(3px);
+    }
+    .centerPill.layout2{
+      background: #000;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+    }
+
+    .composer{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding: 10px 12px;
+      border-top:1px solid rgba(255,255,255,.06);
+      background: rgba(2,6,23,.55);
+    }
+    .pill{
+      height: 36px;
+      flex: 1 1 auto;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .send{
+      width: 44px; height: 36px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(59,130,246,.25);
+    }
+    .footer-note{
+      padding: 8px 12px 12px;
+      font-size:11px;
+      color: rgba(255,255,255,.45);
+    }
+
+    /* header modes */
+    .header-mode-back .avatar{ display:none; }
+    .header-mode-back .backMark{ display:block; }
+    .header-mode-avatar .avatar{ display:block; }
+    .header-mode-avatar .backMark{ display:none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <section class="card">
+      <h2>
+        <span data-i18n="panelTitle">入力</span>
+        <button class="langbtn" id="langToggle" type="button">EN</button>
+      </h2>
+
+      <div class="controls">
+
+        <!-- ① トーク相手名 / 表示 -->
+        <div class="subcard">
+          <div>
+            <label data-i18n="peerNameLabel">トーク相手名</label>
+            <input id="peerName" type="text" value="相手" />
+          </div>
+
+          <div class="row">
+            <div>
+              <label data-i18n="headerModeLabel">相手名の表示</label>
+              <select id="headerMode">
+                <option value="back" data-i18n="headerModeBack">＜ 名前</option>
+                <option value="avatar" data-i18n="headerModeAvatar">アバター画像 名前</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="rightAvatarToggleLabel">右アバター表示</label>
+              <select id="showRightAvatar">
+                <option value="off" data-i18n="toggleOff">非表示</option>
+                <option value="on" data-i18n="toggleOn">表示</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② アバター画像 -->
+        <div class="subcard">
+          <div class="row">
+            <div>
+              <label data-i18n="peerAvatarLabel">左アバター画像</label>
+              <div class="filewrap" data-filewrap="peerAvatar">
+                <input id="peerAvatar" class="fileNative" type="file" accept="image/*" />
+                <button type="button" class="fileBtn" data-filebtn="peerAvatar">ファイルを選択</button>
+                <span class="fileName" data-filename="peerAvatar">選択されていません</span>
+              </div>
+            </div>
+            <div>
+              <label data-i18n="meAvatarLabel">右アバター画像</label>
+              <div class="filewrap" data-filewrap="meAvatar">
+                <input id="meAvatar" class="fileNative" type="file" accept="image/*" />
+                <button type="button" class="fileBtn" data-filebtn="meAvatar">ファイルを選択</button>
+                <span class="fileName" data-filename="meAvatar">選択されていません</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ メッセージ入力 -->
+        <div class="subcard">
+          <div class="row">
+            <div>
+              <label data-i18n="senderLabel">送信者</label>
+              <select id="side">
+                <option value="left" data-i18n="senderLeft">左（相手）</option>
+                <option value="right" data-i18n="senderRight">右（自分）</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="timeLabel">時刻（任意）</label>
+              <input id="time" type="text" placeholder="例: 21:07" data-i18n-placeholder="timePlaceholder" />
+            </div>
+          </div>
+
+          <div>
+            <label data-i18n="messageLabel">メッセージ</label>
+            <textarea id="text" placeholder="文章を入力（改行OK）" data-i18n-placeholder="messagePlaceholder"></textarea>
+          </div>
+
+          <div class="row">
+            <div>
+              <label data-i18n="imageLabel">画像（任意）</label>
+              <div class="filewrap" data-filewrap="img">
+                <input id="img" class="fileNative" type="file" accept="image/*" />
+                <button type="button" class="fileBtn" data-filebtn="img">ファイルを選択</button>
+                <span class="fileName" data-filename="img">選択されていません</span>
+              </div>
+            </div>
+            <div>
+              <label data-i18n="readLabel">既読表示</label>
+              <select id="read">
+                <option value="none" data-i18n="readNone">表示しない</option>
+                <option value="shown" data-i18n="readShown">表示する（右のみ）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ 追加ボタン -->
+        <div class="btns">
+          <button id="add" type="button" data-i18n="btnAdd">追加</button>
+          <button class="secondary" id="addDivider" type="button" data-i18n="btnDivider">時刻区切りを追加</button>
+        </div>
+
+        <!-- ⑤ 画面中央の文字（= メッセージ扱いでチャットに追加） -->
+        <div class="subcard">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <label data-i18n="centerTitle" style="margin:0;">画面中央の文字</label>
+          </div>
+
+          <div class="row">
+            <div>
+              <label data-i18n="centerLayoutLabel">レイアウト</label>
+              <select id="centerLayout">
+                <option value="1" data-i18n="centerLayout1">① 半透明グレー / 白</option>
+                <option value="2" data-i18n="centerLayout2">② 黒 / 白</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="centerTemplateLabel">テンプレ</label>
+              <select id="centerTemplate">
+                <option value="1" data-i18n="tpl1">① 今日</option>
+                <option value="2" data-i18n="tpl2">② 〇月〇日(月)</option>
+                <option value="3" data-i18n="tpl3">③ 参加</option>
+                <option value="4" data-i18n="tpl4">④ 退出</option>
+                <option value="5" data-i18n="tpl5" selected>⑤ フリーワード</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- template inputs -->
+          <div id="centerInputs">
+            <div id="tplFree">
+              <label data-i18n="centerFreeLabel">フリーワード入力</label>
+              <input id="centerFreeText" type="text" placeholder="例: 今日" data-i18n-placeholder="centerFreePh" />
+            </div>
+
+            <div id="tplDate" style="display:none;">
+              <label data-i18n="centerDateLabel">日付</label>
+              <input id="centerDate" type="date" />
+            </div>
+
+            <div id="tplJoin" style="display:none;">
+              <div class="row">
+                <div>
+                  <label data-i18n="centerTimeLabel">時間</label>
+                  <input id="centerJoinTime" type="time" />
+                </div>
+                <div>
+                  <label data-i18n="centerNameLabel">名前</label>
+                  <input id="centerJoinName" type="text" placeholder="例: 田中" data-i18n-placeholder="centerNamePh" />
+                </div>
+              </div>
+            </div>
+
+            <div id="tplLeave" style="display:none;">
+              <div class="row">
+                <div>
+                  <label data-i18n="centerTimeLabel">時間</label>
+                  <input id="centerLeaveTime" type="time" />
+                </div>
+                <div>
+                  <label data-i18n="centerNameLabel">名前</label>
+                  <input id="centerLeaveName" type="text" placeholder="例: 田中" data-i18n-placeholder="centerNamePh" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="secondary" id="applyCenter" type="button" data-i18n="applyCenterBtn">中央テキスト反映</button>
+            <button class="secondary" id="clearCenter" type="button" data-i18n="clearCenterBtn">中央テキスト消去</button>
+          </div>
+        </div>
+
+        <!-- ⑥ 色設定 -->
+        <div class="subcard">
+          <label data-i18n="colorTitle">色設定</label>
+
+          <div class="row">
+            <div>
+              <label data-i18n="bgColorLabel">背景色</label>
+              <select id="bgColor">
+                <option value="#8CABD8" data-i18n="bgOpt1">青灰 (#8CABD8)</option>
+                <option value="#000000" data-i18n="bgOpt2">黒 (#000000)</option>
+                <option value="#FFFFFF" data-i18n="bgOpt3">白 (#FFFFFF)</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="leftBubbleLabel">左コメント色</label>
+              <select id="leftBubble">
+                <option value="#FFFFFF" data-i18n="lbOpt1">白 (#FFFFFF)</option>
+                <option value="#000000" data-i18n="lbOpt2">黒 (#000000)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label data-i18n="rightBubbleLabel">右コメント色</label>
+              <select id="rightBubble">
+                <option value="#9DE693" data-i18n="rbOpt1">緑 (#9DE693)</option>
+                <option value="#FFFFFF" data-i18n="rbOpt2">白 (#FFFFFF)</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="leftTextLabel">左文字色</label>
+              <select id="leftText">
+                <option value="#000000" data-i18n="ltOpt1">黒 (#000000)</option>
+                <option value="#FFFFFF" data-i18n="ltOpt2">白 (#FFFFFF)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label data-i18n="rightTextLabel">右文字色</label>
+              <select id="rightText">
+                <option value="#000000" data-i18n="rtOpt1">黒 (#000000)</option>
+                <option value="#FFFFFF" data-i18n="rtOpt2">白 (#FFFFFF)</option>
+              </select>
+            </div>
+            <div></div>
+          </div>
+        </div>
+
+        <!-- ⑦ 全削除 -->
+        <div class="btns">
+          <button class="danger" id="clear" type="button" data-i18n="btnClear">全削除</button>
+        </div>
+
+        <!-- ⑧ PNG書き出し + 注意 -->
+        <div class="btns">
+          <button class="secondary" id="export" type="button" data-i18n="btnExport">PNG書き出し</button>
+        </div>
+
+        <small class="hint" data-i18n="hint">
+          ※これは「非公式のトーク風モック」です。悪用（なりすまし・偽造・詐欺等）を目的とした利用は不可。<br/>
+          出力にはウォーターマークが入ります（固定）。
+        </small>
+      </div>
+    </section>
+
+    <section class="phone">
+      <div class="screen" id="capture">
+        <div class="statusbar"></div>
+
+        <div class="topbar header-mode-back" id="topbar">
+          <div class="title" id="titleArea">
+            <div class="backMark" id="backMark">＜</div>
+            <div class="avatar" id="peerAvatarView"></div>
+            <div class="name" id="peerNameView">相手</div>
+          </div>
+          <div class="badge" data-i18n="badge">非公式サンプル</div>
+        </div>
+
+        <div class="chatbg" id="chat"></div>
+
+        <div class="watermark" id="watermark">非公式サンプル • デモ用 • 実在のアプリ画面ではありません</div>
+
+        <div class="composer">
+          <div class="pill"></div>
+          <div class="send"></div>
+        </div>
+        <div class="footer-note">
+  <div data-i18n="footer">Generated by Chat Mock Generator (Unofficial)</div>
+  <p style="margin-top: 8px; opacity: 0.8;">Amazonの適格販売により、PocketPortalは報酬を得る場合があります。</p>
+</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- html2canvas（PNG書き出し用） -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script>
+    const el = (id)=>document.getElementById(id);
+
+    // ===== i18n =====
+    const I18N = {
+      ja: {
+        panelTitle: "入力",
+        peerNameLabel: "トーク相手名",
+        headerModeLabel: "相手名の表示",
+        headerModeBack: "＜ 名前",
+        headerModeAvatar: "アバター画像 名前",
+        rightAvatarToggleLabel: "右アバター表示",
+        toggleOff: "非表示",
+        toggleOn: "表示",
+
+        peerAvatarLabel: "左アバター画像",
+        meAvatarLabel: "右アバター画像",
+
+        senderLabel: "送信者",
+        senderLeft: "左（相手）",
+        senderRight: "右（自分）",
+        timeLabel: "時刻（任意）",
+        timePlaceholder: "例: 21:07",
+        messageLabel: "メッセージ",
+        messagePlaceholder: "文章を入力（改行OK）",
+        imageLabel: "画像（任意）",
+        readLabel: "既読表示",
+        readNone: "表示しない",
+        readShown: "表示する（右のみ）",
+        btnAdd: "追加",
+        btnDivider: "時刻区切りを追加",
+        btnClear: "全削除",
+        btnExport: "PNG書き出し",
+
+        colorTitle: "色設定",
+        bgColorLabel: "背景色",
+        leftBubbleLabel: "左コメント色",
+        rightBubbleLabel: "右コメント色",
+        leftTextLabel: "左文字色",
+        rightTextLabel: "右文字色",
+
+        bgOpt1: "青灰 (#8CABD8)",
+        bgOpt2: "黒 (#000000)",
+        bgOpt3: "白 (#FFFFFF)",
+        lbOpt1: "白 (#FFFFFF)",
+        lbOpt2: "黒 (#000000)",
+        rbOpt1: "緑 (#9DE693)",
+        rbOpt2: "白 (#FFFFFF)",
+        ltOpt1: "黒 (#000000)",
+        ltOpt2: "白 (#FFFFFF)",
+        rtOpt1: "黒 (#000000)",
+        rtOpt2: "白 (#FFFFFF)",
+
+        centerTitle: "画面中央の文字",
+        centerLayoutLabel: "レイアウト",
+        centerTemplateLabel: "テンプレ",
+        centerLayout1: "① 半透明グレー / 白",
+        centerLayout2: "② 黒 / 白",
+        tpl1: "① 今日",
+        tpl2: "② 〇月〇日(月)",
+        tpl3: "③ 参加",
+        tpl4: "④ 退出",
+        tpl5: "⑤ フリーワード",
+        centerFreeLabel: "フリーワード入力",
+        centerFreePh: "例: 今日",
+        centerDateLabel: "日付",
+        centerTimeLabel: "時間",
+        centerNameLabel: "名前",
+        centerNamePh: "例: 田中",
+        applyCenterBtn: "中央テキスト反映",
+        clearCenterBtn: "中央テキスト消去",
+
+        fileChoose: "ファイルを選択",
+        fileNone: "選択されていません",
+
+        hint:
+          "※これは「非公式のトーク風モック」です。悪用（なりすまし・偽造・詐欺等）を目的とした利用は不可。<br/>" +
+          "出力にはウォーターマークが入ります（固定）。",
+        badge: "非公式サンプル",
+        watermark: "非公式サンプル • デモ用 • 実在のアプリ画面ではありません",
+        footer: "Generated by Chat Mock Generator (Unofficial)",
+        alerts: {
+          needInput: "メッセージか画像のどちらかを入れてください。",
+          confirmClear: "全メッセージを削除しますか？",
+        },
+        divider: (t)=> `— ${t} —`,
+        readText: "既読",
+        defaultPeerName: "相手",
+
+        // center templates text (JA fixed)
+        centerTplToday: "今日",
+        centerTplJoin: (t,name)=> `${t}\n${name}がグループに参加しました。`,
+        centerTplLeave: (t,name)=> `${t}\n${name}が退出しました。`,
+      },
+      en: {
+        panelTitle: "Input",
+        peerNameLabel: "Chat partner name",
+        headerModeLabel: "Header style",
+        headerModeBack: "< Name",
+        headerModeAvatar: "Avatar + Name",
+        rightAvatarToggleLabel: "Right avatar",
+        toggleOff: "Off",
+        toggleOn: "On",
+
+        peerAvatarLabel: "Left avatar image",
+        meAvatarLabel: "Right avatar image",
+
+        senderLabel: "Sender",
+        senderLeft: "Left (partner)",
+        senderRight: "Right (me)",
+        timeLabel: "Time (optional)",
+        timePlaceholder: "e.g. 21:07",
+        messageLabel: "Message",
+        messagePlaceholder: "Type message (new lines OK)",
+        imageLabel: "Image (optional)",
+        readLabel: "Read receipt",
+        readNone: "Hide",
+        readShown: "Show (right only)",
+        btnAdd: "Add",
+        btnDivider: "Add time divider",
+        btnClear: "Clear all",
+        btnExport: "Export PNG",
+
+        colorTitle: "Colors",
+        bgColorLabel: "Background",
+        leftBubbleLabel: "Left bubble",
+        rightBubbleLabel: "Right bubble",
+        leftTextLabel: "Left text",
+        rightTextLabel: "Right text",
+
+        bgOpt1: "Blue gray (#8CABD8)",
+        bgOpt2: "Black (#000000)",
+        bgOpt3: "White (#FFFFFF)",
+        lbOpt1: "White (#FFFFFF)",
+        lbOpt2: "Black (#000000)",
+        rbOpt1: "Green (#9DE693)",
+        rbOpt2: "White (#FFFFFF)",
+        ltOpt1: "Black (#000000)",
+        ltOpt2: "White (#FFFFFF)",
+        rtOpt1: "Black (#000000)",
+        rtOpt2: "White (#FFFFFF)",
+
+        centerTitle: "Center label",
+        centerLayoutLabel: "Layout",
+        centerTemplateLabel: "Template",
+        centerLayout1: "① Semi-gray / White",
+        centerLayout2: "② Black / White",
+        tpl1: "① Today",
+        tpl2: "② Date (editable)",
+        tpl3: "③ Joined",
+        tpl4: "④ Left",
+        tpl5: "⑤ Free text",
+        centerFreeLabel: "Free text",
+        centerFreePh: "e.g. Today",
+        centerDateLabel: "Date",
+        centerTimeLabel: "Time",
+        centerNameLabel: "Name",
+        centerNamePh: "e.g. Alex",
+        applyCenterBtn: "Add center label",
+        clearCenterBtn: "Remove last center label",
+
+        fileChoose: "Choose file",
+        fileNone: "No file chosen",
+
+        hint:
+          "This is an unofficial chat-style mock. Do not use it for impersonation, fraud, or deceptive purposes.<br/>" +
+          "Exports include a fixed watermark.",
+        badge: "UNOFFICIAL MOCK",
+        watermark: "UNOFFICIAL MOCK • SAMPLE • NOT A REAL APP SCREEN",
+        footer: "Generated by Chat Mock Generator (Unofficial)",
+        alerts: {
+          needInput: "Please enter a message or choose an image.",
+          confirmClear: "Clear all messages?",
+        },
+        divider: (t)=> `— ${t} —`,
+        readText: "READ",
+        defaultPeerName: "Chat Partner",
+
+        // center templates text
+        centerTplToday: "Today",
+        centerTplJoin: (t,name)=> `${t}\n${name} joined the group.`,
+        centerTplLeave: (t,name)=> `${t}\n${name} left the group.`,
+      }
+    };
+
+    let currentLang = "ja";
+
+    function applyI18n(lang){
+      currentLang = lang;
+      const dict = I18N[lang];
+
+      // nodes
+      document.querySelectorAll("[data-i18n]").forEach(node=>{
+        const key = node.getAttribute("data-i18n");
+        if(dict[key] != null) node.innerHTML = dict[key];
+      });
+
+      // placeholders
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(node=>{
+        const key = node.getAttribute("data-i18n-placeholder");
+        if(dict[key] != null) node.setAttribute("placeholder", dict[key]);
+      });
+
+      // watermark text
+      el("watermark").textContent = dict.watermark;
+
+      // peer name default only if not customized
+      const pn = el("peerName");
+      const view = el("peerNameView");
+      const jaDefault = I18N.ja.defaultPeerName;
+      const enDefault = I18N.en.defaultPeerName;
+      const isDefault = (pn.value === jaDefault || pn.value === enDefault || pn.value.trim() === "");
+      if(isDefault){
+        pn.value = dict.defaultPeerName;
+        view.textContent = dict.defaultPeerName;
+      }
+
+      // file labels
+      document.querySelectorAll("[data-filebtn]").forEach(btn=>{
+        btn.textContent = dict.fileChoose;
+      });
+      document.querySelectorAll("[data-filename]").forEach(span=>{
+        const targetId = span.getAttribute("data-filename");
+        const input = document.getElementById(targetId);
+        if(!input || !input.files || input.files.length === 0){
+          span.textContent = dict.fileNone;
+        }
+      });
+
+      // toggle button label
+      el("langToggle").textContent = (lang === "ja") ? "EN" : "日本語";
+    }
+
+    el("langToggle").addEventListener("click", ()=>{
+      applyI18n(currentLang === "ja" ? "en" : "ja");
+    });
+    applyI18n("ja");
+
+    // ===== file wrap init =====
+    function initFileWrap(id){
+      const input = el(id);
+      const btn = document.querySelector(`[data-filebtn="${id}"]`);
+      const name = document.querySelector(`[data-filename="${id}"]`);
+      if(!input || !btn || !name) return;
+
+      btn.addEventListener("click", ()=> input.click());
+      input.addEventListener("change", ()=>{
+        if(input.files && input.files.length > 0){
+          name.textContent = input.files[0].name;
+        }else{
+          name.textContent = I18N[currentLang].fileNone;
+        }
+      });
+    }
+    initFileWrap("peerAvatar");
+    initFileWrap("meAvatar");
+    initFileWrap("img");
+
+    // ===== theme controls =====
+    function setVar(name, value){
+      document.documentElement.style.setProperty(name, value);
+    }
+    function applyThemeFromControls(){
+      setVar("--chatSolid", el("bgColor").value);
+      setVar("--bubbleLbg", el("leftBubble").value);
+      setVar("--bubbleRbg", el("rightBubble").value);
+      setVar("--bubbleLtext", el("leftText").value);
+      setVar("--bubbleRtext", el("rightText").value);
+    }
+    ["bgColor","leftBubble","rightBubble","leftText","rightText"].forEach(id=>{
+      el(id).addEventListener("change", applyThemeFromControls);
+    });
+    applyThemeFromControls();
+
+    // ===== header mode =====
+    function applyHeaderMode(){
+      const mode = el("headerMode").value; // back / avatar
+      const topbar = el("topbar");
+      topbar.classList.remove("header-mode-back","header-mode-avatar");
+      topbar.classList.add(mode === "back" ? "header-mode-back" : "header-mode-avatar");
+    }
+    el("headerMode").addEventListener("change", applyHeaderMode);
+    applyHeaderMode();
+
+    // ===== peer name binding =====
+    el("peerName").addEventListener("input", ()=>{
+      el("peerNameView").textContent = el("peerName").value || I18N[currentLang].defaultPeerName;
+    });
+
+    // ===== store avatar URLs =====
+    let peerAvatarURL = "";
+    let meAvatarURL = "";
+
+    function setHeaderAvatar(fileInput, viewEl, which){
+      fileInput.addEventListener("change", ()=>{
+        const f = fileInput.files?.[0];
+        if(!f){
+          if(which==="peer"){ peerAvatarURL=""; viewEl.innerHTML=""; }
+          if(which==="me"){ meAvatarURL=""; }
+          return;
+        }
+        const url = URL.createObjectURL(f);
+        if(which==="peer"){
+          peerAvatarURL = url;
+          viewEl.innerHTML = "";
+          const img = document.createElement("img");
+          img.src = url;
+          viewEl.appendChild(img);
+        }else if(which==="me"){
+          meAvatarURL = url;
+        }
+      });
+    }
+    setHeaderAvatar(el("peerAvatar"), el("peerAvatarView"), "peer");
+    setHeaderAvatar(el("meAvatar"), null, "me");
+
+    // ===== message add / divider =====
+    const chat = el("chat");
+    let lastSide = null;
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function defaultTime(){
+      const d = new Date();
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function makeMiniAvatar(side, isFirstInRun){
+      const wrap = document.createElement("div");
+      wrap.className = "miniAvatar";
+
+      if(!isFirstInRun){
+        wrap.classList.add("spacer");
+        return wrap;
+      }
+
+      if(side === "left"){
+        if(!peerAvatarURL){ wrap.classList.add("spacer"); return wrap; }
+        const img = document.createElement("img");
+        img.src = peerAvatarURL;
+        wrap.appendChild(img);
+        return wrap;
+      }
+
+      const show = (el("showRightAvatar").value === "on");
+      if(!show || !meAvatarURL){ wrap.classList.add("spacer"); return wrap; }
+      const img = document.createElement("img");
+      img.src = meAvatarURL;
+      wrap.appendChild(img);
+      return wrap;
+    }
+
+    el("addDivider").addEventListener("click", ()=>{
+      const div = document.createElement("div");
+      div.style.textAlign = "center";
+      div.style.margin = "14px 0 10px";
+      div.style.fontSize = "11px";
+      div.style.color = "rgba(0,0,0,.55)";
+      div.style.letterSpacing = ".06em";
+      div.style.fontWeight = "900";
+
+      const t = (el("time").value || defaultTime()).trim();
+      div.textContent = I18N[currentLang].divider(t);
+
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      lastSide = null;
+    });
+
+    el("add").addEventListener("click", ()=>{
+      const side = el("side").value;
+      const t = (el("time").value || defaultTime()).trim();
+      const text = el("text").value.trim();
+      const readMode = el("read").value;
+      const imgFile = el("img").files?.[0];
+
+      if(!text && !imgFile){
+        alert(I18N[currentLang].alerts.needInput);
+        return;
+      }
+
+      const isFirstInRun = (lastSide !== side);
+      lastSide = side;
+
+      const row = document.createElement("div");
+      row.className = "msg " + side;
+
+      const metaCol = document.createElement("div");
+      metaCol.className = "metaCol";
+      const read = document.createElement("div");
+      read.className = "read";
+      read.textContent = (side === "right" && readMode === "shown") ? I18N[currentLang].readText : "";
+      const time = document.createElement("div");
+      time.className = "time";
+      time.textContent = t;
+      metaCol.appendChild(read);
+      metaCol.appendChild(time);
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      if(text){
+        const p = document.createElement("div");
+        p.textContent = text;
+        bubble.appendChild(p);
+      }
+      if(imgFile){
+        const url = URL.createObjectURL(imgFile);
+        const img = document.createElement("img");
+        img.src = url;
+        bubble.appendChild(img);
+      }
+
+      const miniAv = makeMiniAvatar(side, isFirstInRun);
+
+      if(side === "left"){
+        row.appendChild(miniAv);
+        row.appendChild(bubble);
+        row.appendChild(metaCol);
+      }else{
+        row.appendChild(metaCol);
+        row.appendChild(bubble);
+        row.appendChild(miniAv);
+      }
+
+      chat.appendChild(row);
+
+      el("text").value = "";
+      el("img").value = "";
+      const imgName = document.querySelector('[data-filename="img"]');
+      if(imgName) imgName.textContent = I18N[currentLang].fileNone;
+
+      chat.scrollTop = chat.scrollHeight;
+    });
+
+    el("showRightAvatar").addEventListener("change", ()=>{ lastSide = null; });
+
+    // ===== Center label (flow item) =====
+    function weekdayJP(d){
+      const w = ["日","月","火","水","木","金","土"];
+      return w[d.getDay()];
+    }
+    function formatJPDate(yyyy_mm_dd){
+      if(!yyyy_mm_dd) return "";
+      const [y,m,dd] = yyyy_mm_dd.split("-").map(Number);
+      const d = new Date(y, m-1, dd);
+      return `${m}月${dd}日(${weekdayJP(d)})`;
+    }
+    function formatENDate(yyyy_mm_dd){
+      if(!yyyy_mm_dd) return "";
+      const d = new Date(yyyy_mm_dd + "T00:00:00");
+      const opts = { weekday:"short", year:"numeric", month:"short", day:"2-digit" };
+      return d.toLocaleDateString("en-US", opts);
+    }
+
+    function showTemplateInputs(){
+      const v = el("centerTemplate").value;
+      el("tplFree").style.display  = (v==="5") ? "" : "none";
+      el("tplDate").style.display  = (v==="2") ? "" : "none";
+      el("tplJoin").style.display  = (v==="3") ? "" : "none";
+      el("tplLeave").style.display = (v==="4") ? "" : "none";
+    }
+    el("centerTemplate").addEventListener("change", showTemplateInputs);
+    showTemplateInputs();
+
+    function buildCenterText(){
+      const dict = I18N[currentLang];
+      const tpl = el("centerTemplate").value;
+
+      if(tpl === "1"){
+        return dict.centerTplToday;
+      }
+      if(tpl === "2"){
+        const v = el("centerDate").value;
+        return currentLang === "ja" ? formatJPDate(v) : formatENDate(v);
+      }
+      if(tpl === "3"){
+        const t = el("centerJoinTime").value || "??:??";
+        const name = (el("centerJoinName").value || (currentLang==="ja" ? "○○" : "Someone")).trim();
+        return dict.centerTplJoin(t, name);
+      }
+      if(tpl === "4"){
+        const t = el("centerLeaveTime").value || "??:??";
+        const name = (el("centerLeaveName").value || (currentLang==="ja" ? "○○" : "Someone")).trim();
+        return dict.centerTplLeave(t, name);
+      }
+      return (el("centerFreeText").value || "").trim();
+    }
+
+    function addCenterLabel(){
+      const text = buildCenterText();
+      if(!text) return;
+
+      const layout = el("centerLayout").value;
+      const row = document.createElement("div");
+      row.className = "centerRow";
+
+      const pill = document.createElement("div");
+      pill.className = "centerPill " + (layout === "2" ? "layout2" : "layout1");
+      pill.textContent = text;
+
+      row.appendChild(pill);
+      chat.appendChild(row);
+
+      chat.scrollTop = chat.scrollHeight;
+      lastSide = null; // treat as break
+    }
+
+    function removeLastCenterLabel(){
+      const rows = chat.querySelectorAll(".centerRow");
+      if(rows.length === 0) return;
+      rows[rows.length - 1].remove();
+    }
+
+    el("applyCenter").addEventListener("click", addCenterLabel);
+    el("clearCenter").addEventListener("click", removeLastCenterLabel);
+
+    // ===== Clear all =====
+    el("clear").addEventListener("click", ()=>{
+      if(confirm(I18N[currentLang].alerts.confirmClear)){
+        chat.innerHTML = "";
+
+        // reset file inputs + labels
+        ["peerAvatar","meAvatar","img"].forEach(id=>{
+          const inp = el(id);
+          if(inp) inp.value = "";
+          const name = document.querySelector(`[data-filename="${id}"]`);
+          if(name) name.textContent = I18N[currentLang].fileNone;
+        });
+
+        peerAvatarURL = "";
+        meAvatarURL = "";
+        el("peerAvatarView").innerHTML = "";
+        lastSide = null;
+      }
+    });
+
+    // ===== Export PNG =====
+    el("export").addEventListener("click", async ()=>{
+      const target = el("capture");
+      const canvas = await html2canvas(target, { backgroundColor: null, scale: 2 });
+      const a = document.createElement("a");
+      a.download = "chat-mock.png";
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    });
+
+    // defaults for template inputs
+    (function initCenterDefaults(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      el("centerDate").value = `${yyyy}-${mm}-${dd}`;
+
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mi = String(d.getMinutes()).padStart(2,"0");
+      el("centerJoinTime").value = `${hh}:${mi}`;
+      el("centerLeaveTime").value = `${hh}:${mi}`;
+
+      el("centerJoinName").value = "○○";
+      el("centerLeaveName").value = "○○";
+      el("centerFreeText").value = "";
+    })();
+  </script>
+</body>
+
+</html>

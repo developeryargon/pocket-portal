@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>おむつ最安値比較 | PocketPortal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; }
+        input { font-size: 16px !important; }
+        .best-deal { border: 3px solid #f59e0b !important; background-color: #fffbeb !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
+
+    <nav class="bg-white border-b border-slate-200 py-3 px-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="font-bold text-blue-600 flex items-center gap-1">🏠 <span class="text-sm">PocketPortal</span></a>
+            <button onclick="window.location.reload()" class="text-xs text-slate-400 font-bold">リセット</button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 max-w-xl">
+        <h1 class="text-xl font-bold text-center mb-6">おむつ単価 4件比較</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="card-0" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded">商品 1</span>
+                    <span id="rank-0" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
+                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
+                </div>
+                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
+            </div>
+
+            <div id="card-1" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded">商品 2</span>
+                    <span id="rank-1" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
+                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
+                </div>
+                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
+            </div>
+
+            <div id="card-2" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold bg-purple-100 text-purple-600 px-2 py-0.5 rounded">商品 3</span>
+                    <span id="rank-2" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
+                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
+                </div>
+                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
+            </div>
+
+            <div id="card-3" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold bg-pink-100 text-pink-600 px-2 py-0.5 rounded">商品 4</span>
+                    <span id="rank-3" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
+                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
+                </div>
+                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
+            </div>
+        </div>
+
+        <div class="mt-8 p-6 bg-orange-50 rounded-3xl border border-orange-200 shadow-sm text-center">
+            <p class="text-[10px] font-bold text-orange-600 mb-2">買い忘れはありませんか？</p>
+            <p class="text-xs text-slate-600 mb-4 leading-relaxed font-bold">おむつ・おしりふきは<br>Amazon定期便が結局おトク</p>
+            <a href="https://www.amazon.co.jp/diapers" target="_blank" class="inline-block bg-orange-500 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-orange-200 active:scale-95 transition-all">
+                Amazonで価格をチェック
+            </a>
+        </div>
+    </main>
+
+    <script>
+        function calc() {
+            const cards = document.querySelectorAll('.item-card');
+            const prices = document.querySelectorAll('.price');
+            const counts = document.querySelectorAll('.count');
+            const displays = document.querySelectorAll('.unit-price');
+            const ranks = [document.getElementById('rank-0'), document.getElementById('rank-1'), document.getElementById('rank-2'), document.getElementById('rank-3')];
+
+            let results = [];
+
+            cards.forEach((card, i) => {
+                const p = parseFloat(prices[i].value) || 0;
+                const c = parseFloat(counts[i].value) || 0;
+                const unitPrice = (c > 0) ? (p * 1.1 / c) : Infinity;
+
+                displays[i].innerText = unitPrice === Infinity ? "0" : unitPrice.toFixed(1);
+                card.classList.remove('best-deal');
+                ranks[i].classList.add('hidden');
+
+                if (unitPrice !== Infinity) {
+                    results.push({ index: i, value: unitPrice });
+                }
+            });
+
+            // 最安値判定
+            if (results.length > 1) {
+                const min = Math.min(...results.map(r => r.value));
+                results.forEach(r => {
+                    if (r.value === min) {
+                        cards[r.index].classList.add('best-deal');
+                        ranks[r.index].classList.remove('hidden');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

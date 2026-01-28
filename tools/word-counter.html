@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字数カウント ＆ 読了時間計算 | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Writing Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">文字数カウント ＆ 読了時間</h1>
+            <p class="text-xs text-slate-500">リアルタイムで文字数を計測し、読むのにかかる時間を算出</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-4xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6">
+                    <textarea id="text-input" oninput="countText()" rows="15" class="w-full p-6 bg-slate-50 border-none rounded-2xl text-base text-slate-700 leading-relaxed outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="ここに文章を入力またはペーストしてください..."></textarea>
+                    
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="clearText()" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1">
+                            🗑️ テキストを消去
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl shadow-lg border border-slate-100 p-6">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-widest">📊 解析結果</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">文字数（空白含む）</p>
+                            <p id="count-with-space" class="text-3xl font-bold text-blue-600">0</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">文字数（空白抜き）</p>
+                            <p id="count-no-space" class="text-3xl font-bold text-slate-800">0</p>
+                        </div>
+                        <div class="pt-4 border-t border-slate-50">
+                            <p class="text-xs text-slate-500 mb-1">原稿用紙換算</p>
+                            <p id="manuscript-pages" class="text-sm font-bold text-slate-700">0 枚</p>
+                        </div>
+                        <div class="pt-4 border-t border-slate-50">
+                            <p class="text-xs text-slate-500 mb-1">読了時間の目安</p>
+                            <p id="read-time" class="text-sm font-bold text-slate-700">約 0 秒</p>
+                            <p class="text-[10px] text-slate-400 mt-1 italic">※600文字/分で計算</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg shadow-blue-100">
+                    <p class="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-4 italic">Writing Buddy</p>
+                    <a href="https://af.moshimo.com/..." target="_blank" class="block group">
+                        <div class="bg-white/10 p-4 rounded-xl border border-white/10 group-hover:border-blue-300 transition-all">
+                            <p class="text-sm font-bold mb-2 flex items-center justify-between">
+                                肩こり軽減。最高のキーボード
+                                <span class="group-hover:translate-x-1 transition-transform">→</span>
+                            </p>
+                            <p class="text-[10px] text-blue-100 leading-tight">
+                                長時間の執筆には、疲れにくいHHKBやリアルフォースを。
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+        <p class="mt-2">Amazonの適格販売により、PocketPortalは報酬を得る場合があります。</p>
+    </footer>
+
+    <script>
+        function countText() {
+            const input = document.getElementById('text-input').value;
+            
+            // 文字数計測
+            const withSpace = input.length;
+            const noSpace = input.replace(/\s+/g, '').length;
+            
+            // 原稿用紙換算 (400文字1枚)
+            const pages = Math.ceil(withSpace / 400);
+            
+            // 読了時間目安 (平均的な読書スピード 600文字/分)
+            const minutes = withSpace / 600;
+            const seconds = Math.floor(minutes * 60);
+            
+            // 表示更新
+            document.getElementById('count-with-space').innerText = withSpace.toLocaleString();
+            document.getElementById('count-no-space').innerText = noSpace.toLocaleString();
+            document.getElementById('manuscript-pages').innerText = `${pages.toLocaleString()} 枚`;
+            
+            if (seconds < 60) {
+                document.getElementById('read-time').innerText = `約 ${seconds} 秒`;
+            } else {
+                const min = Math.floor(seconds / 60);
+                const sec = seconds % 60;
+                document.getElementById('read-time').innerText = `約 ${min} 分 ${sec} 秒`;
+            }
+        }
+
+        function clearText() {
+            if (confirm('入力したテキストをすべて消去しますか？')) {
+                document.getElementById('text-input').value = '';
+                countText();
+            }
+        }
+    </script>
+</body>
+</html>

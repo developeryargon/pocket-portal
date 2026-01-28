@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web便利ツール集 | PocketPortal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; }
+        .tool-card { transition: all 0.2s ease-in-out; }
+        .tool-card:hover { transform: translateY(-4px); border-color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 px-2 py-1 rounded-full">Utility Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-12 px-6 mb-10">
+        <div class="container mx-auto text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-3">Web便利ツール集</h1>
+            <p class="text-slate-500 text-sm">インストール不要。ブラウザですぐに使える無料ツール集です。</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 max-w-5xl mb-20">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <a href="./diaper-calc.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">👶</div>
+                <h3 class="font-bold text-slate-800 mb-1">おむつ単価比較</h3>
+                <p class="text-[11px] text-slate-400">4商品一括比較で最安値を判定</p>
+            </a>
+
+            <a href="./multi-calculator.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">🧮</div>
+                <h3 class="font-bold text-slate-800 mb-1">3-in-1 ハイブリッド電卓</h3>
+                <p class="text-[11px] text-slate-400">通常・商業簿記・関数モード搭載</p>
+            </a>
+
+            <a href="./word-counter.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">📝</div>
+                <h3 class="font-bold text-slate-800 mb-1">文字数カウント</h3>
+                <p class="text-[11px] text-slate-400">リアルタイム集計と読了時間予測</p>
+            </a>
+
+            <a href="./sms-chat.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">💬</div>
+                <h3 class="font-bold text-slate-800 mb-1">チャット風画像作成</h3>
+                <p class="text-[11px] text-slate-400">SNS投稿用の会話モックアップ作成</p>
+            </a>
+
+            <a href="./qr-generator.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">🔳</div>
+                <h3 class="font-bold text-slate-800 mb-1">QRコード作成</h3>
+                <p class="text-[11px] text-slate-400">商標表記対応の安心ジェネレーター</p>
+            </a>
+
+            <a href="./password-gen.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">🔐</div>
+                <h3 class="font-bold text-slate-800 mb-1">パスワード生成</h3>
+                <p class="text-[11px] text-slate-400">強度診断付きの安全なコード生成</p>
+            </a>
+
+            <a href="./ip-check.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">📡</div>
+                <h3 class="font-bold text-slate-800 mb-1">IPアドレス確認</h3>
+                <p class="text-[11px] text-slate-400">接続元のIPやブラウザ情報の表示</p>
+            </a>
+
+            <a href="./ip-calculator.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">🗺️</div>
+                <h3 class="font-bold text-slate-800 mb-1">IP/サブネット計算</h3>
+                <p class="text-[11px] text-slate-400">ネットワーク設計用の詳細計算</p>
+            </a>
+
+            <a href="./color-picker.html" class="tool-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                <div class="text-4xl mb-4">🎨</div>
+                <h3 class="font-bold text-slate-800 mb-1">画像の色取得</h3>
+                <p class="text-[11px] text-slate-400">画像上の任意の場所から色情報を抽出</p>
+            </a>
+
+        </div>
+
+        <div class="mt-16 p-8 bg-slate-900 rounded-[2.5rem] text-white text-center shadow-xl">
+            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3">Today's Deals</p>
+            <p class="font-bold mb-6">作業効率を爆上げする<br>最新のガジェットをチェック</p>
+            <a href="https://amzn.to/あなたのID" target="_blank" class="bg-white text-slate-900 px-8 py-3 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors">
+                Amazon タイムセール会場へ
+            </a>
+        </div>
+    </main>
+
+    <footer class="py-12 border-t border-slate-200 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal | Web Utility Center</p>
+    </footer>
+
+</body>
+</html>

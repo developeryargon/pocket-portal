@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRコード作成ツール | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        #qrcode img { margin: 0 auto; border: 8px solid white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">QRコード作成ツール</h1>
+            <p class="text-xs text-slate-500">URLやテキストをQRコードに変換します</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-xl">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+            
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">変換したいURLやテキスト</label>
+                <textarea id="text-input" rows="3" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="https://example.com"></textarea>
+            </div>
+
+            <button onclick="generateQR()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-200 mb-8">
+                QRコードを生成する
+            </button>
+
+            <div id="qrcode-container" class="hidden text-center animate-in fade-in duration-500">
+                <div id="qrcode" class="mb-6"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※画像を右クリックまたは長押しで保存できます</p>
+            </div>
+        </div>
+
+        <div class="mt-8 px-4 text-center">
+            <p class="text-[10px] text-slate-400 leading-relaxed">
+                QRコードは株式会社デンソーウェーブの登録商標です。<br>
+                当ツールで生成されたQRコードの利用により生じた損害について、当サイトは一切の責任を負いません。
+            </p>
+        </div>
+
+        <div class="mt-8 p-6 bg-slate-900 rounded-3xl text-white">
+            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-4">Recommended for Business</p>
+            <a href="https://af.moshimo.com/..." target="_blank" class="block group">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 group-hover:border-blue-500 transition-all text-left flex items-center gap-4">
+                    <div class="text-2xl">🖨️</div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-white mb-1">ラベルプリンター</p>
+                        <p class="text-[10px] text-slate-400 leading-tight">作成したQRコードをシールにして貼り付け。店舗運営や整理整頓に。</p>
+                    </div>
+                    <div class="text-slate-500 group-hover:text-blue-400">→</div>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        let qrcode = null;
+
+        function generateQR() {
+            const text = document.getElementById('text-input').value;
+            const container = document.getElementById('qrcode-container');
+            const display = document.getElementById('qrcode');
+
+            if (!text.trim()) {
+                alert('テキストを入力してください');
+                return;
+            }
+
+            // 前回のQRコードをクリア
+            display.innerHTML = '';
+            container.classList.remove('hidden');
+
+            // QRコード生成
+            qrcode = new QRCode(display, {
+                text: text,
+                width: 200,
+                height: 200,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+    </script>
+</body>
+</html>
