@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>川崎お出かけバリアフリーMAP</title>
+    <title>川崎お出かけ子育て応援MAP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jschardet/3.0.0/jschardet.min.js"></script>
@@ -12,45 +12,57 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
         body { font-family: 'Noto Sans JP', sans-serif; }
-        #map { height: 300px; width: 100%; border-radius: 1rem; z-index: 10; border: 2px solid white; }
-        .feature-tag { font-size: 0.65rem; padding: 2px 8px; border-radius: 9999px; font-weight: bold; }
+        #map { height: 350px; width: 100%; border-radius: 1.5rem; z-index: 10; border: 4px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .feature-tag { font-size: 0.7rem; padding: 4px 10px; border-radius: 9999px; font-weight: bold; display: inline-flex; align-items: center; gap: 2px; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
+<body class="bg-orange-50/30 text-slate-800 min-h-screen pb-20">
 
-    <nav class="bg-white border-b border-slate-200 py-3 px-4 sticky top-0 z-[1000]">
+    <nav class="bg-white/80 backdrop-blur-md border-b border-orange-100 py-3 px-4 sticky top-0 z-[1000]">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="../index.html" class="font-bold text-blue-600 flex items-center gap-1">🏠 <span class="text-sm">PocketPortal</span></a>
-            <button onclick="getLocation()" class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">現在地</button>
+            <a href="../index.html" class="font-bold text-orange-600 flex items-center gap-1">🏠 <span class="text-sm">PocketPortal</span></a>
+            <button onclick="getLocation()" class="bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">現在地を表示</button>
         </div>
     </nav>
 
     <main class="container mx-auto p-4 max-w-xl">
-        <h1 class="text-xl font-bold text-center mb-4">川崎バリアフリーMAP</h1>
-        <div id="map" class="mb-4 shadow-sm"></div>
-
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
-            <div class="flex flex-wrap gap-2 mb-4">
-                <button onclick="toggleFilter('toilet')" id="btn-toilet" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all">♿️ トイレ</button>
-                <button onclick="toggleFilter('baby')" id="btn-baby" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all">🍼 おむつ台</button>
-                <button onclick="toggleFilter('nursing')" id="btn-nursing" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all">🤱 授乳室</button>
-            </div>
-            <input type="text" id="keyword" placeholder="施設名や住所で検索..." class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm outline-none font-bold">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-black text-slate-800 flex justify-center items-center gap-2">
+                👶 川崎子育てMAP
+            </h1>
+            <p class="text-[10px] text-slate-500 font-bold mt-1">川崎市オープンデータ活用：施設・バリアフリー情報</p>
         </div>
 
-        <div id="loading" class="text-center py-10 text-slate-400 font-bold">📡 データを解析中...</div>
-        <div id="results" class="space-y-3"></div>
+        <div id="map" class="mb-6"></div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-xl border border-orange-50 mb-6">
+            <p class="text-[10px] font-bold text-slate-400 mb-2 ml-1">絞り込みフィルター</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button onclick="toggleFilter('stroller')" id="btn-stroller" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1">🛒 ベビーカーOK</button>
+                <button onclick="toggleFilter('baby')" id="btn-baby" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1">🍼 おむつ替え</button>
+                <button onclick="toggleFilter('nursing')" id="btn-nursing" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1">🤱 授乳室</button>
+                <button onclick="toggleFilter('toilet')" id="btn-toilet" class="bg-slate-100 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1">♿️ 多目的トイレ</button>
+            </div>
+            <input type="text" id="keyword" placeholder="施設名・住所・キーワードで検索..." class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-orange-200 rounded-2xl text-sm outline-none font-bold transition-all">
+        </div>
+
+        <div id="loading" class="text-center py-10 animate-pulse">
+            <span class="text-2xl">📡</span>
+            <div class="text-slate-400 font-bold text-sm mt-2">最新データを準備中...</div>
+        </div>
+        <div id="results" class="space-y-4"></div>
     </main>
 
     <script>
         const DATA_URL = '../area/kanagawa/kawasaki/kawasaki-barrierfree.csv';
         let allData = [];
-        let activeFilters = { toilet: false, baby: false, nursing: false };
+        let activeFilters = { toilet: false, baby: false, nursing: false, stroller: false };
         let map, markers = [];
 
         function initMap() {
-            map = L.map('map').setView([35.5308, 139.7029], 13);
+            map = L.map('map', { zoomControl: false }).setView([35.5308, 139.7029], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
         }
 
         async function loadData() {
@@ -58,30 +70,26 @@
                 const response = await fetch(DATA_URL);
                 const buffer = await response.arrayBuffer();
                 const encoding = jschardet.detect(new Uint8Array(buffer)).encoding || 'UTF-8';
-                const decoder = new TextDecoder(encoding);
-                const csvString = decoder.decode(buffer);
+                let csvString = new TextDecoder(encoding).decode(buffer);
+                
+                // BOM（文字コードのゴミ）を除去する対策
+                csvString = csvString.replace(/^\uFEFF/, "");
 
                 Papa.parse(csvString, {
-                    header: true,
-                    skipEmptyLines: true,
+                    header: true, skipEmptyLines: true,
                     complete: (results) => {
-                        // 名称が入っている行だけを有効なデータとする
                         allData = results.data.filter(row => row["名称"] && row["名称"].trim() !== "");
                         document.getElementById('loading').style.display = 'none';
                         render();
                     }
                 });
             } catch (e) {
-                console.error(e);
-                document.getElementById('loading').innerText = "⚠️ データの読み込みエラー";
+                document.getElementById('loading').innerText = "⚠️ データの読み込みに失敗しました";
             }
         }
 
-        // 川崎市CSVの「可」という文字を判定する
-        const isOK = (item, key) => {
-            const val = item[key];
-            return val && val.trim() === "可";
-        };
+        // CSVの「可」などの判定
+        const isOK = (item, key) => item[key] && item[key].trim() === "可";
 
         function render() {
             const container = document.getElementById('results');
@@ -93,38 +101,44 @@
             const filtered = allData.filter(item => {
                 const name = (item["名称"] || "").toLowerCase();
                 const addr = (item["所在地_連結表記"] || "").toLowerCase();
-                if (!name.includes(keyword) && !addr.includes(keyword)) return false;
+                const desc = (item["備考"] || "").toLowerCase();
+                if (!name.includes(keyword) && !addr.includes(keyword) && !desc.includes(keyword)) return false;
 
-                const hasToilet = isOK(item, "バリアフリートイレ");
-                const hasBaby = isOK(item, "おむつ替えコーナー");
+                const hasStroller = isOK(item, "ベビーカー利用") || isOK(item, "ベビーカー貸出");
+                const hasBaby = isOK(item, "おむつ替えコーナー") || isOK(item, "ベビーキープ");
                 const hasNursing = isOK(item, "授乳室");
+                const hasToilet = isOK(item, "バリアフリートイレ");
 
-                if (activeFilters.toilet && !hasToilet) return false;
+                if (activeFilters.stroller && !hasStroller) return false;
                 if (activeFilters.baby && !hasBaby) return false;
                 if (activeFilters.nursing && !hasNursing) return false;
+                if (activeFilters.toilet && !hasToilet) return false;
                 
                 return true;
             });
 
             filtered.forEach(item => {
-                const name = item["名称"];
-                const addr = item["所在地_連結表記"] || "住所情報なし";
-
                 const div = document.createElement('div');
-                div.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100";
+                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow";
+                
+                let tags = "";
+                if (isOK(item, "バリアフリートイレ")) tags += `<span class="feature-tag bg-blue-50 text-blue-600">♿️ 多目的トイレ</span>`;
+                if (isOK(item, "おむつ替えコーナー")) tags += `<span class="feature-tag bg-pink-50 text-pink-600">🍼 おむつ替え</span>`;
+                if (isOK(item, "ベビーキープ")) tags += `<span class="feature-tag bg-pink-50 text-pink-400">👶 ベビーキープ</span>`;
+                if (isOK(item, "授乳室")) tags += `<span class="feature-tag bg-rose-50 text-rose-600">🤱 授乳室</span>`;
+                if (isOK(item, "ベビーカー利用")) tags += `<span class="feature-tag bg-orange-50 text-orange-600">🛒 ベビーカー可</span>`;
+                if (isOK(item, "ベビーカー貸出")) tags += `<span class="feature-tag bg-orange-50 text-orange-400">✨ ベビーカー貸出</span>`;
+
                 div.innerHTML = `
-                    <h3 class="font-bold text-slate-800 text-sm mb-1">${name}</h3>
-                    <p class="text-[10px] text-slate-400 mb-3">📍 ${addr}</p>
-                    <div class="flex flex-wrap gap-1">
-                        ${isOK(item, "バリアフリートイレ") ? '<span class="feature-tag bg-blue-50 text-blue-500">♿️ トイレ</span>' : ''}
-                        ${isOK(item, "おむつ替えコーナー") ? '<span class="feature-tag bg-pink-50 text-pink-500">🍼 おむつ台</span>' : ''}
-                        ${isOK(item, "授乳室") ? '<span class="feature-tag bg-green-50 text-green-500">🤱 授乳室</span>' : ''}
-                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">${item["名称"]}</h3>
+                    <p class="text-[10px] text-slate-400 mb-4 flex items-center gap-1">📍 ${item["所在地_連結表記"]}</p>
+                    <div class="flex flex-wrap gap-1.5">${tags}</div>
+                    ${item["備考"] ? `<p class="mt-3 text-[9px] text-slate-400 bg-slate-50 p-2 rounded-lg italic">メモ: ${item["備考"]}</p>` : ''}
                 `;
                 container.appendChild(div);
 
                 if (item["緯度"] && item["経度"]) {
-                    const m = L.marker([item["緯度"], item["経度"]]).addTo(map).bindPopup(`<b>${name}</b>`);
+                    const m = L.marker([item["緯度"], item["経度"]]).addTo(map).bindPopup(`<b>${item["名称"]}</b>`);
                     markers.push(m);
                 }
             });
@@ -133,8 +147,16 @@
         function toggleFilter(type) {
             activeFilters[type] = !activeFilters[type];
             const btn = document.getElementById(`btn-${type}`);
-            btn.classList.toggle('bg-blue-600'); btn.classList.toggle('text-white');
-            btn.classList.toggle('bg-slate-100'); btn.classList.toggle('text-slate-500');
+            const colors = {
+                stroller: 'bg-orange-500',
+                baby: 'bg-pink-500',
+                nursing: 'bg-rose-500',
+                toilet: 'bg-blue-600'
+            };
+            btn.classList.toggle(colors[type]);
+            btn.classList.toggle('text-white');
+            btn.classList.toggle('bg-slate-100');
+            btn.classList.toggle('text-slate-500');
             render();
         }
 
