@@ -2,241 +2,114 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像の色取得ツール | PocketPortal Tools</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>画像の色取得ツール | PocketPortal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
-        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
-        .drop-area {
-            border: 2px dashed #cbd5e1;
-            background-color: #f8fafc;
-            transition: all 0.2s ease-in-out;
-        }
-        .drop-area.highlight {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-        }
-        #color-display {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 1px #cbd5e1;
-        }
-        #image-canvas {
-            cursor: crosshair;
-            max-width: 100%;
-            height: auto;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        /* おむつ計算機と同じフォントとスタイル設定 */
+        body { font-family: 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; }
+        #canvas { width: 100%; max-width: 100%; height: auto; cursor: crosshair; display: block; }
+        .canvas-container { width: 100%; overflow: hidden; border-radius: 1rem; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
 
-    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+    <nav class="bg-white border-b border-slate-200 py-3 px-4 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="../../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
-                <span>🏠</span> PocketPortal
+            <a href="../index.html" class="font-bold text-blue-600 flex items-center gap-1">
+                🏠 <span class="text-sm">PocketPortal</span>
             </a>
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+            <button onclick="window.location.reload()" class="text-xs text-slate-400 font-bold">リセット</button>
         </div>
     </nav>
 
-    <header class="bg-white border-b border-slate-100 py-8 px-6">
-        <div class="container mx-auto text-center">
-            <h1 class="text-2xl font-bold text-slate-800 mb-2">画像の色取得ツール</h1>
-            <p class="text-xs text-slate-500">画像からHEX/RGBカラーコードを簡単に抽出</p>
-        </div>
-    </header>
+    <main class="container mx-auto p-4 max-w-xl">
+        <h1 class="text-xl font-bold text-center mb-6">画像の色取得ツール</h1>
 
-    <main class="flex-grow container mx-auto py-10 px-6 max-w-3xl">
-        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 md:p-10 mb-8">
-            <div id="drop-area" class="drop-area p-8 rounded-xl text-center cursor-pointer flex flex-col items-center justify-center mb-6">
-                <span class="text-4xl text-slate-400 mb-3">🖼️</span>
-                <p class="font-bold text-slate-600">画像をここにドラッグ＆ドロップ</p>
-                <p class="text-sm text-slate-500 mt-1">または <label for="file-input" class="text-blue-600 cursor-pointer hover:underline">ファイルを選択</label></p>
-                <input type="file" id="file-input" accept="image/*" class="hidden">
-            </div>
-
-            <div id="image-preview" class="hidden mb-6 relative">
-                <canvas id="image-canvas" class="block w-full h-auto rounded-lg shadow-md border border-slate-200"></canvas>
-                <button onclick="resetTool()" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs opacity-80 hover:opacity-100 transition">
-                    × リセット
-                </button>
-            </div>
-
-            <div id="color-info" class="hidden flex flex-col md:flex-row items-center justify-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div id="color-display" class="shrink-0"></div>
-                <div>
-                    <p class="text-xs text-slate-500 font-medium">取得した色情報:</p>
-                    <p class="text-xl font-bold text-slate-800" id="hex-code">#------</p>
-                    <p class="text-sm text-slate-600" id="rgb-code">rgb(---, ---, ---)</p>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100">
+            
+            <div id="drop-area" class="border-2 border-dashed border-slate-200 rounded-xl p-6 mb-4 text-center hover:border-blue-400 transition-colors cursor-pointer bg-slate-50 flex flex-col items-center justify-center min-h-[150px]">
+                <input type="file" id="file-input" class="hidden" accept="image/*">
+                <div id="upload-prompt">
+                    <p class="text-2xl mb-1">📷</p>
+                    <p class="text-slate-400 text-[10px] font-bold">画像をタップして選択</p>
                 </div>
-                <button onclick="copyColorCode('hex')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all ml-auto">
-                    HEXコピー
-                </button>
+                <div class="canvas-container">
+                    <canvas id="canvas" class="hidden"></canvas>
+                </div>
             </div>
-        </div>
 
-        <div class="mt-8 p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
-            <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">デザイン作業効率UP！</p>
-            <a href="https://af.moshimo.com/..." target="_blank" class="block group">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-200 group-hover:border-blue-400 transition-all text-left flex items-center gap-4">
-                    <div class="text-3xl">🎨</div>
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-blue-800 mb-1">Adobe Creative Cloud</p>
-                        <p class="text-[10px] text-blue-600 opacity-80 leading-tight">Photoshop, Illustratorでデザインをもっと自由に。</p>
+            <div id="result-area" class="hidden">
+                <div class="flex items-center gap-4 p-4 bg-slate-900 rounded-xl relative text-white">
+                    <div id="color-preview" class="w-12 h-12 rounded-lg border border-white/20 shrink-0"></div>
+                    <div class="flex-grow">
+                        <h2 id="hex-code" class="text-lg font-mono font-bold tracking-wider">#------</h2>
+                        <p id="rgb-code" class="text-[9px] text-slate-400 font-mono italic">rgb(---, ---, ---)</p>
                     </div>
-                    <div class="text-blue-300 group-hover:text-blue-500">→</div>
+                    <button onclick="copyToClipboard()" id="copy-btn" class="bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">コピー</button>
                 </div>
-            </a>
+                <p class="text-center text-[10px] text-slate-400 mt-3 font-bold italic">画像内をタップして色を抽出</p>
+            </div>
+        </div>
+
+        <div class="mt-8 p-6 bg-blue-50 rounded-3xl border border-blue-100 shadow-sm text-center">
+            <p class="text-[10px] font-bold text-blue-600 mb-1">使い方は簡単</p>
+            <p class="text-xs text-slate-600 leading-relaxed font-bold">写真を撮るか画像を選んで<br>気になる色をタップするだけ！</p>
         </div>
     </main>
 
-    <footer class="py-8 text-center text-slate-400 text-[10px]">
-        <p>© 2024 PocketPortal Tools - 画像データは保存されません</p>
-    </footer>
-
     <script>
-        const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('file-input');
-        const imagePreview = document.getElementById('image-preview');
-        const imageCanvas = document.getElementById('image-canvas');
-        const ctx = imageCanvas.getContext('2d', { willReadFrequently: true });
-        const colorInfo = document.getElementById('color-info');
-        const colorDisplay = document.getElementById('color-display');
-        const hexCode = document.getElementById('hex-code');
-        const rgbCode = document.getElementById('rgb-code');
-        let currentImage = null; // 現在表示中の画像オブジェクト
+        const dropArea = document.getElementById('drop-area');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const resultArea = document.getElementById('result-area');
+        const colorPreview = document.getElementById('color-preview');
+        const hexText = document.getElementById('hex-code');
+        const rgbText = document.getElementById('rgb-code');
+        const uploadPrompt = document.getElementById('upload-prompt');
 
-        // --- Drag & Drop 処理 ---
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false); // 全体へのドロップ防止
-        });
+        dropArea.onclick = () => { if(canvas.classList.contains('hidden')) fileInput.click(); };
+        fileInput.onchange = (e) => handleImage(e.target.files[0]);
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, unhighlight, false);
-        });
-
-        dropArea.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', handleFiles, false);
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        function highlight() { dropArea.classList.add('highlight'); }
-        function unhighlight() { dropArea.classList.remove('highlight'); }
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles({ target: { files: files } });
-        }
-
-        function handleFiles(e) {
-            const files = e.target.files;
-            if (files.length === 0) return;
-
-            const file = files[0];
-            if (!file.type.startsWith('image/')) {
-                alert('画像ファイルを選択してください。');
-                return;
-            }
-
+        function handleImage(file) {
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = (event) => {
                 const img = new Image();
-                img.onload = function() {
-                    currentImage = img;
-                    drawImageOnCanvas(img);
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    canvas.classList.remove('hidden');
+                    uploadPrompt.classList.add('hidden');
+                    resultArea.classList.remove('hidden');
+                    dropArea.classList.replace('p-6', 'p-0');
+                    dropArea.classList.remove('border-dashed', 'bg-slate-50');
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        function drawImageOnCanvas(img) {
-            const maxWidth = imagePreview.offsetWidth; // プレビューエリアの幅に合わせる
-            const ratio = img.width / img.height;
-            let newWidth = maxWidth;
-            let newHeight = maxWidth / ratio;
-
-            if (newHeight > window.innerHeight * 0.7) { // 画面の高さに収まるように調整
-                newHeight = window.innerHeight * 0.7;
-                newWidth = newHeight * ratio;
-            }
-
-            imageCanvas.width = newWidth;
-            imageCanvas.height = newHeight;
-            ctx.drawImage(img, 0, 0, newWidth, newHeight);
-
-            dropArea.classList.add('hidden');
-            imagePreview.classList.remove('hidden');
-            colorInfo.classList.add('hidden'); // 色情報はリセット時に隠す
-            resetColorInfo(); // 表示もリセット
-        }
-
-        imageCanvas.addEventListener('mousemove', function(e) {
-            if (!currentImage) return;
-
-            const rect = imageCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
+        canvas.addEventListener('click', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
             const pixel = ctx.getImageData(x, y, 1, 1).data;
-            const r = pixel[0];
-            const g = pixel[1];
-            const b = pixel[2];
-
-            const hex = rgbToHex(r, g, b);
-            
-            colorDisplay.style.backgroundColor = hex;
-            hexCode.innerText = hex;
-            rgbCode.innerText = `rgb(${r}, ${g}, ${b})`;
-            colorInfo.classList.remove('hidden');
+            const hex = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1).toUpperCase();
+            colorPreview.style.backgroundColor = hex;
+            hexText.innerText = hex;
+            rgbText.innerText = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
         });
 
-        // クリック時にも色情報を固定表示
-        imageCanvas.addEventListener('click', function(e) {
-             // mousemoveで既に更新されているので、特に処理は不要だが、
-             // クリックされたら情報が固定されるようなUIにしても良い
-        });
-
-
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
-
-        function copyColorCode(type) {
-            const code = type === 'hex' ? hexCode.innerText : rgbCode.innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = event.target;
-                const originalText = btn.innerText;
-                btn.innerText = "✅ コピー完了！";
-                setTimeout(() => btn.innerText = originalText, 2000);
-            });
-        }
-
-        function resetTool() {
-            dropArea.classList.remove('hidden');
-            imagePreview.classList.add('hidden');
-            colorInfo.classList.add('hidden');
-            fileInput.value = null; // ファイル選択もリセット
-            currentImage = null;
-            resetColorInfo();
-        }
-
-        function resetColorInfo() {
-            colorDisplay.style.backgroundColor = '#cccccc';
-            hexCode.innerText = '#------';
-            rgbCode.innerText = 'rgb(---, ---, ---)';
+        function copyToClipboard() {
+            if(hexText.innerText === "#------") return;
+            navigator.clipboard.writeText(hexText.innerText);
+            const btn = document.getElementById('copy-btn');
+            btn.innerText = "OK!";
+            setTimeout(() => btn.innerText = "コピー", 1000);
         }
     </script>
 </body>
