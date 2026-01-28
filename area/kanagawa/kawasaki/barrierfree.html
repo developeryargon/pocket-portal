@@ -54,27 +54,33 @@
         }
 
         async function loadData() {
-            // 文字コードの自動判別と読み込み
-            const response = await fetch(DATA_URL);
-            const buffer = await response.arrayBuffer();
-            const uint8Array = new Uint8Array(buffer);
-            const encoding = jschardet.detect(uint8Array).encoding;
-            const decoder = new TextDecoder(encoding);
-            const csvString = decoder.decode(uint8Array);
+            try {
+                const response = await fetch(DATA_URL);
+                const buffer = await response.arrayBuffer();
+                const encoding = jschardet.detect(new Uint8Array(buffer)).encoding || 'UTF-8';
+                const decoder = new TextDecoder(encoding);
+                const csvString = decoder.decode(buffer);
 
-            Papa.parse(csvString, {
-                header: true, skipEmptyLines: true,
-                complete: (results) => {
-                    allData = results.data;
-                    document.getElementById('loading').style.display = 'none';
-                    render();
-                }
-            });
+                Papa.parse(csvString, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        // 名称が入っている行だけを有効なデータとする
+                        allData = results.data.filter(row => row["名称"] && row["名称"].trim() !== "");
+                        document.getElementById('loading').style.display = 'none';
+                        render();
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerText = "⚠️ データの読み込みエラー";
+            }
         }
 
-        const hasFacility = (item, name) => {
-            const val = String(item[name] || "").trim();
-            return val === "1" || val === "○" || val === "有" || val === "可";
+        // 川崎市CSVの「可」という文字を判定する
+        const isOK = (item, key) => {
+            const val = item[key];
+            return val && val.trim() === "可";
         };
 
         function render() {
@@ -84,41 +90,41 @@
             markers.forEach(m => map.removeLayer(m));
             markers = [];
 
-            allData.filter(item => {
+            const filtered = allData.filter(item => {
                 const name = (item["名称"] || "").toLowerCase();
-                const addr = (item["所在地_連結表記"] || item["所在地"] || "").toLowerCase();
+                const addr = (item["所在地_連結表記"] || "").toLowerCase();
                 if (!name.includes(keyword) && !addr.includes(keyword)) return false;
 
-                const hasToilet = hasFacility(item, "バリアフリートイレ");
-                const hasBaby = hasFacility(item, "おむつ替えコーナー");
-                const hasNursing = hasFacility(item, "授乳室");
+                const hasToilet = isOK(item, "バリアフリートイレ");
+                const hasBaby = isOK(item, "おむつ替えコーナー");
+                const hasNursing = isOK(item, "授乳室");
 
                 if (activeFilters.toilet && !hasToilet) return false;
                 if (activeFilters.baby && !hasBaby) return false;
                 if (activeFilters.nursing && !hasNursing) return false;
                 
                 return true;
-            }).forEach(item => {
-                const displayName = item["名称"] || "名称不明";
-                const displayAddr = item["所在地_連結表記"] || item["所在地"] || "住所不明";
+            });
+
+            filtered.forEach(item => {
+                const name = item["名称"];
+                const addr = item["所在地_連結表記"] || "住所情報なし";
 
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100";
                 div.innerHTML = `
-                    <h3 class="font-bold text-slate-800 text-sm mb-1">${displayName}</h3>
-                    <p class="text-[10px] text-slate-400 mb-3">📍 ${displayAddr}</p>
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">${name}</h3>
+                    <p class="text-[10px] text-slate-400 mb-3">📍 ${addr}</p>
                     <div class="flex flex-wrap gap-1">
-                        ${hasFacility(item, "バリアフリートイレ") ? '<span class="feature-tag bg-blue-50 text-blue-500">♿️ トイレ</span>' : ''}
-                        ${hasFacility(item, "おむつ替えコーナー") ? '<span class="feature-tag bg-pink-50 text-pink-500">🍼 おむつ台</span>' : ''}
-                        ${hasFacility(item, "授乳室") ? '<span class="feature-tag bg-green-50 text-green-500">🤱 授乳室</span>' : ''}
+                        ${isOK(item, "バリアフリートイレ") ? '<span class="feature-tag bg-blue-50 text-blue-500">♿️ トイレ</span>' : ''}
+                        ${isOK(item, "おむつ替えコーナー") ? '<span class="feature-tag bg-pink-50 text-pink-500">🍼 おむつ台</span>' : ''}
+                        ${isOK(item, "授乳室") ? '<span class="feature-tag bg-green-50 text-green-500">🤱 授乳室</span>' : ''}
                     </div>
                 `;
                 container.appendChild(div);
 
-                const lat = parseFloat(item["緯度"]);
-                const lng = parseFloat(item["経度"]);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    const m = L.marker([lat, lng]).addTo(map).bindPopup(`<b>${displayName}</b>`);
+                if (item["緯度"] && item["経度"]) {
+                    const m = L.marker([item["緯度"], item["経度"]]).addTo(map).bindPopup(`<b>${name}</b>`);
                     markers.push(m);
                 }
             });
