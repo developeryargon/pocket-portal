@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n進数変換ツール | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@400&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .mono { font-family: 'Fira Code', monospace; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">n進数変換ツール</h1>
+            <p class="text-xs text-slate-500">2進数、10進数、16進数などを相互に一括変換します</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-[10px] font-bold text-blue-600 uppercase mb-2 ml-2 tracking-widest">Decimal (10進数)</label>
+                    <input type="number" id="dec" oninput="convert(10)" class="w-full p-4 bg-blue-50/50 border border-blue-100 rounded-2xl text-lg font-bold mono focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="255">
+                </div>
+
+                <div class="flex justify-center py-2">
+                    <div class="text-slate-200">⇅</div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2 tracking-widest">Hexadecimal (16進数)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold mono">0x</span>
+                            <input type="text" id="hex" oninput="convert(16)" class="w-full p-4 pl-12 bg-slate-50 border border-slate-200 rounded-2xl text-lg mono focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="ff">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2 tracking-widest">Binary (2進数)</label>
+                        <textarea id="bin" oninput="convert(2)" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg mono focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" rows="2" placeholder="11111111"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2 tracking-widest">Octal (8進数)</label>
+                        <input type="text" id="oct" oninput="convert(8)" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg mono focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="377">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="clearAll()" class="w-full mt-8 py-3 text-slate-400 text-xs font-bold hover:text-slate-600 transition-all">
+                数値をクリア
+            </button>
+        </div>
+
+        <div class="mt-8 p-6 bg-slate-900 rounded-3xl text-white">
+            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">エンジニア豆知識</p>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+                16進数は、1バイト（8ビット）を <span class="text-white">00</span> から <span class="text-white">FF</span> までの2桁で表現できるため、メモリ番地やカラーコードの指定によく使われます。
+            </p>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        const inputs = {
+            10: document.getElementById('dec'),
+            16: document.getElementById('hex'),
+            2: document.getElementById('bin'),
+            8: document.getElementById('oct')
+        };
+
+        function convert(base) {
+            let val = inputs[base].value.trim();
+            
+            if (val === "") {
+                clearAll();
+                return;
+            }
+
+            try {
+                // 各進数から一度10進数（数値型）に直す
+                let decimalValue;
+                if (base === 10) {
+                    decimalValue = parseInt(val, 10);
+                } else {
+                    decimalValue = parseInt(val, base);
+                }
+
+                if (isNaN(decimalValue)) return;
+
+                // 他のフィールドを更新
+                if (base !== 10) inputs[10].value = decimalValue.toString(10);
+                if (base !== 16) inputs[16].value = decimalValue.toString(16).toUpperCase();
+                if (base !== 2)  inputs[2].value  = decimalValue.toString(2);
+                if (base !== 8)  inputs[8].value  = decimalValue.toString(8);
+
+            } catch (e) {
+                // 入力中の不正な文字は無視
+            }
+        }
+
+        function clearAll() {
+            Object.values(inputs).forEach(input => input.value = "");
+        }
+    </script>
+</body>
+</html>

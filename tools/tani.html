@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>単位変換ツール | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">単位変換ツール</h1>
+            <p class="text-xs text-slate-500">長さ・重さ・容量を瞬時に一括変換します</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        
+        <section class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-xl">📏</span>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">長さ (Length)</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">メートル (m)</label>
+                    <input type="number" id="m" oninput="convert('length', 'm')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">センチ (cm)</label>
+                    <input type="number" id="cm" oninput="convert('length', 'cm')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">インチ (in)</label>
+                    <input type="number" id="in" oninput="convert('length', 'in')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">尺 (shaku)</label>
+                    <input type="number" id="shaku" oninput="convert('length', 'shaku')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-xl">⚖️</span>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">重さ (Weight)</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">キログラム (kg)</label>
+                    <input type="number" id="kg" oninput="convert('weight', 'kg')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">グラム (g)</label>
+                    <input type="number" id="g" oninput="convert('weight', 'g')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">ポンド (lb)</label>
+                    <input type="number" id="lb" oninput="convert('weight', 'lb')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">オンス (oz)</label>
+                    <input type="number" id="oz" oninput="convert('weight', 'oz')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-xl">💧</span>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">容量 (Volume)</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">リットル (L)</label>
+                    <input type="number" id="l" oninput="convert('volume', 'l')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">ミリリットル (ml / cc)</label>
+                    <input type="number" id="ml" oninput="convert('volume', 'ml')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">合 (go)</label>
+                    <input type="number" id="go" oninput="convert('volume', 'go')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">USガロン (gal)</label>
+                    <input type="number" id="gal" oninput="convert('volume', 'gal')" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="0">
+                </div>
+            </div>
+        </section>
+
+        <div class="mt-8 p-6 bg-slate-900 rounded-3xl text-white">
+            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-4">Cooking Essentials</p>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-left flex items-center gap-4">
+                <div class="text-2xl">⚖️</div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-white mb-1">デジタルスケール</p>
+                    <p class="text-[10px] text-slate-400 leading-tight">0.1g単位で測れる高精度スケール。料理や郵便物の計量に最適。</p>
+                </div>
+                <div class="text-slate-500">→</div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        const factors = {
+            length: {
+                m: 1,
+                cm: 100,
+                in: 39.3701,
+                shaku: 3.3003
+            },
+            weight: {
+                kg: 1,
+                g: 1000,
+                lb: 2.20462,
+                oz: 35.274
+            },
+            volume: {
+                l: 1,
+                ml: 1000,
+                go: 5.5435,
+                gal: 0.264172
+            }
+        };
+
+        function convert(category, unit) {
+            const input = document.getElementById(unit);
+            const value = parseFloat(input.value);
+            
+            if (isNaN(value)) {
+                clearCategory(category);
+                return;
+            }
+
+            // 基本単位（m, kg, L）に変換
+            const baseValue = value / factors[category][unit];
+
+            // 他のすべての単位を計算
+            for (const u in factors[category]) {
+                if (u !== unit) {
+                    const result = baseValue * factors[category][u];
+                    // 小数点第4位まで表示（不要な0は消す）
+                    document.getElementById(u).value = Math.round(result * 10000) / 10000;
+                }
+            }
+        }
+
+        function clearCategory(category) {
+            for (const u in factors[category]) {
+                document.getElementById(u).value = '';
+            }
+        }
+    </script>
+</body>
+</html>

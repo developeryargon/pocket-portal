@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI・基礎代謝計算 | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .result-card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">BMI・基礎代謝計算</h1>
+            <p class="text-xs text-slate-500">あなたの適正体重と1日の必要カロリーを算出します</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-xl">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">性別</label>
+                    <div class="flex gap-2">
+                        <button onclick="setGender('male')" id="btn-male" class="flex-1 py-3 rounded-xl border-2 border-slate-100 font-bold text-sm transition-all bg-blue-50 border-blue-500 text-blue-700">男性</button>
+                        <button onclick="setGender('female')" id="btn-female" class="flex-1 py-3 rounded-xl border-2 border-slate-100 font-bold text-sm transition-all text-slate-500">女性</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">年齢 (歳)</label>
+                    <input type="number" id="age" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="30">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">身長 (cm)</label>
+                    <input type="number" id="height" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="170">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">体重 (kg)</label>
+                    <input type="number" id="weight" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="65">
+                </div>
+            </div>
+
+            <button onclick="calculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-200 mb-8">
+                計算する
+            </button>
+
+            <div id="results" class="hidden space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 p-6 rounded-2xl text-center">
+                        <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">BMI</p>
+                        <p id="bmi-val" class="text-3xl font-bold text-blue-700">22.5</p>
+                        <p id="bmi-status" class="text-[10px] font-bold mt-1 text-blue-600">普通体重</p>
+                    </div>
+                    <div class="bg-emerald-50 p-6 rounded-2xl text-center">
+                        <p class="text-[10px] font-bold text-emerald-400 uppercase mb-1">基礎代謝 (BMR)</p>
+                        <p id="bmr-val" class="text-2xl font-bold text-emerald-700">1,520</p>
+                        <p class="text-[10px] font-bold mt-1 text-emerald-600">kcal / 日</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-6">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-xs font-bold text-slate-500">適正体重 (BMI 22)</span>
+                        <span id="ideal-weight" class="text-sm font-bold text-slate-800">-- kg</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs font-bold text-slate-500">適正まであと</span>
+                        <span id="weight-diff" class="text-sm font-bold text-orange-500">-- kg</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="px-4">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 ml-2 tracking-widest">BMI 判定基準</h3>
+            <div class="grid grid-cols-4 gap-1 text-[9px] text-center font-bold">
+                <div class="bg-blue-100 text-blue-600 py-2 rounded-l-lg">18.5未満<br>低体重</div>
+                <div class="bg-emerald-100 text-emerald-600 py-2">18.5〜25<br>普通</div>
+                <div class="bg-orange-100 text-orange-600 py-2">25〜30<br>肥満(1)</div>
+                <div class="bg-red-100 text-red-600 py-2 rounded-r-lg">30以上<br>肥満(2)</div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        let currentGender = 'male';
+
+        function setGender(gender) {
+            currentGender = gender;
+            const mBtn = document.getElementById('btn-male');
+            const fBtn = document.getElementById('btn-female');
+            
+            if(gender === 'male') {
+                mBtn.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                fBtn.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                fBtn.classList.add('text-slate-500');
+            } else {
+                fBtn.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                mBtn.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                mBtn.classList.add('text-slate-500');
+            }
+        }
+
+        function calculate() {
+            const age = parseFloat(document.getElementById('age').value);
+            const heightCm = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+
+            if (!age || !heightCm || !weight) {
+                alert('すべての項目を正しく入力してください');
+                return;
+            }
+
+            const heightM = heightCm / 100;
+            
+            // BMI計算
+            const bmi = weight / (heightM * heightM);
+            document.getElementById('bmi-val').innerText = bmi.toFixed(1);
+
+            // BMI判定
+            let status = "";
+            if (bmi < 18.5) status = "低体重 (痩せ型)";
+            else if (bmi < 25) status = "普通体重";
+            else if (bmi < 30) status = "肥満 (1度)";
+            else status = "肥満 (2度以上)";
+            document.getElementById('bmi-status').innerText = status;
+
+            // 基礎代謝計算 (ハリス・ベネディクト方程式 改良版)
+            let bmr = 0;
+            if (currentGender === 'male') {
+                bmr = 13.397 * weight + 4.799 * heightCm - 5.677 * age + 88.362;
+            } else {
+                bmr = 9.247 * weight + 3.098 * heightCm - 4.33 * age + 447.593;
+            }
+            document.getElementById('bmr-val').innerText = Math.round(bmr).toLocaleString();
+
+            // 適正体重
+            const ideal = (heightM * heightM) * 22;
+            document.getElementById('ideal-weight').innerText = ideal.toFixed(1) + " kg";
+            
+            const diff = weight - ideal;
+            const diffText = diff > 0 ? "+" + diff.toFixed(1) : diff.toFixed(1);
+            document.getElementById('weight-diff').innerText = diffText + " kg";
+
+            // 結果表示
+            document.getElementById('results').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

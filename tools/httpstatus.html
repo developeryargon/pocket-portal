@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTPステータス検索 | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@400&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .status-card { transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">HTTPステータス検索</h1>
+            <p class="text-xs text-slate-500">コードを入力してレスポンスの意味を素早く確認</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8 text-center">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Enter Status Code</label>
+            <input type="number" id="status-input" oninput="searchStatus()" class="w-32 text-center text-4xl font-bold p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 focus:outline-none transition-all" placeholder="404" maxlength="3">
+            
+            <div id="result-area" class="mt-8 hidden animate-in fade-in zoom-in duration-300">
+                <h2 id="status-title" class="text-xl font-bold text-slate-800 mb-2">----</h2>
+                <p id="status-desc" class="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">----</p>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <h3 class="text-xs font-bold text-slate-400 uppercase ml-2 tracking-widest">Quick Reference</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div onclick="setCode(200)" class="status-card cursor-pointer bg-emerald-50 border border-emerald-100 p-4 rounded-2xl hover:shadow-md">
+                    <span class="text-emerald-600 font-bold text-lg">2xx Success</span>
+                    <p class="text-[10px] text-emerald-500">リクエストは成功しました</p>
+                </div>
+                <div onclick="setCode(301)" class="status-card cursor-pointer bg-blue-50 border border-blue-100 p-4 rounded-2xl hover:shadow-md">
+                    <span class="text-blue-600 font-bold text-lg">3xx Redirection</span>
+                    <p class="text-[10px] text-blue-500">追加の処理が必要です</p>
+                </div>
+                <div onclick="setCode(400)" class="status-card cursor-pointer bg-orange-50 border border-orange-100 p-4 rounded-2xl hover:shadow-md">
+                    <span class="text-orange-600 font-bold text-lg">4xx Client Error</span>
+                    <p class="text-[10px] text-orange-500">クライアント側にエラーがあります</p>
+                </div>
+                <div onclick="setCode(500)" class="status-card cursor-pointer bg-red-50 border border-red-100 p-4 rounded-2xl hover:shadow-md">
+                    <span class="text-red-600 font-bold text-lg">5xx Server Error</span>
+                    <p class="text-[10px] text-red-500">サーバー側が失敗しました</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        const statusCodes = {
+            200: { title: "OK", desc: "リクエストが成功しました。最も一般的なレスポンスです。" },
+            201: { title: "Created", desc: "リクエストが成功し、新しいリソースが作成されました。" },
+            204: { title: "No Content", desc: "リクエストは成功しましたが、返すべきコンテンツがありません。" },
+            301: { title: "Moved Permanently", desc: "リクエストされたリソースは、恒久的に新しいURLに移動しました。" },
+            302: { title: "Found", desc: "リソースが一時的に別のURLに存在します。" },
+            304: { title: "Not Modified", desc: "リソースは更新されていません。キャッシュを利用できます。" },
+            400: { title: "Bad Request", desc: "リクエストの構文が誤っているなど、サーバーが理解できません。" },
+            401: { title: "Unauthorized", desc: "リソースへのアクセスには認証が必要です。" },
+            403: { title: "Forbidden", desc: "閲覧権限がないため、アクセスが拒否されました。" },
+            404: { title: "Not Found", desc: "リソースが見つかりませんでした。URLが間違っている可能性があります。" },
+            405: { title: "Method Not Allowed", desc: "許可されていないメソッド（GET, POSTなど）でリクエストされました。" },
+            429: { title: "Too Many Requests", desc: "一定時間内のリクエスト数が制限を超えました。" },
+            500: { title: "Internal Server Error", desc: "サーバー内部で予期しないエラーが発生しました。" },
+            502: { title: "Bad Gateway", desc: "ゲートウェイ・プロキシサーバーが不正なレスポンスを受け取りました。" },
+            503: { title: "Service Unavailable", desc: "サーバーが一時的に過負荷、またはメンテナンス中です。" },
+            504: { title: "Gateway Timeout", desc: "ゲートウェイの背後にあるサーバーからの応答が間に合いませんでした。" }
+        };
+
+        function searchStatus() {
+            const code = document.getElementById('status-input').value;
+            const resultArea = document.getElementById('result-area');
+            const title = document.getElementById('status-title');
+            const desc = document.getElementById('status-desc');
+
+            if (statusCodes[code]) {
+                title.innerText = `${code} ${statusCodes[code].title}`;
+                desc.innerText = statusCodes[code].desc;
+                resultArea.classList.remove('hidden');
+            } else if (code.length === 3) {
+                title.innerText = `${code} Unknown`;
+                desc.innerText = "このコードの定義が見つかりませんでした。";
+                resultArea.classList.remove('hidden');
+            } else {
+                resultArea.classList.add('hidden');
+            }
+        }
+
+        function setCode(code) {
+            const input = document.getElementById('status-input');
+            input.value = code;
+            searchStatus();
+            input.focus();
+        }
+    </script>
+</body>
+</html>

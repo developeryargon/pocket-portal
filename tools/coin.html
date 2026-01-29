@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>コイントス | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@900&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        @keyframes flip {
+            0% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(720deg) scale(1.3); }
+            100% { transform: rotateY(1440deg) scale(1); }
+        }
+        .flipping { animation: flip 0.6s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-amber-100 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-amber-600">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Decision Maker</span>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto py-20 px-6 flex flex-col items-center justify-center">
+        <div id="coin-container" class="w-44 h-44 mb-12 perspective-1000">
+            <div id="coin-display" class="w-full h-full bg-gradient-to-br from-amber-300 to-amber-500 border-4 border-amber-600 rounded-full flex items-center justify-center text-5xl font-black text-amber-800 shadow-2xl">？</div>
+        </div>
+
+        <div id="coin-result" class="h-10 mb-10 text-xl font-bold text-amber-700 tracking-wider">どっちが出るかな？</div>
+
+        <div class="w-full max-w-xs">
+            <button onclick="flipCoin()" id="flip-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-5 rounded-3xl font-black text-lg transition-all shadow-lg active:scale-95 shadow-amber-200">コイントス！</button>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-amber-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        function flipCoin() {
+            const display = document.getElementById('coin-display');
+            const resultText = document.getElementById('coin-result');
+            const btn = document.getElementById('flip-btn');
+            
+            btn.disabled = true;
+            resultText.innerText = "....";
+            display.classList.add('flipping');
+            display.innerText = "★";
+            
+            setTimeout(() => {
+                display.classList.remove('flipping');
+                const isHeads = Math.random() < 0.5;
+                display.innerText = isHeads ? "表" : "裏";
+                resultText.innerText = isHeads ? "【 表 】が出ました！" : "【 裏 】が出ました！";
+                btn.disabled = false;
+            }, 600);
+        }
+    </script>
+</body>
+</html>

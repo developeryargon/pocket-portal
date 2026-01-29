@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>端数なし精算機 | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Adjustment Tool</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-6 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-xl font-bold text-slate-800 mb-1">端数なし精算機</h1>
+            <p class="text-[10px] text-slate-500 uppercase tracking-tighter">個別調整とLINEコピペ機能を搭載</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-6 px-4 max-w-xl">
+        
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 mb-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">支払総額 (円)</label>
+                    <input type="number" id="total-amount" oninput="calculate()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="30000">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">端数単位 (円)</label>
+                    <select id="round-unit" onchange="calculate()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="1">1円単位</option>
+                        <option value="10">10円単位</option>
+                        <option value="100" selected>100円単位</option>
+                        <option value="500">500円単位</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="member-list" class="space-y-3 mb-6">
+            </div>
+
+        <button onclick="addMember()" class="w-full py-4 mb-6 border-2 border-dashed border-slate-200 text-slate-400 rounded-2xl text-xs font-bold hover:bg-slate-100 transition-all">
+            ＋ メンバーを追加
+        </button>
+
+        <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">精算結果</h3>
+                <span id="diff-amount" class="text-[10px] font-bold text-orange-400">差額: 0円</span>
+            </div>
+            
+            <div id="result-text-area" class="bg-slate-800 rounded-2xl p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap mb-4 min-h-[100px]">
+                メンバーを入力してください
+            </div>
+
+            <button onclick="copyToClipboard()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+                <span>📋</span> LINE用に結果をコピー
+            </button>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        let memberCount = 0;
+
+        function addMember(name = '', adjust = 0) {
+            const id = `member-${Date.now()}`;
+            const html = `
+                <div id="${id}" class="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <input type="text" value="${name}" oninput="calculate()" class="flex-1 bg-slate-50 border border-slate-100 p-3 rounded-xl text-sm outline-none focus:ring-1 focus:ring-blue-500" placeholder="名前">
+                    <div class="relative w-28">
+                        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">±</span>
+                        <input type="number" oninput="calculate()" class="w-full bg-slate-50 border border-slate-100 p-3 pl-6 rounded-xl text-sm outline-none focus:ring-1 focus:ring-blue-500" placeholder="調整額">
+                    </div>
+                    <button onclick="removeMember('${id}')" class="text-slate-300 hover:text-red-500 transition-colors">✕</button>
+                </div>
+            `;
+            document.getElementById('member-list').insertAdjacentHTML('beforeend', html);
+            calculate();
+        }
+
+        function removeMember(id) {
+            document.getElementById(id).remove();
+            calculate();
+        }
+
+        function calculate() {
+            const total = parseInt(document.getElementById('total-amount').value) || 0;
+            const roundUnit = parseInt(document.getElementById('round-unit').value);
+            const members = document.getElementById('member-list').children;
+            const memberData = [];
+
+            let totalAdjust = 0;
+            for (let m of members) {
+                const name = m.querySelector('input[type="text"]').value || `メンバー${memberData.length + 1}`;
+                const adjust = parseInt(m.querySelector('input[type="number"]').value) || 0;
+                memberData.push({ name, adjust });
+                totalAdjust += adjust;
+            }
+
+            if (memberData.length === 0) return;
+
+            // 基本の割り勘額（調整額を引いてから人数で割る）
+            const baseAmount = (total - totalAdjust) / memberData.length;
+            
+            let resultText = "【精算のお知らせ】\n";
+            let currentTotal = 0;
+
+            memberData.forEach(m => {
+                // 基本額 + 個別調整額 を端数処理
+                let finalAmount = Math.round((baseAmount + m.adjust) / roundUnit) * roundUnit;
+                if (finalAmount < 0) finalAmount = 0;
+                
+                resultText += `${m.name}：${finalAmount.toLocaleString()}円\n`;
+                currentTotal += finalAmount;
+            });
+
+            const diff = currentTotal - total;
+            const diffSign = diff >= 0 ? "+" : "";
+            document.getElementById('diff-amount').innerText = `合計: ${currentTotal.toLocaleString()}円 (差額: ${diffSign}${diff.toLocaleString()}円)`;
+            
+            if (diff !== 0) {
+                resultText += `\n（端数調整により計${diffSign}${diff}円の差額が出ています）`;
+            }
+            
+            document.getElementById('result-text-area').innerText = resultText;
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('result-text-area').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("コピーしました！LINEに貼り付けてください。");
+            });
+        }
+
+        // 初期メンバー追加
+        addMember('部長', 2000);
+        addMember('自分', 0);
+        addMember('ゲスト', -1000);
+    </script>
+</body>
+</html>

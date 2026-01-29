@@ -2,121 +2,191 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>おむつ最安値比較 | PocketPortal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>おむつ単価比較 | PocketPortal Tools</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; }
-        input { font-size: 16px !important; }
-        .best-deal { border: 3px solid #f59e0b !important; background-color: #fffbeb !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .win-card { border-color: #10b981 !important; background-color: #ecfdf5; box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.1); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
-    <nav class="bg-white border-b border-slate-200 py-3 px-4 sticky top-0 z-50">
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="../index.html" class="font-bold text-blue-600 flex items-center gap-1">🏠 <span class="text-sm">PocketPortal</span></a>
-            <button onclick="window.location.reload()" class="text-xs text-slate-400 font-bold">リセット</button>
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="bg-blue-600 text-[10px] text-white px-2 py-1 rounded font-bold uppercase tracking-wider">Pro Mode</span>
         </div>
     </nav>
 
-    <main class="container mx-auto p-4 max-w-xl">
-        <h1 class="text-xl font-bold text-center mb-6">おむつ単価 4件比較</h1>
+    <header class="bg-white border-b border-slate-100 py-8 px-6 text-center">
+        <h1 class="text-2xl font-bold text-slate-800 mb-2">おむつ単価比較（本気）</h1>
+        <p class="text-xs text-slate-500 font-medium">ポイント還元や割引を含めた「真の実質価格」を4件比較</p>
+    </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div id="card-0" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded">商品 1</span>
-                    <span id="rank-0" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
-                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
-                </div>
-                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
-            </div>
+    <main class="flex-grow container mx-auto py-10 px-4 max-w-6xl">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <script>
+                for(let i=1; i<=4; i++) {
+                    const label = String.fromCharCode(64 + i);
+                    document.write(`
+                        <div id="card-${i}" class="bg-white p-5 rounded-[2.5rem] border-2 border-slate-100 transition-all duration-300 shadow-sm flex flex-col">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">候補 ${label}</span>
+                                <span id="win-${i}" class="hidden text-[10px] font-bold bg-emerald-500 text-white px-2 py-1 rounded-full animate-bounce">最安確定！</span>
+                            </div>
+                            
+                            <div class="space-y-4 flex-grow">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1 ml-1">本体価格</label>
+                                        <input type="number" id="price-${i}" oninput="calc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="1280">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1 ml-1">袋数</label>
+                                        <input type="number" id="bag-${i}" oninput="calc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" value="1">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1 ml-1">1袋の枚数</label>
+                                    <input type="number" id="sheet-${i}" oninput="calc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="56">
+                                </div>
 
-            <div id="card-1" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded">商品 2</span>
-                    <span id="rank-1" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
-                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
-                </div>
-                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
-            </div>
+                                <div class="bg-slate-50 p-3 rounded-2xl space-y-3 border border-slate-100">
+                                    <p class="text-[8px] font-bold text-blue-500 tracking-widest uppercase text-center border-b border-blue-100 pb-1">特典・割引設定</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="text-[8px] text-slate-500 font-bold ml-1">○%割引</label>
+                                            <input type="number" id="discount-p-${i}" oninput="calc()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" placeholder="0">
+                                        </div>
+                                        <div>
+                                            <label class="text-[8px] text-slate-500 font-bold ml-1">○円引き</label>
+                                            <input type="number" id="discount-y-${i}" oninput="calc()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" placeholder="0">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="text-[8px] text-slate-500 font-bold ml-1">付与pt</label>
+                                            <input type="number" id="bonus-pt-${i}" oninput="calc()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" placeholder="0">
+                                        </div>
+                                        <div>
+                                            <label class="text-[8px] text-slate-500 font-bold ml-1">ポイント○倍</label>
+                                            <input type="number" id="multi-pt-${i}" oninput="calc()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" value="1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div id="card-2" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[10px] font-bold bg-purple-100 text-purple-600 px-2 py-0.5 rounded">商品 3</span>
-                    <span id="rank-2" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
-                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
-                </div>
-                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
-            </div>
-
-            <div id="card-3" class="item-card bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-100 transition-all">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[10px] font-bold bg-pink-100 text-pink-600 px-2 py-0.5 rounded">商品 4</span>
-                    <span id="rank-3" class="text-[10px] font-bold text-amber-600 hidden">最安値！</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" oninput="calc()" class="price p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="値段(税抜)">
-                    <input type="number" oninput="calc()" class="count p-2 bg-slate-50 rounded-lg text-sm border-none ring-1 ring-slate-200" placeholder="枚数">
-                </div>
-                <p class="mt-2 text-right text-xs font-bold text-slate-500">1枚: ¥<span class="unit-price">0</span></p>
-            </div>
+                            <div class="mt-6 pt-4 border-t border-dashed border-slate-200">
+                                <p class="text-[9px] text-slate-400 text-center mb-1">実質支払額: <span id="real-pay-${i}" class="font-bold text-slate-600">0</span>円</p>
+                                <div class="flex flex-col items-center">
+                                    <p class="text-[9px] font-bold text-slate-400 uppercase">1枚あたり</p>
+                                    <div class="text-xl font-black text-slate-800 tracking-tighter"><span id="unit-${i}">---</span><span class="text-xs ml-0.5 font-bold">円</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                }
+            </script>
         </div>
 
-        <div class="mt-8 p-6 bg-orange-50 rounded-3xl border border-orange-200 shadow-sm text-center">
-            <p class="text-[10px] font-bold text-orange-600 mb-2">買い忘れはありませんか？</p>
-            <p class="text-xs text-slate-600 mb-4 leading-relaxed font-bold">おむつ・おしりふきは<br>Amazon定期便が結局おトク</p>
-            <a href="https://www.amazon.co.jp/diapers" target="_blank" class="inline-block bg-orange-500 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-orange-200 active:scale-95 transition-all">
-                Amazonで価格をチェック
-            </a>
+        <div class="max-w-xl mx-auto space-y-4">
+            <button onclick="clearAll()" class="w-full py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl text-xs font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
+                すべての入力をリセット
+            </button>
+
+            <div class="p-6 bg-slate-900 rounded-[2.5rem] text-white shadow-xl">
+                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">💡 計算ロジック</h3>
+                <ul class="text-[10px] text-slate-400 space-y-2 leading-relaxed">
+                    <li>• <span class="text-white font-bold">実質価格の算出：</span>（(本体価格×袋数) × (1-割引%) - 円割引）- ポイント還元額</li>
+                    <li>• <span class="text-white font-bold">ポイント還元：</span>（割引後価格の1% × 倍率）+ 固定付与ポイント</li>
+                    <li>• <strong>「2ケースで500円引き」</strong>なら、袋数をケース数、円引きを500に設定して比較してください。</li>
+                </ul>
+            </div>
         </div>
     </main>
 
+    <footer class="py-10 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
     <script>
         function calc() {
-            const cards = document.querySelectorAll('.item-card');
-            const prices = document.querySelectorAll('.price');
-            const counts = document.querySelectorAll('.count');
-            const displays = document.querySelectorAll('.unit-price');
-            const ranks = [document.getElementById('rank-0'), document.getElementById('rank-1'), document.getElementById('rank-2'), document.getElementById('rank-3')];
+            const results = [];
 
-            let results = [];
+            for (let i = 1; i <= 4; i++) {
+                // 入力値取得
+                const price = parseFloat(document.getElementById(`price-${i}`).value) || 0;
+                const bags = parseFloat(document.getElementById(`bag-${i}`).value) || 1;
+                const sheetsPerBag = parseFloat(document.getElementById(`sheet-${i}`).value) || 0;
+                
+                const discountPercent = parseFloat(document.getElementById(`discount-p-${i}`).value) || 0;
+                const discountYen = parseFloat(document.getElementById(`discount-y-${i}`).value) || 0;
+                const bonusPt = parseFloat(document.getElementById(`bonus-pt-${i}`).value) || 0;
+                const multiPt = parseFloat(document.getElementById(`multi-pt-${i}`).value) || 1;
 
-            cards.forEach((card, i) => {
-                const p = parseFloat(prices[i].value) || 0;
-                const c = parseFloat(counts[i].value) || 0;
-                const unitPrice = (c > 0) ? (p * 1.1 / c) : Infinity;
+                const card = document.getElementById(`card-${i}`);
+                const win = document.getElementById(`win-${i}`);
 
-                displays[i].innerText = unitPrice === Infinity ? "0" : unitPrice.toFixed(1);
-                card.classList.remove('best-deal');
-                ranks[i].classList.add('hidden');
+                // リセット
+                card.classList.remove('win-card', 'ring-2', 'ring-emerald-200');
+                card.classList.add('border-slate-100');
+                win.classList.add('hidden');
 
-                if (unitPrice !== Infinity) {
-                    results.push({ index: i, value: unitPrice });
+                if (price > 0 && sheetsPerBag > 0) {
+                    // 1. 総額計算
+                    let totalRaw = price * bags;
+                    
+                    // 2. 割引適用
+                    let discountedPrice = totalRaw * (1 - discountPercent / 100) - discountYen;
+                    if (discountedPrice < 0) discountedPrice = 0;
+
+                    // 3. ポイント計算 (基本1%と想定)
+                    const basePt = Math.floor(discountedPrice * 0.01);
+                    const totalPt = (basePt * multiPt) + bonusPt;
+
+                    // 4. 実質価格
+                    const realPrice = discountedPrice - totalPt;
+                    const totalSheets = sheetsPerBag * bags;
+                    const unitPrice = realPrice / totalSheets;
+
+                    // 表示更新
+                    document.getElementById(`real-pay-${i}`).innerText = Math.floor(realPrice).toLocaleString();
+                    document.getElementById(`unit-${i}`).innerText = unitPrice.toFixed(2);
+                    
+                    results.push({ id: i, value: unitPrice });
+                } else {
+                    document.getElementById(`unit-${i}`).innerText = "---";
+                    document.getElementById(`real-pay-${i}`).innerText = "0";
                 }
-            });
-
-            // 最安値判定
-            if (results.length > 1) {
-                const min = Math.min(...results.map(r => r.value));
-                results.forEach(r => {
-                    if (r.value === min) {
-                        cards[r.index].classList.add('best-deal');
-                        ranks[r.index].classList.remove('hidden');
-                    }
-                });
             }
+
+            // 最安値判定（2件以上入力がある場合）
+            if (results.length >= 2) {
+                const winner = results.reduce((prev, curr) => (prev.value < curr.value) ? prev : curr);
+                document.getElementById(`card-${winner.id}`).classList.add('win-card', 'ring-2', 'ring-emerald-200');
+                document.getElementById(`card-${winner.id}`).classList.remove('border-slate-100');
+                document.getElementById(`win-${winner.id}`).classList.remove('hidden');
+            }
+        }
+
+        function clearAll() {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`price-${i}`).value = '';
+                document.getElementById(`bag-${i}`).value = '1';
+                document.getElementById(`sheet-${i}`).value = '';
+                document.getElementById(`discount-p-${i}`).value = '';
+                document.getElementById(`discount-y-${i}`).value = '';
+                document.getElementById(`bonus-pt-${i}`).value = '';
+                document.getElementById(`multi-pt-${i}`).value = '1';
+            }
+            calc();
         }
     </script>
 </body>

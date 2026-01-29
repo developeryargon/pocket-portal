@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ルーレット | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .spinning { transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-indigo-600">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Party Tools</span>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl text-center">
+        <div class="bg-white rounded-[3rem] shadow-xl border border-slate-100 p-8 relative overflow-hidden mb-8">
+            <h1 class="text-xl font-bold text-slate-800 mb-8">カスタムルーレット</h1>
+            
+            <div class="relative inline-block mb-10">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[24px] border-t-red-500 z-10 -mt-2"></div>
+                <canvas id="roulette-canvas" width="320" height="320" class="mx-auto spinning drop-shadow-lg"></canvas>
+            </div>
+
+            <div id="roulette-result" class="text-2xl font-black text-indigo-600 h-10 mb-8">項目を入力してスタート！</div>
+
+            <div class="space-y-4 max-w-sm mx-auto">
+                <textarea id="roulette-items" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-none" placeholder="項目を改行区切りで入力...">ランチ&#13;カフェ&#13;ラーメン&#13;パスタ</textarea>
+                <button onclick="spinRoulette()" id="spin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-indigo-100">ルーレットを回す</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('roulette-canvas');
+        const ctx = canvas.getContext('2d');
+        let currentRotation = 0;
+
+        function drawRoulette() {
+            const items = document.getElementById('roulette-items').value.split('\n').filter(i => i.trim() !== "");
+            if (items.length === 0) return;
+            const arc = (2 * Math.PI) / items.length;
+            ctx.clearRect(0, 0, 320, 320);
+            items.forEach((item, i) => {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = `hsl(${(i * 360) / items.length}, 70%, 80%)`;
+                ctx.moveTo(160, 160);
+                ctx.arc(160, 160, 150, angle, angle + arc);
+                ctx.fill();
+                ctx.save();
+                ctx.translate(160, 160); ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right"; ctx.fillStyle = "#334155"; ctx.font = "bold 14px sans-serif";
+                ctx.fillText(item.substring(0, 8), 140, 5); ctx.restore();
+            });
+        }
+
+        function spinRoulette() {
+            const items = document.getElementById('roulette-items').value.split('\n').filter(i => i.trim() !== "");
+            if (items.length === 0) return;
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+            document.getElementById('roulette-result').innerText = "抽選中...";
+            currentRotation += (5 + Math.random() * 5) * 360;
+            canvas.style.transform = `rotate(-${currentRotation}deg)`;
+            setTimeout(() => {
+                btn.disabled = false;
+                const winnerIndex = Math.floor(items.length - ((currentRotation % 360) / 360) * items.length) % items.length;
+                document.getElementById('roulette-result').innerText = `✨ ${items[winnerIndex]} ✨`;
+            }, 4000);
+        }
+
+        document.getElementById('roulette-items').addEventListener('input', drawRoulette);
+        drawRoulette();
+    </script>
+</body>
+</html>

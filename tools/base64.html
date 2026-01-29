@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>エンコード・デコードツール | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@400&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .mono { font-family: 'Fira Code', monospace; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">エンコード・デコード</h1>
+            <p class="text-xs text-slate-500">Base64やURLエンコードを素早く相互変換します</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        
+        <section class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-xl">🔗</span>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Base64 変換</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">テキスト (UTF-8)</label>
+                    <textarea id="b64-text" oninput="encodeBase64()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm mono focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" rows="3" placeholder="こんにちは"></textarea>
+                </div>
+
+                <div class="flex justify-center">
+                    <div class="text-slate-300">⇅</div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">Base64 文字列</label>
+                    <textarea id="b64-encoded" oninput="decodeBase64()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm mono focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" rows="3" placeholder="44GT44KT44Gr44Gh44Gv"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-xl">🌐</span>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">URL エンコード</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">元のURL / テキスト</label>
+                    <textarea id="url-text" oninput="encodeURL()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm mono focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" rows="3" placeholder="https://example.com/検索"></textarea>
+                </div>
+
+                <div class="flex justify-center">
+                    <div class="text-slate-300">⇅</div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">エンコード済み文字列</label>
+                    <textarea id="url-encoded" oninput="decodeURL()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm mono focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" rows="3" placeholder="https%3A%2F%2Fexample.com%2F%E6%A4%9C%E7%B4%A2"></textarea>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        // --- Base64 Logic ---
+        function encodeBase64() {
+            const str = document.getElementById('b64-text').value;
+            try {
+                // Unicode対応のBase64変換
+                const base64 = btoa(unescape(encodeURIComponent(str)));
+                document.getElementById('b64-encoded').value = base64;
+            } catch (e) {
+                document.getElementById('b64-encoded').value = "Error: 無効な文字列です";
+            }
+        }
+
+        function decodeBase64() {
+            const b64 = document.getElementById('b64-encoded').value;
+            try {
+                const str = decodeURIComponent(escape(atob(b64)));
+                document.getElementById('b64-text').value = str;
+            } catch (e) {
+                // デコードエラー時は書き換えない
+            }
+        }
+
+        // --- URL Encode Logic ---
+        function encodeURL() {
+            const str = document.getElementById('url-text').value;
+            document.getElementById('url-encoded').value = encodeURIComponent(str);
+        }
+
+        function decodeURL() {
+            const str = document.getElementById('url-encoded').value;
+            try {
+                document.getElementById('url-text').value = decodeURIComponent(str);
+            } catch (e) {
+                // デコードエラー時は無視
+            }
+        }
+    </script>
+</body>
+</html>

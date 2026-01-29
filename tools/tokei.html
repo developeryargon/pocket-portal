@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>はじめてのとけい | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .clock-face { position: relative; width: 280px; height: 280px; background: white; border: 8px solid #f1f5f9; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; border-radius: 10px; transition: transform 0.5s cubic-bezier(0.4, 2, 0.5, 1); }
+        .hour-hand { width: 8px; height: 60px; background: #ef4444; z-index: 3; }
+        .min-hand { width: 5px; height: 95px; background: #3b82f6; z-index: 2; }
+        .center-dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; background: #475569; border-radius: 50%; z-index: 4; border: 2px solid white; }
+        .num-pm { color: #94a3b8; font-size: 0.7rem; position: absolute; font-weight: 700; }
+        .num-main { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Education Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">はじめてのとけい</h1>
+            <p class="text-xs text-slate-500 font-medium">針を動かして、時計の読み方を楽しく学習しよう</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-xl">
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-8 flex flex-col items-center mb-8">
+            
+            <div id="clock" class="clock-face mb-10">
+                <div class="center-dot"></div>
+                <div id="hour-hand" class="hand hour-hand"></div>
+                <div id="min-hand" class="hand min-hand"></div>
+                <div id="numbers-container"></div>
+            </div>
+
+            <div class="w-full bg-slate-50 rounded-2xl py-6 px-4 mb-8 border border-slate-100 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">今のじかん</p>
+                <div id="digital-time" class="text-4xl font-black text-slate-700 tracking-widest font-mono">10:00</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 w-full">
+                <div class="space-y-3">
+                    <p class="text-center text-[10px] font-black text-red-500 uppercase tracking-tighter">じ (短い針)</p>
+                    <div class="flex gap-2">
+                        <button onclick="changeTime('h', -1)" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-xl font-bold transition-all shadow-sm">ー</button>
+                        <button onclick="changeTime('h', 1)" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition-all shadow-md shadow-red-100">＋</button>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <p class="text-center text-[10px] font-black text-blue-500 uppercase tracking-tighter">ふん (長い針)</p>
+                    <div class="flex gap-2">
+                        <button onclick="changeTime('m', -5)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-3 rounded-xl font-bold transition-all shadow-sm">ー</button>
+                        <button onclick="changeTime('m', 5)" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-all shadow-md shadow-blue-100">＋</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl">
+            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-4">💡 24じかん の まほう</p>
+            <div class="grid grid-cols-3 gap-3 text-center mb-4">
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[9px] text-slate-500">お昼の1時</p>
+                    <p class="text-lg font-bold text-blue-400">13じ</p>
+                </div>
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[9px] text-slate-500">お昼の3時</p>
+                    <p class="text-lg font-bold text-blue-400">15じ</p>
+                </div>
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[9px] text-slate-500">夜の9時</p>
+                    <p class="text-lg font-bold text-blue-400">21じ</p>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-400 leading-relaxed text-center">
+                外側の小さな数字は「午後」の数え方だよ！<br>
+                12の次は 13, 14, 15... って増えていくんだ。
+            </p>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        let hour = 10;
+        let minute = 0;
+
+        function initClock() {
+            const container = document.getElementById('numbers-container');
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * 30) * (Math.PI / 180);
+                
+                // 1-12時のメイン数字
+                const x = 140 + 105 * Math.sin(angle);
+                const y = 140 - 105 * Math.cos(angle);
+                const el = document.createElement('div');
+                el.className = 'absolute num-main text-xl text-slate-700';
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                el.style.transform = 'translate(-50%, -50%)';
+                el.innerText = i;
+                container.appendChild(el);
+
+                // 13-24時の補助数字
+                const x2 = 140 + 128 * Math.sin(angle);
+                const y2 = 140 - 128 * Math.cos(angle);
+                const pm = document.createElement('div');
+                pm.className = 'num-pm';
+                pm.style.left = `${x2}px`;
+                pm.style.top = `${y2}px`;
+                pm.style.transform = 'translate(-50%, -50%)';
+                pm.innerText = i + 12 === 24 ? '0' : i + 12;
+                container.appendChild(pm);
+            }
+            updateClock();
+        }
+
+        function changeTime(type, val) {
+            if (type === 'h') {
+                hour = (hour + val + 24) % 24;
+            } else {
+                minute = (minute + val + 60) % 60;
+                if (minute === 55 && val === -5) hour = (hour - 1 + 24) % 24;
+                if (minute === 0 && val === 5) hour = (hour + 1) % 24;
+            }
+            updateClock();
+        }
+
+        function updateClock() {
+            const hDeg = (hour % 12) * 30 + (minute / 60) * 30;
+            const mDeg = minute * 6;
+
+            document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${hDeg}deg)`;
+            document.getElementById('min-hand').style.transform = `translateX(-50%) rotate(${mDeg}deg)`;
+
+            const displayH = String(hour).padStart(2, '0');
+            const displayM = String(minute).padStart(2, '0');
+            document.getElementById('digital-time').innerText = `${displayH}:${displayM}`;
+        }
+
+        initClock();
+    </script>
+</body>
+</html>

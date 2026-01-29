@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>おしりふき単価比較 | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .win-card { border-color: #10b981 !important; background-color: #ecfdf5; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Baby Care</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">おしりふき単価比較</h1>
+            <p class="text-xs text-slate-500">どちらが安い？1枚あたりの価格をパッと判定</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <script>
+                for(let i=0; i<4; i++) {
+                    const label = String.fromCharCode(65 + i); // A, B, C, D
+                    document.write(`
+                        <div id="card-${i}" class="bg-white p-6 rounded-[2rem] border-2 border-slate-100 transition-all shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">商品 ${label}</span>
+                                <span id="win-${i}" class="hidden text-[10px] font-bold bg-emerald-500 text-white px-3 py-1 rounded-full animate-bounce">最安値！</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">価格 (円)</label>
+                                    <input type="number" id="price-${i}" oninput="calc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="0">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">1パックの枚数</label>
+                                        <input type="number" id="sheets-${i}" oninput="calc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="80">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">パック数</label>
+                                        <input type="number" id="packs-${i}" oninput="calc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="1">
+                                    </div>
+                                </div>
+                                <div class="pt-4 border-t border-slate-50 flex justify-between items-end">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">1枚あたり</p>
+                                    <p id="unit-${i}" class="text-xl font-black text-slate-700">---<span class="text-xs ml-0.5 font-bold">円</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                }
+            </script>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button onclick="clearForm()" class="w-full py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl text-xs font-bold hover:bg-slate-50 transition-all active:scale-[0.98]">
+                入力内容をリセット
+            </button>
+
+            <div class="p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl">
+                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">💡 節約のアドバイス</h3>
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    おしりふきは、1枚あたりの単価が「1円〜1.5円」程度が目安です。厚手タイプは単価が高くなりますが、使用枚数が減るため、トータルのコスパが良くなることもあります。
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        function calc() {
+            const results = [];
+
+            for (let i = 0; i < 4; i++) {
+                const price = parseFloat(document.getElementById(`price-${i}`).value);
+                const sheets = parseFloat(document.getElementById(`sheets-${i}`).value);
+                const packsInput = document.getElementById(`packs-${i}`).value;
+                const packs = packsInput === "" ? 1 : parseFloat(packsInput);
+
+                const unitText = document.getElementById(`unit-${i}`);
+                const winLabel = document.getElementById(`win-${i}`);
+                const card = document.getElementById(`card-${i}`);
+
+                // リセット
+                winLabel.classList.add('hidden');
+                card.classList.remove('win-card', 'ring-2', 'ring-emerald-200');
+                card.classList.add('border-slate-100');
+
+                if (price > 0 && sheets > 0) {
+                    const totalSheets = sheets * packs;
+                    const unitPrice = price / totalSheets;
+                    
+                    unitText.innerHTML = unitPrice.toFixed(2) + '<span class="text-xs ml-0.5 font-bold">円</span>';
+                    results.push({ index: i, value: unitPrice });
+                } else {
+                    unitText.innerHTML = '---<span class="text-xs ml-0.5 font-bold">円</span>';
+                }
+            }
+
+            // 最安値判定
+            if (results.length >= 2) {
+                const min = results.reduce((prev, curr) => (prev.value < curr.value) ? prev : curr);
+                document.getElementById(`win-${min.index}`).classList.remove('hidden');
+                document.getElementById(`card-${min.index}`).classList.add('win-card', 'ring-2', 'ring-emerald-200');
+            }
+        }
+
+        function clearForm() {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`price-${i}`).value = '';
+                document.getElementById(`sheets-${i}`).value = '';
+                document.getElementById(`packs-${i}`).value = '';
+            }
+            calc();
+        }
+    </script>
+</body>
+</html>

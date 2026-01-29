@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>等分カットガイド | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        #canvas-container { position: relative; width: 100%; max-width: 500px; margin: 0 auto; overflow: hidden; border-radius: 1.5rem; background: #f1f5f9; touch-action: none; }
+        canvas { width: 100%; display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Kitchen Expert</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">等分カットガイド</h1>
+            <p class="text-xs text-slate-500">ピザからロールケーキまで、写真に合わせて均等に分割</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 mb-8">
+            
+            <div class="mb-6">
+                <label class="block w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-center py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-100">
+                    <span>📷 写真を撮る / ガイドを重ねる</span>
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                </label>
+            </div>
+
+            <div class="flex gap-2 mb-4">
+                <button onclick="setMode('circle')" id="mode-circle" class="flex-1 py-2 rounded-xl font-bold text-xs transition-all bg-blue-100 text-blue-700 border-2 border-blue-200">🎂 ホール型</button>
+                <button onclick="setMode('rect')" id="mode-rect" class="flex-1 py-2 rounded-xl font-bold text-xs transition-all bg-slate-50 text-slate-400 border-2 border-transparent">🍞 長方形</button>
+            </div>
+
+            <div id="canvas-container" class="mb-6 shadow-inner border border-slate-100">
+                <canvas id="guide-canvas"></canvas>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs font-bold text-slate-400 uppercase">分割数: <span id="split-val" class="text-blue-600 font-mono text-lg">6</span></label>
+                    </div>
+                    <input type="range" id="split-range" min="2" max="15" value="6" oninput="updateGuide()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">線の色</label>
+                        <select id="line-color" onchange="updateGuide()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                            <option value="#ffffff">ホワイト</option>
+                            <option value="#3b82f6">ブルー</option>
+                            <option value="#ef4444">レッド</option>
+                            <option value="#000000">ブラック</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end text-center">
+                        <button onclick="resetImage()" class="w-full p-3 border-2 border-slate-100 text-slate-400 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">
+                            リセット
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-slate-900 rounded-3xl text-white shadow-xl">
+            <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">💡 対応メニュー例</h3>
+            <div class="grid grid-cols-2 gap-4 text-[11px] text-slate-400">
+                <div class="space-y-1">
+                    <p class="text-white font-bold">ホール型モード</p>
+                    <p>• ホールケーキ / ピザ</p>
+                    <p>• タルト / キッシュ</p>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-white font-bold">長方形モード</p>
+                    <p>• カステラ / 羊羹</p>
+                    <p>• ロールケーキ / パウンドケーキ</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('guide-canvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('image-input');
+        let baseImage = null;
+        let mode = 'circle'; // 'circle' or 'rect'
+
+        function initCanvas() {
+            canvas.width = 1000;
+            canvas.height = 1000;
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#cbd5e1";
+            ctx.font = "bold 30px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("写真をアップロードしてください", 500, 500);
+        }
+
+        function setMode(m) {
+            mode = m;
+            const cBtn = document.getElementById('mode-circle');
+            const rBtn = document.getElementById('mode-rect');
+            
+            if(m === 'circle') {
+                cBtn.className = "flex-1 py-2 rounded-xl font-bold text-xs transition-all bg-blue-100 text-blue-700 border-2 border-blue-200";
+                rBtn.className = "flex-1 py-2 rounded-xl font-bold text-xs transition-all bg-slate-50 text-slate-400 border-2 border-transparent";
+            } else {
+                rBtn.className = "flex-1 py-2 rounded-xl font-bold text-xs transition-all bg-blue-100 text-blue-700 border-2 border-blue-200";
+                cBtn.className = "flex-1 py-2 rounded-xl font-bold text-xs transition-all bg-slate-50 text-slate-400 border-2 border-transparent";
+            }
+            draw();
+        }
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => { baseImage = img; draw(); };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updateGuide() {
+            document.getElementById('split-val').innerText = document.getElementById('split-range').value;
+            draw();
+        }
+
+        function draw() {
+            if (!baseImage) return;
+            const scale = 1000 / Math.max(baseImage.width, baseImage.height);
+            canvas.width = baseImage.width * scale;
+            canvas.height = baseImage.height * scale;
+            ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+            const splits = parseInt(document.getElementById('split-range').value);
+            const color = document.getElementById('line-color').value;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 6;
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 4;
+
+            if (mode === 'circle') {
+                const radius = Math.min(centerX, centerY) * 0.9;
+                for (let i = 0; i < splits; i++) {
+                    const angle = (i * 360 / splits) * (Math.PI / 180);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+                    ctx.stroke();
+                }
+                ctx.setLineDash([10, 10]);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else {
+                // 長方形モード（縦に等分割）
+                const rectW = canvas.width * 0.8;
+                const rectH = canvas.height * 0.6;
+                const startX = (canvas.width - rectW) / 2;
+                const startY = (canvas.height - rectH) / 2;
+
+                // 枠の描画（点線）
+                ctx.setLineDash([10, 10]);
+                ctx.strokeRect(startX, startY, rectW, rectH);
+                ctx.setLineDash([]);
+
+                // 分割線の描画
+                for (let i = 1; i < splits; i++) {
+                    const x = startX + (rectW / splits) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, startY + rectH);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function resetImage() {
+            baseImage = null;
+            imageInput.value = '';
+            initCanvas();
+        }
+
+        initCanvas();
+    </script>
+</body>
+</html>

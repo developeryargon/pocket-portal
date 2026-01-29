@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マルチ・キッチンタイマー | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .timer-font { font-family: 'Fira Code', monospace; }
+        .timer-card { transition: all 0.3s ease; }
+        .timer-expired { animation: pulse-red 1s infinite; border-color: #ef4444 !important; }
+        @keyframes pulse-red {
+            0%, 100% { background-color: #fff; }
+            50% { background-color: #fee2e2; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <button onclick="addTimer()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
+                ＋ タイマーを追加
+            </button>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">マルチ・キッチンタイマー</h1>
+            <p class="text-xs text-slate-500">複数の料理を並行して管理。通知機能で仕上がりを逃さない</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        <div id="timer-list" class="grid grid-cols-1 gap-6 mb-8">
+            </div>
+
+        <div id="empty-hint" class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200 mb-8">
+            <div class="text-5xl mb-4 opacity-20">⏲️</div>
+            <p class="text-slate-400 text-sm font-bold">タイマーが設定されていません</p>
+            <p class="text-slate-300 text-[10px] mt-1">右上のボタンから追加してください</p>
+        </div>
+
+        <div class="p-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl text-white shadow-xl">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-blue-500 text-[10px] font-bold px-2 py-1 rounded">HINT</span>
+                <p class="text-xs font-bold text-slate-300 uppercase tracking-widest">Cooking Tips</p>
+            </div>
+            <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
+                <p class="text-sm font-bold text-white mb-2">ブラウザ通知をオンに</p>
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    通知を許可すると、他のタブを開いていても終了時にお知らせします。パスタの茹で時間や、煮込み料理の火の通り具合をスマホやPCがしっかりガード。
+                </p>
+            </div>
+            <div class="mt-4 flex justify-around text-[10px] text-slate-500 font-bold">
+                <span>🔔 音声アラーム</span>
+                <span>📱 バックグラウンド通知</span>
+                <span>🔢 複数同時計測</span>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2026 PocketPortal Tools</p>
+    </footer>
+
+    <audio id="alarm-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" loop></audio>
+
+    <script>
+        const timers = {};
+
+        function addTimer() {
+            document.getElementById('empty-hint').classList.add('hidden');
+            const id = 'timer-' + Date.now();
+            const container = document.getElementById('timer-list');
+
+            const timerHtml = `
+                <div id="${id}" class="timer-card bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <input type="text" placeholder="タイマー名 (例: パスタ)" class="text-sm font-bold text-slate-600 bg-slate-50 px-4 py-2 rounded-lg outline-none border border-transparent focus:border-blue-200 transition-all w-2/3">
+                        <button onclick="removeTimer('${id}')" class="text-slate-300 hover:text-red-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="timer-font text-5xl font-bold text-center py-6 text-blue-600 bg-slate-50 rounded-2xl mb-8 tracking-wider" id="${id}-display">
+                        00:00
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 mb-8">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-xs font-bold text-slate-400 uppercase">時間設定 (秒)</span>
+                            </div>
+                            <input type="range" id="${id}-range" min="0" max="3600" value="0" oninput="syncTime('${id}', this.value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="adjustTime('${id}', 60)" class="flex-1 bg-slate-100 hover:bg-slate-200 py-2 rounded-xl text-xs font-bold transition-all">+1分</button>
+                            <button onclick="adjustTime('${id}', 10)" class="flex-1 bg-slate-100 hover:bg-slate-200 py-2 rounded-xl text-xs font-bold transition-all">+10秒</button>
+                            <button onclick="resetTimer('${id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 py-2 rounded-xl text-xs font-bold transition-all text-slate-500">リセット</button>
+                        </div>
+                    </div>
+
+                    <button id="${id}-start" onclick="toggleTimer('${id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-100">
+                        スタート
+                    </button>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('afterbegin', timerHtml);
+            timers[id] = { timeLeft: 0, interval: null, running: false };
+        }
+
+        function syncTime(id, seconds) {
+            timers[id].timeLeft = parseInt(seconds);
+            updateDisplay(id);
+        }
+
+        function adjustTime(id, seconds) {
+            timers[id].timeLeft += seconds;
+            document.getElementById(`${id}-range`).value = timers[id].timeLeft;
+            updateDisplay(id);
+        }
+
+        function updateDisplay(id) {
+            const m = Math.floor(timers[id].timeLeft / 60);
+            const s = timers[id].timeLeft % 60;
+            document.getElementById(`${id}-display`).innerText = 
+                `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function toggleTimer(id) {
+            const timer = timers[id];
+            const btn = document.getElementById(`${id}-start`);
+
+            if (timer.running) {
+                clearInterval(timer.interval);
+                timer.running = false;
+                btn.innerText = "スタート";
+                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 transition-all";
+                stopAlarm();
+            } else {
+                if (timer.timeLeft <= 0) return;
+                timer.running = true;
+                btn.innerText = "ストップ";
+                btn.className = "w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg transition-all";
+                
+                timer.interval = setInterval(() => {
+                    timer.timeLeft--;
+                    document.getElementById(`${id}-range`).value = timer.timeLeft;
+                    updateDisplay(id);
+                    if (timer.timeLeft <= 0) {
+                        clearInterval(timer.interval);
+                        timerFinished(id);
+                    }
+                }, 1000);
+            }
+        }
+
+        function timerFinished(id) {
+            const card = document.getElementById(id);
+            card.classList.add('timer-expired');
+            document.getElementById('alarm-sound').play();
+            document.getElementById(`${id}-start`).innerText = "アラーム停止";
+            
+            if (Notification.permission === "granted") {
+                new Notification("タイマー終了！", { body: "設定した時間が経過しました。" });
+            }
+        }
+
+        function stopAlarm() {
+            const alarm = document.getElementById('alarm-sound');
+            alarm.pause();
+            alarm.currentTime = 0;
+            document.querySelectorAll('.timer-card').forEach(card => card.classList.remove('timer-expired'));
+        }
+
+        function resetTimer(id) {
+            const timer = timers[id];
+            clearInterval(timer.interval);
+            timer.timeLeft = 0;
+            timer.running = false;
+            document.getElementById(`${id}-range`).value = 0;
+            updateDisplay(id);
+            const btn = document.getElementById(`${id}-start`);
+            btn.innerText = "スタート";
+            btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 transition-all";
+            document.getElementById(id).classList.remove('timer-expired');
+        }
+
+        function removeTimer(id) {
+            if (timers[id].interval) clearInterval(timers[id].interval);
+            document.getElementById(id).remove();
+            delete timers[id];
+            if (Object.keys(timers).length === 0) {
+                document.getElementById('empty-hint').classList.remove('hidden');
+            }
+        }
+
+        if (Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正規表現テスター | PocketPortal Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@400&display=swap');
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .mono { font-family: 'Fira Code', monospace; }
+        .highlight { background-color: rgba(59, 130, 246, 0.3); border-bottom: 2px solid #3b82f6; border-radius: 2px; }
+        #display-area { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700">
+                <span>🏠</span> PocketPortal
+            </a>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Web Tools</span>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b border-slate-100 py-8 px-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">正規表現テスター</h1>
+            <p class="text-xs text-slate-500">Regexのパターンマッチをリアルタイムで確認できます</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-10 px-6 max-w-2xl">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+            
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">正規表現パターン (RegExp Pattern)</label>
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                    <span class="text-slate-400 font-bold mono">/</span>
+                    <input type="text" id="regex-input" oninput="testRegex()" class="flex-1 bg-transparent outline-none text-sm mono" placeholder="[0-9]+">
+                    <span class="text-slate-400 font-bold mono">/</span>
+                    <input type="text" id="flags-input" oninput="testRegex()" class="w-12 bg-transparent outline-none text-sm mono text-blue-600 font-bold" value="g" placeholder="flags">
+                </div>
+            </div>
+
+            <div class="mb-6 relative">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2">テストテキスト (Test Text)</label>
+                <div class="relative min-h-[150px]">
+                    <div id="display-area" class="absolute inset-0 p-4 text-sm mono text-transparent pointer-events-none border border-transparent"></div>
+                    <textarea id="text-input" oninput="testRegex()" onscroll="syncScroll()" class="absolute inset-0 w-full h-full p-4 bg-transparent border border-slate-200 rounded-2xl text-sm mono focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" placeholder="ここにテストしたい文章を入力してください..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900 text-white rounded-2xl p-4">
+                <div class="flex items-center gap-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Result:</span>
+                    <span id="match-count" class="text-sm font-bold">0 matches</span>
+                </div>
+                <div id="error-msg" class="text-[10px] text-red-400 font-bold hidden">Invalid Regex</div>
+            </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div class="bg-white/50 p-3 rounded-xl border border-slate-200 text-[10px]">
+                <code class="text-blue-600 font-bold">\d</code> <span class="text-slate-500">数字</span>
+            </div>
+            <div class="bg-white/50 p-3 rounded-xl border border-slate-200 text-[10px]">
+                <code class="text-blue-600 font-bold">[a-z]</code> <span class="text-slate-500">英小文字</span>
+            </div>
+            <div class="bg-white/50 p-3 rounded-xl border border-slate-200 text-[10px]">
+                <code class="text-blue-600 font-bold">.+</code> <span class="text-slate-500">1文字以上</span>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-[10px]">
+        <p>© 2024 PocketPortal Tools</p>
+    </footer>
+
+    <script>
+        function testRegex() {
+            const pattern = document.getElementById('regex-input').value;
+            const flags = document.getElementById('flags-input').value;
+            const text = document.getElementById('text-input').value;
+            const display = document.getElementById('display-area');
+            const matchCount = document.getElementById('match-count');
+            const errorMsg = document.getElementById('error-msg');
+
+            if (!pattern) {
+                display.innerHTML = text;
+                matchCount.innerText = "0 matches";
+                errorMsg.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const regex = new RegExp(pattern, flags.includes('g') ? flags : flags + 'g');
+                errorMsg.classList.add('hidden');
+
+                const matches = [...text.matchAll(regex)];
+                matchCount.innerText = `${matches.length} matches`;
+
+                // ハイライト処理
+                let highlightedText = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(regex, (match) => `<span class="highlight">${match}</span>`);
+                
+                display.innerHTML = highlightedText;
+            } catch (e) {
+                errorMsg.classList.remove('hidden');
+                display.innerHTML = text;
+            }
+        }
+
+        function syncScroll() {
+            const textarea = document.getElementById('text-input');
+            const display = document.getElementById('display-area');
+            display.scrollTop = textarea.scrollTop;
+            display.scrollLeft = textarea.scrollLeft;
+        }
+    </script>
+</body>
+</html>
