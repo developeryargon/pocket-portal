@@ -37,12 +37,12 @@ const particles = Array.from({length:220}).map(()=>({
 }));
 
 function scoreBottle(b, picked) {
-  // pickedColor‚ª top/bottom ‚ÉŠÜ‚Ü‚ê‚é‚Ù‚ÇãˆÊ
+  // pickedColorãŒ top/bottom ã«å«ã¾ã‚Œã‚‹ã»ã©ä¸Šä½
   let s = 0;
   if (b.top_color === picked) s += 4;
   if (b.bottom_color === picked) s += 3;
 
-  // ’Ç‰ÁF‹ß‚¢Œn“‚ð­‚µ‰Á“_iÅ’áŒÀj
+  // è¿½åŠ ï¼šè¿‘ã„ç³»çµ±ã‚’å°‘ã—åŠ ç‚¹ï¼ˆæœ€ä½Žé™ï¼‰
   const friendly = {
     Blue: ["Violet","Green","White"],
     Gold: ["Yellow","Orange","Red"],
@@ -58,7 +58,7 @@ function scoreBottle(b, picked) {
   if (near.includes(b.top_color)) s += 1;
   if (near.includes(b.bottom_color)) s += 1;
 
-  // ƒL[ƒ[ƒh‚ª‚ ‚ê‚Î•µˆÍ‹C—vˆö‚Æ‚µ‚Ä”÷‰Á“_iƒ‰ƒ“ƒ_ƒ€«‚ðŒ¸‚ç‚·j
+  // ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãŒã‚ã‚Œã°é›°å›²æ°—è¦å› ã¨ã—ã¦å¾®åŠ ç‚¹ï¼ˆãƒ©ãƒ³ãƒ€ãƒ æ€§ã‚’æ¸›ã‚‰ã™ï¼‰
   if ((b.keywords || "").length > 0) s += 0.2;
 
   return s;
@@ -80,7 +80,7 @@ function renderList() {
     btn.onclick = () => {
       chosen = b;
       document.getElementById("toQ").disabled = false;
-      document.getElementById("note").textContent = `Šm’èŒó•â: ${b.bottle_id}i${b.name}j`;
+      document.getElementById("note").textContent = `ç¢ºå®šå€™è£œ: ${b.bottle_id}ï¼ˆ${b.name}ï¼‰`;
     };
     list.appendChild(btn);
   });
@@ -89,12 +89,12 @@ function renderList() {
 function drawCeremony() {
   t += 0.016;
 
-  // ”wŒi
+  // èƒŒæ™¯
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = "rgb(7,10,18)";
   ctx.fillRect(0,0,W,H);
 
-  // ‘I‘ðF‚Ìg‹C”zh‚ðo‚·
+  // é¸æŠžè‰²ã®â€œæ°—é…â€ã‚’å‡ºã™
   const pickedRgb = COLOR_RGB[pickedColor] || [120,160,255];
   const bg = ctx.createRadialGradient(W*0.55, H*0.55, 0, W*0.55, H*0.55, H*0.95);
   bg.addColorStop(0, `rgba(${pickedRgb[0]},${pickedRgb[1]},${pickedRgb[2]},0.18)`);
@@ -102,7 +102,7 @@ function drawCeremony() {
   ctx.fillStyle = bg;
   ctx.fillRect(0,0,W,H);
 
-  // —±Žq
+  // ç²’å­
   ctx.save();
   ctx.globalCompositeOperation = "screen";
   for (const p of particles) {
@@ -121,12 +121,12 @@ function drawCeremony() {
   }
   ctx.restore();
 
-  // gƒ{ƒgƒ‹h‚Ì’ŠÛ•\Œ»i‰æ‘œ‚ª‚È‚­‚Ä‚à‹VŽ®‚É‚È‚éj
-  // ‰æ‘œ‚ª‚ ‚ê‚ÎŒã‚Åd‚Ë‚ç‚ê‚é
+  // â€œãƒœãƒˆãƒ«â€ã®æŠ½è±¡è¡¨ç¾ï¼ˆç”»åƒãŒãªãã¦ã‚‚å„€å¼ã«ãªã‚‹ï¼‰
+  // ç”»åƒãŒã‚ã‚Œã°å¾Œã§é‡ã­ã‚‰ã‚Œã‚‹
   const cx = W*0.50, cy = H*0.55;
   const bw = W*0.18, bh = H*0.48;
 
-  // ƒ{ƒgƒ‹‚ÌƒKƒ‰ƒX
+  // ãƒœãƒˆãƒ«ã®ã‚¬ãƒ©ã‚¹
   ctx.save();
   ctx.globalAlpha = 0.9;
   ctx.strokeStyle = "rgba(255,255,255,0.18)";
@@ -135,24 +135,24 @@ function drawCeremony() {
   roundRect(ctx, cx-bw/2, cy-bh/2, bw, bh, 26);
   ctx.stroke();
 
-  // ’†giã‰ºFj
+  // ä¸­èº«ï¼ˆä¸Šä¸‹è‰²ï¼‰
   const topC = chosen ? (COLOR_RGB[chosen.top_color] || pickedRgb) : pickedRgb;
   const botC = chosen ? (COLOR_RGB[chosen.bottom_color] || [30,40,60]) : [20,25,40];
 
   const fillH = bh*0.78;
   const fillY = cy + bh*0.5 - fillH - 18;
 
-  // ‰º
+  // ä¸‹
   ctx.fillStyle = `rgba(${botC[0]},${botC[1]},${botC[2]},0.55)`;
   roundRect(ctx, cx-bw/2+8, fillY+fillH*0.5, bw-16, fillH*0.5, 18);
   ctx.fill();
 
-  // ã
+  // ä¸Š
   ctx.fillStyle = `rgba(${topC[0]},${topC[1]},${topC[2]},0.55)`;
   roundRect(ctx, cx-bw/2+8, fillY, bw-16, fillH*0.5, 18);
   ctx.fill();
 
-  // ƒnƒCƒ‰ƒCƒg
+  // ãƒã‚¤ãƒ©ã‚¤ãƒˆ
   ctx.globalCompositeOperation = "screen";
   const hl = ctx.createLinearGradient(cx-bw/3, fillY, cx+bw/3, fillY);
   hl.addColorStop(0, "rgba(255,255,255,0)");
@@ -162,7 +162,7 @@ function drawCeremony() {
   roundRect(ctx, cx-bw/2+14, fillY, 18, fillH, 12);
   ctx.fill();
 
-  // ‘I‘ðŽžƒŠƒ“ƒO
+  // é¸æŠžæ™‚ãƒªãƒ³ã‚°
   if (chosen) {
     ctx.globalCompositeOperation = "screen";
     const ring = ctx.createRadialGradient(cx, cy, 0, cx, cy, bh*0.55);
@@ -190,27 +190,27 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// CSV“Ç‚Ýž‚Ý¨Œó•â¶¬
+// CSVèª­ã¿è¾¼ã¿â†’å€™è£œç”Ÿæˆ
 (async function init(){
   bottles = await loadCSV("/assets/data/bottles.csv");
 
-  // ƒXƒRƒA‡‚ÅãˆÊ3‚Â
+  // ã‚¹ã‚³ã‚¢é †ã§ä¸Šä½3ã¤
   const scored = bottles
     .map(b => ({ b, s: scoreBottle(b, pickedColor) }))
     .sort((a,b)=> b.s - a.s)
     .slice(0, 3)
     .map(x => x.b);
 
-  // ‚à‚µƒf[ƒ^‚ª­‚È‚¯‚ê‚ÎA‚»‚Ì‚Ü‚Ü‘S•”
+  // ã‚‚ã—ãƒ‡ãƒ¼ã‚¿ãŒå°‘ãªã‘ã‚Œã°ã€ãã®ã¾ã¾å…¨éƒ¨
   candidates = scored.length ? scored : bottles.slice(0,3);
 
   renderList();
 })().catch(err=>{
-  document.getElementById("lead").textContent = "ƒf[ƒ^“Ç‚Ýž‚Ý‚ÉŽ¸”s‚µ‚Ü‚µ‚½BCSVƒpƒX‚ðŠm”F‚µ‚Ä‚­‚¾‚³‚¢B";
+  document.getElementById("lead").textContent = "ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸã€‚CSVãƒ‘ã‚¹ã‚’ç¢ºèªã—ã¦ãã ã•ã„ã€‚";
   console.error(err);
 });
 
-// ŽŸ‚Ö
+// æ¬¡ã¸
 document.getElementById("toQ").onclick = ()=>{
   if (!chosen) return;
 

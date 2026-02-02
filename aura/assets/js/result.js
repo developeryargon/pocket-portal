@@ -31,8 +31,8 @@ const COLOR_RGB = {
 };
 
 const bottle = state.bottle || {};
-bottleName.textContent = bottle.name ? `${bottle.name}i${bottle.bottle_id}`: "?";
-bottleColors.textContent = bottle.top_color ? `${bottle.top_color} / ${bottle.bottom_color}` : "?";
+bottleName.textContent = bottle.name ? `${bottle.name}ï¼ˆ${bottle.bottle_id}ï¼‰` : "â€”";
+bottleColors.textContent = bottle.top_color ? `${bottle.top_color} / ${bottle.bottom_color}` : "â€”";
 
 const top2 = pickTopColors(state.scores, 2);
 const mainColor = top2[0] || "Blue";
@@ -50,19 +50,19 @@ const particles = Array.from({length:320}).map((_,i)=>({
   a: 0.06 + Math.random()*0.18,
   sp: 0.5 + Math.random()*1.2,
   ph: Math.random()*Math.PI*2,
-  lane: i%2, // å‘è/•â•
+  lane: i%2, // ä¸»é¡Œ/è£œåŠ©
 }));
 
 function findMeaning(color, mode) {
   const row = colorRows.find(r => r.color === color && r.mode === mode);
-  // mode‚ª–³‚¢ê‡‚Í“¯F‚Ì‚Ç‚ê‚©
+  // modeãŒç„¡ã„å ´åˆã¯åŒè‰²ã®ã©ã‚Œã‹
   return row || colorRows.find(r => r.color === color) || null;
 }
 
 function setMeaning() {
   const m = findMeaning(mainColor, mode);
   if (!m) {
-    meaningShort.textContent = "?";
+    meaningShort.textContent = "â€”";
     meaningLong.textContent = "";
     shadowEl.textContent = "";
     actionEl.textContent = "";
@@ -84,14 +84,14 @@ function drawAura() {
   const main = COLOR_RGB[mainColor] || [80,140,255];
   const sub  = COLOR_RGB[subColor]  || [255,210,90];
 
-  // ”wŒi‚Ìg‹C”zh
+  // èƒŒæ™¯ã®â€œæ°—é…â€
   const bg = ctx.createRadialGradient(W*0.55, H*0.55, 0, W*0.55, H*0.55, H*0.95);
   bg.addColorStop(0, `rgba(${main[0]},${main[1]},${main[2]},0.12)`);
   bg.addColorStop(1, `rgba(${main[0]},${main[1]},${main[2]},0.00)`);
   ctx.fillStyle = bg;
   ctx.fillRect(0,0,W,H);
 
-  // ƒI[ƒ‰ƒŠƒ“ƒOiå‘èE•â•j
+  // ã‚ªãƒ¼ãƒ©ãƒªãƒ³ã‚°ï¼ˆä¸»é¡Œãƒ»è£œåŠ©ï¼‰
   const cx = W*0.52, cy = H*0.53;
   const baseR = H*0.22;
 
@@ -120,7 +120,7 @@ function drawAura() {
     ctx.stroke();
   }
 
-  // —±qiå‘è/•â•‚ğŒğŒİj
+  // ç²’å­ï¼ˆä¸»é¡Œ/è£œåŠ©ã‚’äº¤äº’ï¼‰
   for (const p of particles) {
     const col = p.lane === 0 ? main : sub;
     const tw = 0.5 + 0.5*Math.sin(t*p.sp + p.ph);
@@ -139,7 +139,7 @@ function drawAura() {
     ctx.fill();
   }
 
-  // ’†S‚Ìg”g–äh
+  // ä¸­å¿ƒã®â€œæ³¢ç´‹â€
   const ripple = 0.5 + 0.5*Math.sin(t*1.3);
   const rr = baseR*0.55 + ripple*18;
   const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
@@ -151,7 +151,7 @@ function drawAura() {
 
   ctx.restore();
 
-  // ƒJ[ƒh—pƒeƒLƒXƒgiCanvas“à‚É‚àÚ‚¹‚éj
+  // ã‚«ãƒ¼ãƒ‰ç”¨ãƒ†ã‚­ã‚¹ãƒˆï¼ˆCanvaså†…ã«ã‚‚è¼‰ã›ã‚‹ï¼‰
   ctx.save();
   ctx.fillStyle = "rgba(233,238,255,0.92)";
   ctx.font = "700 32px system-ui, -apple-system, 'Noto Sans JP', sans-serif";
@@ -174,12 +174,12 @@ drawAura();
 document.getElementById("modeHeal").onclick = ()=>{
   mode = "heal";
   setMeaning();
-  statusEl.textContent = "ƒ‚[ƒhF–ü‚µ";
+  statusEl.textContent = "ãƒ¢ãƒ¼ãƒ‰ï¼šç™’ã—";
 };
 document.getElementById("modeAwaken").onclick = ()=>{
   mode = "awaken";
   setMeaning();
-  statusEl.textContent = "ƒ‚[ƒhFŠoÁ";
+  statusEl.textContent = "ãƒ¢ãƒ¼ãƒ‰ï¼šè¦šé†’";
 };
 
 document.getElementById("restart").onclick = ()=>{
@@ -187,16 +187,16 @@ document.getElementById("restart").onclick = ()=>{
   location.href = "/index.html";
 };
 
-// PNG•Û‘¶iƒuƒ‰ƒEƒU‚Ìƒ_ƒEƒ“ƒ[ƒhj
+// PNGä¿å­˜ï¼ˆãƒ–ãƒ©ã‚¦ã‚¶ã®ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ï¼‰
 document.getElementById("savePng").onclick = ()=>{
   const a = document.createElement("a");
   a.download = `aura_${Date.now()}.png`;
   a.href = canvas.toDataURL("image/png");
   a.click();
-  statusEl.textContent = "PNG‚ğ•Û‘¶‚µ‚Ü‚µ‚½iƒ_ƒEƒ“ƒ[ƒhj";
+  statusEl.textContent = "PNGã‚’ä¿å­˜ã—ã¾ã—ãŸï¼ˆãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ï¼‰";
 };
 
-// —š—ğ•Û‘¶ilocalStoragej
+// å±¥æ­´ä¿å­˜ï¼ˆlocalStorageï¼‰
 document.getElementById("saveHistory").onclick = ()=>{
   const memo = document.getElementById("memo").value || "";
   const item = {
@@ -216,14 +216,14 @@ document.getElementById("saveHistory").onclick = ()=>{
   arr = arr.slice(0, 50);
   localStorage.setItem(key, JSON.stringify(arr));
 
-  statusEl.textContent = "—š—ğ‚É•Û‘¶‚µ‚Ü‚µ‚½i’[––“àj";
+  statusEl.textContent = "å±¥æ­´ã«ä¿å­˜ã—ã¾ã—ãŸï¼ˆç«¯æœ«å†…ï¼‰";
 };
 
 (async function init(){
   colorRows = await loadCSV("/assets/data/colors.csv");
   setMeaning();
-  statusEl.textContent = "€”õŠ®—¹";
+  statusEl.textContent = "æº–å‚™å®Œäº†";
 })().catch(err=>{
   console.error(err);
-  statusEl.textContent = "colors.csv ‚Ì“Ç‚İ‚İ‚É¸”s‚µ‚Ü‚µ‚½";
+  statusEl.textContent = "colors.csv ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸ";
 })();

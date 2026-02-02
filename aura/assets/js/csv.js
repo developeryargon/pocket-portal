@@ -5,7 +5,7 @@ export async function loadCSV(url) {
   return parseCSV(text);
 }
 
-// ƒVƒ“ƒvƒ‹CSViƒJƒ“ƒ}Aƒ_ƒuƒ‹ƒNƒH[ƒg‘Î‰‚ÌÅ¬”Åj
+// ã‚·ãƒ³ãƒ—ãƒ«CSVï¼ˆã‚«ãƒ³ãƒã€ãƒ€ãƒ–ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆå¯¾å¿œã®æœ€å°ç‰ˆï¼‰
 export function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   const headers = splitCSVLine(lines[0]);

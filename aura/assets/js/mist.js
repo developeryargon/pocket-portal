@@ -5,7 +5,7 @@ const ctx = canvas.getContext("2d");
 
 const W = canvas.width, H = canvas.height;
 
-// ‚±‚±‚ğ‘‚â‚·‚Ù‚Çg‰œs‚«h‚ªo‚é
+// ã“ã“ã‚’å¢—ã‚„ã™ã»ã©â€œå¥¥è¡Œãâ€ãŒå‡ºã‚‹
 const PALETTE = [
   { name:"Blue",   rgb:[80,140,255] },
   { name:"Gold",   rgb:[255,210,90] },
@@ -33,12 +33,12 @@ const clouds = Array.from({length:90}).map(()=>({
 function draw() {
   t += 0.012;
 
-  // ”wŒi
+  // èƒŒæ™¯
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = "rgb(7,10,18)";
   ctx.fillRect(0,0,W,H);
 
-  // –¶id‚Ë“h‚èj
+  // éœ§ï¼ˆé‡ã­å¡—ã‚Šï¼‰
   for (const c of clouds) {
     c.x += Math.cos(t * c.v) * 0.6;
     c.y += Math.sin((t+1.7) * c.v) * 0.4;
@@ -57,7 +57,7 @@ function draw() {
     ctx.fill();
   }
 
-  // ‘I‘ğ•\¦
+  // é¸æŠè¡¨ç¤º
   if (selected) {
     ctx.save();
     ctx.globalCompositeOperation = "screen";
@@ -82,7 +82,7 @@ canvas.addEventListener("pointerdown", (e)=>{
   const x = (e.clientX - rect.left) * (W / rect.width);
   const y = (e.clientY - rect.top) * (H / rect.height);
 
-  // g’Í‚İh‚ÍA‹ß‚¢–¶‚ÌF‚ğÌ—pi‚»‚ê‚Á‚Û‚¢j
+  // â€œæ´ã¿â€ã¯ã€è¿‘ã„éœ§ã®è‰²ã‚’æ¡ç”¨ï¼ˆãã‚Œã£ã½ã„ï¼‰
   let best = null, bestD = 1e9;
   for (const c of clouds) {
     const dx = c.x - x, dy = c.y - y;
@@ -91,16 +91,16 @@ canvas.addEventListener("pointerdown", (e)=>{
   }
   selected = { ...best, x, y };
 
-  document.getElementById("hint").textContent = `‘I‘ğ: ${selected.name}`;
+  document.getElementById("hint").textContent = `é¸æŠ: ${selected.name}`;
   document.getElementById("next").disabled = false;
 });
 
 document.getElementById("next").onclick = ()=>{
-  // gƒgƒbƒvƒJƒ‰[h‚Æ‚µ‚Ä•Û‘¶iŒã‚Å¿–âƒXƒRƒA‚É¬‚º‚éj
+  // â€œãƒˆãƒƒãƒ—ã‚«ãƒ©ãƒ¼â€ã¨ã—ã¦ä¿å­˜ï¼ˆå¾Œã§è³ªå•ã‚¹ã‚³ã‚¢ã«æ··ãœã‚‹ï¼‰
   saveState({
     step: "bottle",
     pickedColor: selected.name,
-    scores: { [selected.name]: 3 } // ‰Šúƒu[ƒXƒg
+    scores: { [selected.name]: 3 } // åˆæœŸãƒ–ãƒ¼ã‚¹ãƒˆ
   });
   location.href = "/bottle.html";
 };

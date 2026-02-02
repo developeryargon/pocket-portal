@@ -38,7 +38,7 @@ function downloadText(name, text, mime="application/json") {
 }
 
 function toCSV(items) {
-  // d—vî•ñ‚¾‚¯”²‚­i‹‘å‚É‚È‚è‚ª‚¿‚Èscores‚ÍJSON•¶š—ñ‰»j
+  // é‡è¦æƒ…å ±ã ã‘æŠœãï¼ˆå·¨å¤§ã«ãªã‚ŠãŒã¡ãªscoresã¯JSONæ–‡å­—åˆ—åŒ–ï¼‰
   const headers = ["ts","mode","mainColor","subColor","bottle_id","bottle_name","top_color","bottom_color","memo","scores_json"];
   const rows = items.map(it => {
     const b = it.bottle || {};
@@ -71,24 +71,24 @@ function render() {
     div.innerHTML = `
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
         <div>
-          <div style="font-weight:900;font-size:16px">${it.mainColor || "?"} / ${it.subColor || "?"}</div>
-          <div class="small" style="margin-top:4px">${fmt(it.ts)} / ƒ‚[ƒh: ${it.mode || "?"}</div>
+          <div style="font-weight:900;font-size:16px">${it.mainColor || "â€”"} / ${it.subColor || "â€”"}</div>
+          <div class="small" style="margin-top:4px">${fmt(it.ts)} / ãƒ¢ãƒ¼ãƒ‰: ${it.mode || "â€”"}</div>
           <div class="small" style="margin-top:6px">
-            ƒ{ƒgƒ‹: ${(b.name || "?")} ${(b.bottle_id ? `(${b.bottle_id})` : "")}<br>
-            F: ${(b.top_color || "?")} / ${(b.bottom_color || "?")}
+            ãƒœãƒˆãƒ«: ${(b.name || "â€”")} ${(b.bottle_id ? `(${b.bottle_id})` : "")}<br>
+            è‰²: ${(b.top_color || "â€”")} / ${(b.bottom_color || "â€”")}
           </div>
-          ${it.memo ? `<div class="small" style="margin-top:8px">ƒƒ‚: ${escapeHtml(it.memo).replace(/\n/g,"<br>")}</div>` : ""}
+          ${it.memo ? `<div class="small" style="margin-top:8px">ãƒ¡ãƒ¢: ${escapeHtml(it.memo).replace(/\n/g,"<br>")}</div>` : ""}
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;min-width:170px">
-          <button class="btn" data-act="open" data-idx="${idx}">‚±‚ê‚ğŠJ‚­</button>
-          <button class="btn" data-act="delete" data-idx="${idx}">íœ</button>
+          <button class="btn" data-act="open" data-idx="${idx}">ã“ã‚Œã‚’é–‹ã</button>
+          <button class="btn" data-act="delete" data-idx="${idx}">å‰Šé™¤</button>
         </div>
       </div>
     `;
     listEl.appendChild(div);
   });
 
-  // ƒCƒxƒ“ƒgˆÏ÷
+  // ã‚¤ãƒ™ãƒ³ãƒˆå§”è­²
   listEl.querySelectorAll("button[data-act]").forEach(btn => {
     btn.onclick = () => {
       const act = btn.getAttribute("data-act");
@@ -113,7 +113,7 @@ function openItem(index) {
   const it = arr[index];
   if (!it) return;
 
-  // result‚ª•`‰æ‚Å‚«‚éÅ’áŒÀ‚ğ state ‚ÉÄ’“ü
+  // resultãŒæç”»ã§ãã‚‹æœ€ä½é™ã‚’ state ã«å†æ³¨å…¥
   saveState({
     step: "result",
     bottle: it.bottle || null,
@@ -121,7 +121,7 @@ function openItem(index) {
     answeredAt: it.ts,
   });
 
-  // result‘¤‚Í top2 ‚ğÄŒvZ‚·‚é‚Ì‚ÅOK
+  // resultå´ã¯ top2 ã‚’å†è¨ˆç®—ã™ã‚‹ã®ã§OK
   location.href = "/result.html";
 }
 
@@ -130,7 +130,7 @@ function deleteItem(index) {
   if (!arr[index]) return;
   arr.splice(index, 1);
   saveHistory(arr);
-  statusEl.textContent = "íœ‚µ‚Ü‚µ‚½";
+  statusEl.textContent = "å‰Šé™¤ã—ã¾ã—ãŸ";
   render();
 }
 
@@ -138,23 +138,23 @@ document.getElementById("goResult").onclick = ()=> location.href = "/result.html
 document.getElementById("goStart").onclick = ()=> location.href = "/index.html";
 
 document.getElementById("clearAll").onclick = ()=>{
-  if (!confirm("—š—ğ‚ğ‚·‚×‚Äíœ‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H")) return;
+  if (!confirm("å±¥æ­´ã‚’ã™ã¹ã¦å‰Šé™¤ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ")) return;
   localStorage.removeItem(KEY);
-  statusEl.textContent = "‘Síœ‚µ‚Ü‚µ‚½";
+  statusEl.textContent = "å…¨å‰Šé™¤ã—ã¾ã—ãŸ";
   render();
 };
 
 document.getElementById("exportJson").onclick = ()=>{
   const arr = loadHistory();
   downloadText(`aura_history_${Date.now()}.json`, JSON.stringify(arr, null, 2), "application/json");
-  statusEl.textContent = "JSON‚ğ‘‚«o‚µ‚Ü‚µ‚½";
+  statusEl.textContent = "JSONã‚’æ›¸ãå‡ºã—ã¾ã—ãŸ";
 };
 
 document.getElementById("exportCsv").onclick = ()=>{
   const arr = loadHistory();
   const csv = toCSV(arr);
   downloadText(`aura_history_${Date.now()}.csv`, csv, "text/csv");
-  statusEl.textContent = "CSV‚ğ‘‚«o‚µ‚Ü‚µ‚½";
+  statusEl.textContent = "CSVã‚’æ›¸ãå‡ºã—ã¾ã—ãŸ";
 };
 
 render();
