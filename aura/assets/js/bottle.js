@@ -198,9 +198,8 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 (async function init(){
-  const raw = await loadCSV("../data/bottles.csv");
+  const raw = await loadCSV("assets/data/bottles.csv");
   bottles = raw.map(normalizeBottleRow).filter(b => b.name && b.top_color && b.bottom_color);
-
 
   // デバッグ表示（必要なら一時的に）
   if (!bottles.length) {
