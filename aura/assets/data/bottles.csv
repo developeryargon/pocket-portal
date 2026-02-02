@@ -1,0 +1,5 @@
+bottle_id,name,top_color,bottom_color,image,keywords
+B001,Ocean Dawn,Blue,Gold,/assets/img/bottles/B001.png,"calm,focus,restore"
+B002,Shadow Bloom,Violet,Black,/assets/img/bottles/B002.png,"depth,truth,reset"
+B003,Heart Spring,Green,Pink,/assets/img/bottles/B003.png,"care,repair,soften"
+B004,Solar Edge,Yellow,Red,/assets/img/bottles/B004.png,"drive,courage,ignite"

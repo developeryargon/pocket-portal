@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/assets/css/style.css"/>
+  <title>History</title>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="h1">履歴</h1>
+      <p class="p">端末内に保存した記録。</p>
+
+      <div class="row">
+        <button class="btn" id="goResult">最新の結果へ</button>
+        <button class="btn" id="goStart">最初へ</button>
+        <button class="btn" id="clearAll">全削除</button>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">エクスポート</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="exportJson">JSONを書き出す</button>
+          <button class="btn" id="exportCsv">CSVを書き出す</button>
+        </div>
+        <p class="small">※個人データは外部送信しません。ダウンロードのみ。</p>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">一覧</div>
+        <div id="list" style="margin-top:10px;display:grid;gap:10px"></div>
+        <p class="small" id="empty" style="display:none;margin-top:10px">履歴がありません。</p>
+      </div>
+
+      <p class="small" id="status" style="margin-top:10px"></p>
+    </div>
+  </div>
+
+  <script type="module" src="/assets/js/history.js"></script>
+</body>
+</html>
