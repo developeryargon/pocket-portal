@@ -102,7 +102,8 @@ document.getElementById("next").onclick = ()=>{
     pickedColor: selected.name,
     scores: { [selected.name]: 3 } // 初期ブースト
   });
-  location.href = "/bottle.html";
+  location.href = "./bottle.html";
 };
 
 document.getElementById("back").onclick = ()=> history.back();
+
