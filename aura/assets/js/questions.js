@@ -83,7 +83,7 @@ function next() {
       scores,
       answeredAt: Date.now()
     });
-    location.href = "/result.html";
+    location.href = "../../result.html";
     return;
   }
   render();
@@ -103,7 +103,7 @@ document.getElementById("back").onclick = () => history.back();
 document.getElementById("restart").onclick = () => { resetState(); location.href="../../index.html"; };
 
 (async function init(){
-  questions = await loadCSV("../data/questions.csv");
+  questions = await loadCSV("assets/data/questions.csv");
 
   // 10問に満たない場合でも動くように
   if (questions.length === 0) {
@@ -122,4 +122,5 @@ document.getElementById("restart").onclick = () => { resetState(); location.href
   qText.textContent = "質問データの読み込みに失敗しました（CSVパス確認）";
   console.error(err);
 });
+
 
