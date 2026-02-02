@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/assets/css/style.css"/>
+  <link rel="stylesheet" href="./assets/css/style.css"/>
   <title>Aura Soma Web</title>
 </head>
 <body>
@@ -20,10 +20,10 @@
   </div>
 
   <script type="module">
-    import { resetState, saveState } from "/assets/js/common.js";
+    import { resetState, saveState } from "./assets/js/common.js";
     document.getElementById("start").onclick = () => {
       saveState({ step: "mist" });
-      location.href = "/mist.html";
+      location.href = "./mist.html";
     };
     document.getElementById("reset").onclick = () => {
       resetState();
@@ -32,3 +32,4 @@
   </script>
 </body>
 </html>
+
