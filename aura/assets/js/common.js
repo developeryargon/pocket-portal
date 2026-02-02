@@ -29,3 +29,16 @@ export function pickTopColors(scoreMap, topN = 2) {
     .slice(0, topN)
     .map(([k]) => k);
 }
+
+export function basePath() {
+  // /aura/ のように末尾スラッシュのディレクトリを基準にする
+  const path = location.pathname;
+  // index.html を開いてても /aura/ を返す
+  if (path.endsWith("/")) return path;
+  return path.substring(0, path.lastIndexOf("/") + 1);
+}
+
+export function go(page) {
+  // page: "mist.html" "bottle.html" など
+  location.href = basePath() + page;
+}
