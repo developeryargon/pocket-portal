@@ -5,7 +5,7 @@ const state = loadState();
 
 if (!state.bottle) {
   // 途中手順が抜けてる場合
-  location.href = "/index.html";
+  location.href = "../../index.html";
 }
 
 const qText = document.getElementById("qText");
@@ -100,10 +100,10 @@ bBtn.onclick = () => {
 };
 
 document.getElementById("back").onclick = () => history.back();
-document.getElementById("restart").onclick = () => { resetState(); location.href="/index.html"; };
+document.getElementById("restart").onclick = () => { resetState(); location.href="../../index.html"; };
 
 (async function init(){
-  questions = await loadCSV("/assets/data/questions.csv");
+  questions = await loadCSV("../data/questions.csv");
 
   // 10問に満たない場合でも動くように
   if (questions.length === 0) {
@@ -122,3 +122,4 @@ document.getElementById("restart").onclick = () => { resetState(); location.href
   qText.textContent = "質問データの読み込みに失敗しました（CSVパス確認）";
   console.error(err);
 });
+
