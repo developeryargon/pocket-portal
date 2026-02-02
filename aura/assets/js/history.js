@@ -134,8 +134,8 @@ function deleteItem(index) {
   render();
 }
 
-document.getElementById("goResult").onclick = ()=> location.href = "/result.html";
-document.getElementById("goStart").onclick = ()=> location.href = "/index.html";
+document.getElementById("goResult").onclick = ()=> location.href = "../../result.html";
+document.getElementById("goStart").onclick = ()=> location.href = "../../index.html";
 
 document.getElementById("clearAll").onclick = ()=>{
   if (!confirm("履歴をすべて削除します。よろしいですか？")) return;
@@ -158,3 +158,4 @@ document.getElementById("exportCsv").onclick = ()=>{
 };
 
 render();
+
