@@ -2,7 +2,7 @@ import { loadState, saveState, resetState, pickTopColors } from "./common.js";
 import { loadCSV } from "./csv.js";
 
 const state = loadState();
-if (!state.scores) location.href = "/index.html";
+if (!state.scores) location.href = "../../index.html";
 
 const bottleName = document.getElementById("bottleName");
 const bottleColors = document.getElementById("bottleColors");
@@ -220,10 +220,11 @@ document.getElementById("saveHistory").onclick = ()=>{
 };
 
 (async function init(){
-  colorRows = await loadCSV("/assets/data/colors.csv");
+  colorRows = await loadCSV("../data/colors.csv");
   setMeaning();
   statusEl.textContent = "準備完了";
 })().catch(err=>{
   console.error(err);
   statusEl.textContent = "colors.csv の読み込みに失敗しました";
 })();
+
