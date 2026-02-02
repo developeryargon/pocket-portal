@@ -192,7 +192,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 // CSV読み込み→候補生成
 (async function init(){
-  bottles = await loadCSV("/assets/data/bottles.csv");
+  bottles = await loadCSV("../data/bottles.csv");
 
   // スコア順で上位3つ
   const scored = bottles
@@ -224,7 +224,8 @@ document.getElementById("toQ").onclick = ()=>{
       image: chosen.image
     }
   });
-  location.href = "/questions.html";
+  location.href = "../../questions.html";
 };
 
 document.getElementById("back").onclick = ()=> history.back();
+
