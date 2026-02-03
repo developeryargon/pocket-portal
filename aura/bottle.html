@@ -5,6 +5,38 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="./assets/css/style.css"/>
   <title>Bottle Ceremony</title>
+  <style>
+    /* ボトル画像をCanvasの上に重ねる（bottle.js側は光だけ描く想定） */
+    .canvasBox {
+      position: relative;
+      overflow: hidden;
+    }
+    #bottleImg {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      max-height: 90%;
+      max-width: 90%;
+      pointer-events: none;
+      filter: drop-shadow(0 0 24px rgba(255,255,255,0.22));
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    #bottleImg.isOn {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    /* ほんの少し揺らして神秘感（不要なら消してOK） */
+    @keyframes floatBottle {
+      0%   { transform: translateY(0) scale(1); }
+      50%  { transform: translateY(-4px) scale(1); }
+      100% { transform: translateY(0) scale(1); }
+    }
+    #bottleImg.isFloat {
+      animation: floatBottle 3.8s ease-in-out infinite;
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -23,13 +55,18 @@
 
         <div class="card" style="flex:1.2; min-width:320px">
           <div class="small">儀式</div>
+
+          <!-- ✅ Canvas（オーラ） + ボトル画像（PNG）を重ねる -->
           <div class="canvasBox" style="margin-top:10px">
             <canvas id="c" width="1200" height="520"></canvas>
+            <img id="bottleImg" src="" alt="bottle">
           </div>
+
           <div class="row" style="margin-top:14px">
             <button class="btn" id="toQ" disabled>このボトルで進む</button>
             <button class="btn" id="back">戻る</button>
           </div>
+
           <p class="small" id="note">候補を選ぶと、光がまとわりつく</p>
         </div>
       </div>
@@ -39,4 +76,3 @@
   <script type="module" src="./assets/js/bottle.js"></script>
 </body>
 </html>
-
