@@ -5,6 +5,16 @@ const statusEl = document.getElementById("status");
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
 
+function topColors(scores, n = 2) {
+  return Object.entries(scores || {})
+    .map(([k, v]) => [k, Number(v) || 0])
+    .sort((a, b) => b[1] - a[1])
+    .filter(x => x[1] > 0)
+    .slice(0, n)
+    .map(x => x[0]);
+}
+
+
 function loadHistory() {
   try {
     return JSON.parse(localStorage.getItem(KEY)) || [];
@@ -105,7 +115,15 @@ function render() {
     div.innerHTML = `
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
         <div>
-          <div style="font-weight:900;font-size:16px">${it.mainColor || "—"} / ${it.subColor || "—"}</div>
+          ${(() => {
+  const b = it.bottle || {};
+  const t = (it.mainColor || it.subColor)
+    ? [it.mainColor || "", it.subColor || ""]
+    : topColors(it.scores, 2);
+  const main = t[0] || b.top_color || "—";
+  const sub  = t[1] || b.bottom_color || "—";
+  return `<div style="font-weight:900;font-size:16px">${main} / ${sub}</div>`;
+})()}
           <div class="small" style="margin-top:4px">${fmt(it.ts)} / モード: ${it.mode || "—"}</div>
           <div class="small" style="margin-top:6px">
             ボトル: ${(b.name || "—")} ${(b.bottle_id ? `(${b.bottle_id})` : "")}<br>
@@ -158,3 +176,4 @@ document.getElementById("exportCsv").onclick = () => {
 };
 
 render();
+
