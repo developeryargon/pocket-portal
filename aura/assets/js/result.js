@@ -140,6 +140,144 @@ function saveHistory(state, memo) {
   localStorage.setItem(KEY, JSON.stringify(arr));
 }
 
+/* ---------------------------
+   結果文：強化パック
+   - core: meaningShort
+   - explain: meaningLong（subで補強）
+   - shadow: 注意点
+   - action: 今日の1つ
+--------------------------- */
+
+const AURA_TEXT = {
+  Blue: {
+    core: "外から入ってくる刺激を減らしたい状態です。",
+    explain: {
+      Gold:   "やることは進めたいのに、頭が先に疲れています。優先順位を「1つ」だけに絞ると戻ります。",
+      Violet: "考えと気持ちが同時に動いていて、静かな時間が足りません。人の気配や情報を少し減らすだけで落ち着きます。",
+      Green:  "回復力はありますが、回復の時間が短いサインです。休むというより「触るものを減らす」が効きます。",
+      Red:    "勢いはあるのに、休むタイミングを逃しています。まずはスピードを落とすだけで十分です。",
+      Pink:   "やさしくしたい気持ちが強い分、受け取りすぎています。境界線を1つ引くだけで楽になります。",
+      Yellow: "頭の明るさはあるのに、刺激が多すぎて散っています。短時間の集中に切り替えると整います。",
+      Black:  "張りつめやすい状態です。静かな場所より「音量を下げる」くらいの調整がちょうどいいです。",
+      White:  "きれいに整えたい気持ちが強く出ています。完璧にしなくて大丈夫です。"
+    },
+    shadow: "説明しようとしすぎて、休む前に疲れやすい。",
+    action: "今すぐ「通知を1つだけOFF」にする。"
+  },
+
+  Gold: {
+    core: "整えて前に進みたい状態です。",
+    explain: {
+      Blue:   "考えが先行して、手が止まりやすくなっています。まず「1行だけ」着手すると流れます。",
+      Violet: "やるべきことと本音がずれているサインです。どちらも否定せず、順番を付けると進めます。",
+      Green:  "整えたいのに、体の余力が足りません。小さく整えるほど結果が出ます。",
+      Red:    "勢いで進める力があります。衝動で増やしすぎないように、最後に確認を1回だけ。",
+      Pink:   "人のために整えがちです。自分の都合を先に置くと、結果が早く出ます。",
+      Yellow: "選択肢が多くて散りやすい状態です。条件を1つ減らすと決めやすくなります。",
+      Black:  "守りを固めたい気配があります。守る範囲を狭めるほど、心は安定します。",
+      White:  "白黒つけたくなりやすい状態です。いまは中間でもOKです。"
+    },
+    shadow: "「ちゃんとやる」を増やしすぎて、余白が消えやすい。",
+    action: "今日やることを「3つ→1つ」に減らす。"
+  },
+
+  Violet: {
+    core: "本音に近いところが動いている状態です。",
+    explain: {
+      Blue:   "気持ちを言語化しようとして疲れやすいです。言葉より体感を優先すると落ち着きます。",
+      Gold:   "現実を進めたい気持ちと、内側の違和感が同居しています。どちらも正しいので順番を決めればOKです。",
+      Green:  "感情は動いていますが回復の余地もあります。優しい調整で十分に戻ります。",
+      Red:    "衝動が強まりやすいタイミングです。即決より「10分だけ寝かす」が効きます。",
+      Pink:   "共感が強く出ています。人の気持ちと自分の気持ちを分けると楽になります。",
+      Yellow: "ひらめきが出やすい反面、散りやすいです。メモに1行だけ残すと形になります。",
+      Black:  "強く抱え込みやすい状態です。抱える量を減らすほど深く整います。",
+      White:  "「正しくいたい」と「本音」がぶつかりやすいです。今日は本音を小さく尊重でOK。"
+    },
+    shadow: "感じたことを抱え込んで、外では平気に見せがち。",
+    action: "メモ欄に「いま一番気になる一言」だけ書く。"
+  },
+
+  Green: {
+    core: "回復と調整が必要な状態です。",
+    explain: {
+      Blue:   "頭で整えようとして回復が遅れています。まず体を戻すほうが早いです。",
+      Gold:   "やるべきことはあるのに、余力が足りません。整えるのは明日でも間に合います。",
+      Violet: "気持ちの揺れが疲れに直結しています。1人の時間を「短く」入れるだけで戻ります。",
+      Red:    "勢いで押し切ると反動が来やすいです。今日はブレーキを少しだけ。",
+      Pink:   "やさしさで無理しやすい状態です。断るより「遅らせる」が効きます。",
+      Yellow: "頭の回転はあるのに、体が追いついていません。短い休憩を入れると一気に進みます。",
+      Black:  "固めすぎて抜けにくい状態です。ほどく方向で整います。",
+      White:  "きれいに戻したい気持ちが強いです。完璧より、回復優先でOKです。"
+    },
+    shadow: "頑張ってる自覚が薄く、限界が来てから気づきやすい。",
+    action: "水を一口飲んで、肩を3回ゆっくり回す。"
+  },
+
+  // 予備（もし他色がトップに来た時も落ちない）
+  Red: {
+    core: "動きたい力が強い状態です。",
+    explain: {
+      Blue: "勢いのまま進むと頭が追いつきません。確認を1回だけ入れると安定します。"
+    },
+    shadow: "勢いで増やしすぎて後から疲れやすい。",
+    action: "次の行動の前に「10秒停止」する。"
+  },
+  Pink: {
+    core: "やさしさと共感が強い状態です。",
+    explain: {
+      Blue: "受け取る量が多いサインです。距離を少し取ると戻ります。"
+    },
+    shadow: "相手優先で自分の余白が消えやすい。",
+    action: "返信を1件だけ「あとで」にする。"
+  },
+  Yellow: {
+    core: "頭の明るさが出ている状態です。",
+    explain: {
+      Blue: "考えが散りやすいので、短く区切ると形になります。"
+    },
+    shadow: "選択肢を増やしすぎて迷いやすい。",
+    action: "今やることを「1つ」だけ決める。"
+  },
+  Black: {
+    core: "守りを固めたい状態です。",
+    explain: {
+      Blue: "緊張が抜けにくいので、少し緩めるほうが進みます。"
+    },
+    shadow: "全部自分で抱えようとして重くなりやすい。",
+    action: "やらないことを1つ決める。"
+  },
+  White: {
+    core: "整っていたい気持ちが強い状態です。",
+    explain: {
+      Blue: "完璧を求めるほど疲れます。今日は7割で十分です。"
+    },
+    shadow: "白黒つけたくなって余白が消えやすい。",
+    action: "机の上を「1個だけ」片付ける。"
+  }
+};
+
+function buildResultText(main, sub) {
+  const pack = AURA_TEXT[main] || AURA_TEXT.Blue;
+
+  const core = pack.core || "今のあなたは、少し調整が必要な状態です。";
+
+  // subがあるなら優先、無ければ適当に1つ（あるいは空）
+  let explain = "";
+  if (pack.explain) {
+    if (sub && pack.explain[sub]) explain = pack.explain[sub];
+    else if (pack.explain.Blue) explain = pack.explain.Blue;
+    else {
+      const any = Object.values(pack.explain)[0];
+      explain = any || "";
+    }
+  }
+
+  const shadow = pack.shadow || "やりすぎない。";
+  const action = pack.action || "深呼吸を1回。";
+
+  return { core, explain, shadow, action };
+}
+
 (async function init() {
   try {
     const state = loadState();
@@ -150,7 +288,7 @@ function saveHistory(state, memo) {
     }
 
     if (!state || !state.bottle || !state.scores) {
-      go("index.html"); // /aura/index.html に固定されている前提
+      go("index.html");
       return;
     }
 
@@ -166,11 +304,12 @@ function saveHistory(state, memo) {
     if (bottleColorsEl) bottleColorsEl.textContent = `${bottle.top_color || "—"} / ${bottle.bottom_color || "—"}`;
     if (topColorsEl) topColorsEl.textContent = sub ? `${main} / ${sub}` : `${main}`;
 
-    // 文章（仮）
-    if (meaningShortEl) meaningShortEl.textContent = "色が、形になる。";
-    if (meaningLongEl) meaningLongEl.textContent = "今は答えを急がず、体感として受け取る段階です。";
-    if (shadowEl) shadowEl.textContent = "説明しようとしすぎない。";
-    if (actionEl) actionEl.textContent = "深呼吸を1回。";
+    // 結果文（強化）
+    const { core, explain, shadow, action } = buildResultText(main, sub);
+    if (meaningShortEl) meaningShortEl.textContent = core;
+    if (meaningLongEl) meaningLongEl.textContent = explain || "いまは結果を急がず、体感として受け取る段階です。";
+    if (shadowEl) shadowEl.textContent = shadow;
+    if (actionEl) actionEl.textContent = action;
 
     // オーラ描画
     drawAura(main, sub);
