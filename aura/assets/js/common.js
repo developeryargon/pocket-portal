@@ -1,44 +1,40 @@
 export const STORE_KEY = "aura_soma_state_v1";
 
+
+export function basePath() {
+  // Cloudflare Pages /aura/ 固定
+  return "/aura/";
+}
+
+export function go(page) {
+  location.href = basePath() + page;
+}
+
+// state系（既存があればそのまま残してOK）
+export function saveState(obj) {
+  localStorage.setItem("aura_state_v1", JSON.stringify(obj));
+}
+
 export function loadState() {
   try {
-    return JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+    return JSON.parse(localStorage.getItem("aura_state_v1"));
   } catch {
-    return {};
+    return null;
   }
 }
 
-export function saveState(patch) {
-  const prev = loadState();
-  const next = { ...prev, ...patch, updatedAt: Date.now() };
-  localStorage.setItem(STORE_KEY, JSON.stringify(next));
-  return next;
-}
-
 export function resetState() {
-  localStorage.removeItem(STORE_KEY);
+  localStorage.removeItem("aura_state_v1");
 }
 
+// util（既に使っているものがあれば残す）
 export function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
-export function pickTopColors(scoreMap, topN = 2) {
-  return Object.entries(scoreMap)
-    .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
-    .slice(0, topN)
-    .map(([k]) => k);
-}
-
-export function basePath() {
-  // /aura/ のように末尾スラッシュのディレクトリを基準にする
-  const path = location.pathname;
-  // index.html を開いてても /aura/ を返す
-  if (path.endsWith("/")) return path;
-  return path.substring(0, path.lastIndexOf("/") + 1);
-}
-
-export function go(page) {
-  // page: "mist.html" "bottle.html" など
-  location.href = basePath() + page;
+export function pickTopColors(scores, n = 2) {
+  return Object.entries(scores || {})
+    .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+    .slice(0, n)
+    .map(x => x[0]);
 }
