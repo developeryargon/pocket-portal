@@ -3,17 +3,17 @@ import { loadCSV } from "./csv.js";
 
 /**
  * 目的：
- * - questions.csv が読み込めること
+ * - questions.csv が読み込めること（100〜200件でもOK）
+ * - 毎回ランダムに10問を出す（ただし途中リロードでも同じ10問を維持）
  * - q.text / q.a_text / q.b_text が必ず表示されること
  * - BOM/空白/大小/列名揺れでも壊れないこと
  * - 回答でスコア加算され、10問後 result.html に遷移すること
  */
 
-const state = loadState();
+let state = loadState();
 
 // 手順抜けを補正（bottle未選択など）
 if (!state.bottle) {
-  // /aura/ 直下運用でも go() が安全に飛ばす
   go("index.html");
 }
 
@@ -24,11 +24,13 @@ const progress = document.getElementById("progress");
 const bar = document.getElementById("bar");
 const hint = document.getElementById("hint");
 
-let questions = [];
+let questions = [];         // このセッションで使う10問
 let idx = 0;
+const QUESTIONS_COUNT = 10;
 
 // scores を引き継ぎ。無ければ空で開始
-let scores = (state.scores && typeof state.scores === "object") ? { ...state.scores } : {};
+let scores =
+  (state.scores && typeof state.scores === "object") ? { ...state.scores } : {};
 
 function toNum(v) {
   const n = Number(String(v ?? "").trim());
@@ -84,8 +86,6 @@ function normalizeColorName(colorKey) {
 
 /**
  * a_*** / b_*** を読み取ってスコア加算
- * - 列名揺れ、BOM、空白を吸収
- * - a_blue, b_gold 等の形式を想定
  */
 function applyAnswer(row, which /* "a" or "b" */) {
   if (!row) return;
@@ -95,7 +95,6 @@ function applyAnswer(row, which /* "a" or "b" */) {
   for (const [kRaw, vRaw] of Object.entries(row)) {
     const k = normalizeKey(kRaw);
 
-    // a_blue / b_gold だけ拾う（"a_" で始まる）
     if (!k.startsWith(prefix)) continue;
 
     const colorKey = k.slice(prefix.length); // "blue" "gold" ...
@@ -111,34 +110,52 @@ function applyAnswer(row, which /* "a" or "b" */) {
 
 /**
  * ボトルの上下色を初期ブースト
+ * ※何度も戻って来た時に増え続けないよう、フラグで一回だけ
  */
-function bootstrapFromBottle() {
+function bootstrapFromBottleOnce() {
+  if (state._bootstrappedFromBottle) return;
+
   const top = state.bottle?.top_color;
   const bottom = state.bottle?.bottom_color;
   if (top) scores[top] = (toNum(scores[top]) + 2);
   if (bottom) scores[bottom] = (toNum(scores[bottom]) + 2);
+
+  state._bootstrappedFromBottle = true;
+  saveState({ ...state, scores }); // state側にも一応反映
 }
-bootstrapFromBottle();
+bootstrapFromBottleOnce();
+
+/**
+ * Fisher-Yates shuffle（元配列を壊さない）
+ */
+function shuffle(array) {
+  const a = array.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function render() {
-  const total = questions.length || 10;
-  progress.textContent = `${idx} / ${total}`;
-  bar.style.width = `${Math.round((idx / total) * 100)}%`;
+  const total = questions.length || QUESTIONS_COUNT;
+
+  // 表示は 1 / 10 形式にする
+  const shown = Math.min(idx + 1, total);
+  progress.textContent = `${shown} / ${total}`;
+  bar.style.width = `${Math.round((shown / total) * 100)}%`;
 
   const q = questions[idx];
   if (!q) return;
 
-  // 列名の揺れを吸収
   const text = getField(q, "text", ["question", "q", "prompt"]);
   const aText = getField(q, "a_text", ["a", "choice_a", "option_a", "aText"]);
   const bText = getField(q, "b_text", ["b", "choice_b", "option_b", "bText"]);
 
-  // 表示
   qText.textContent = text || "（質問テキストが空です：questions.csv の text 列を確認）";
   aBtn.textContent = aText || "A";
   bBtn.textContent = bText || "B";
 
-  // ささやかなヒント
   const top2 = pickTopColors(scores, 2);
   hint.textContent = top2.length ? `気配：${top2.join(" / ")}` : "";
 }
@@ -147,8 +164,8 @@ function next() {
   idx++;
 
   if (idx >= questions.length) {
-    // 終了：結果へ
     saveState({
+      ...state,
       step: "result",
       scores,
       answeredAt: Date.now()
@@ -173,14 +190,39 @@ bBtn.onclick = () => {
 
 // 戻る・最初から
 document.getElementById("back").onclick = () => history.back();
-document.getElementById("restart").onclick = () => { resetState(); go("index.html"); };
+document.getElementById("restart").onclick = () => {
+  resetState();
+  go("index.html");
+};
+
+/**
+ * 10問の抽出戦略：
+ * - state.sessionQuestions があればそれを使う（リロードしても同じ10問）
+ * - 無ければ、CSV全件を読み込んでシャッフル→10件抽出→stateに保存
+ */
+async function prepareQuestions() {
+  // 既にセッション用の10問が保存されているなら再利用
+  if (Array.isArray(state.sessionQuestions) && state.sessionQuestions.length === QUESTIONS_COUNT) {
+    return state.sessionQuestions;
+  }
+
+  const raw = await loadCSV("assets/data/questions.csv");
+  const all = Array.isArray(raw) ? raw : [];
+
+  if (all.length === 0) return [];
+
+  // 10問だけ抽出（全件が10未満でも落ちないように）
+  const picked = shuffle(all).slice(0, Math.min(QUESTIONS_COUNT, all.length));
+
+  // stateに保存（同じセッション中のリロードで固定される）
+  state = { ...state, sessionQuestions: picked };
+  saveState(state);
+
+  return picked;
+}
 
 (async function init() {
-  // ここは /aura/ 配下運用想定：相対でOK
-  const raw = await loadCSV("assets/data/questions.csv");
-
-  // 念のため、オブジェクトに整形（BOM付きヘッダが混ざっても getField が拾う）
-  questions = Array.isArray(raw) ? raw : [];
+  questions = await prepareQuestions();
 
   if (questions.length === 0) {
     qText.textContent = "questions.csv が空、または読み込みに失敗しました";
@@ -189,10 +231,7 @@ document.getElementById("restart").onclick = () => { resetState(); go("index.htm
     return;
   }
 
-  // 10問固定
-  questions = questions.slice(0, 10);
-
-  // もし text が全部空なら、ヘッダ不一致の可能性が高いので警告を出す
+  // もし text が全部空なら、ヘッダ不一致の可能性が高いので警告
   const anyText = questions.some(q => getField(q, "text", ["question", "q", "prompt"]) !== "");
   if (!anyText) {
     console.warn("questions.csv の列名が想定と違う可能性があります。ヘッダを確認してください。");
