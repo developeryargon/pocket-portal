@@ -1,4 +1,4 @@
-import { saveState } from "./common.js";
+import { saveState, go } from "./common.js";
 
 const KEY = "aura_soma_history_v1";
 const statusEl = document.getElementById("status");
@@ -20,14 +20,14 @@ function saveHistory(arr) {
 function fmt(ts) {
   const d = new Date(ts);
   const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  const hh = String(d.getHours()).padStart(2,"0");
-  const mm = String(d.getMinutes()).padStart(2,"0");
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${day} ${hh}:${mm}`;
 }
 
-function downloadText(name, text, mime="application/json") {
+function downloadText(name, text, mime = "application/json") {
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -38,7 +38,6 @@ function downloadText(name, text, mime="application/json") {
 }
 
 function toCSV(items) {
-  // 重要情報だけ抜く（巨大になりがちなscoresはJSON文字列化）
   const headers = ["ts","mode","mainColor","subColor","bottle_id","bottle_name","top_color","bottom_color","memo","scores_json"];
   const rows = items.map(it => {
     const b = it.bottle || {};
@@ -51,12 +50,47 @@ function toCSV(items) {
       b.name || "",
       b.top_color || "",
       b.bottom_color || "",
-      (it.memo || "").replace(/\r?\n/g," ").slice(0,200),
-      JSON.stringify(it.scores || {}).replace(/"/g,'""')
+      (it.memo || "").replace(/\r?\n/g, " ").slice(0, 200),
+      JSON.stringify(it.scores || {}).replace(/"/g, '""')
     ];
-    return vals.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",");
+    return vals.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
   });
   return [headers.join(","), ...rows].join("\n");
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function openItem(index) {
+  const arr = loadHistory();
+  const it = arr[index];
+  if (!it) return;
+
+  // result が描画できる最低限を state に再注入
+  saveState({
+    step: "result",
+    bottle: it.bottle || null,
+    scores: it.scores || {},
+    answeredAt: it.ts,
+  });
+
+  // ✅ 常に /aura/result.html
+  go("result.html");
+}
+
+function deleteItem(index) {
+  const arr = loadHistory();
+  if (!arr[index]) return;
+  arr.splice(index, 1);
+  saveHistory(arr);
+  if (statusEl) statusEl.textContent = "削除しました";
+  render();
 }
 
 function render() {
@@ -99,63 +133,28 @@ function render() {
   });
 }
 
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#39;");
-}
+// ---- 上部ボタン：全部 go() に統一 ----
+document.getElementById("goResult").onclick = () => go("result.html");
+document.getElementById("goStart").onclick  = () => go("index.html");
 
-function openItem(index) {
-  const arr = loadHistory();
-  const it = arr[index];
-  if (!it) return;
-
-  // resultが描画できる最低限を state に再注入
-  saveState({
-    step: "result",
-    bottle: it.bottle || null,
-    scores: it.scores || {},
-    answeredAt: it.ts,
-  });
-
-  // result側は top2 を再計算するのでOK
-  location.href = "/result.html";
-}
-
-function deleteItem(index) {
-  const arr = loadHistory();
-  if (!arr[index]) return;
-  arr.splice(index, 1);
-  saveHistory(arr);
-  statusEl.textContent = "削除しました";
-  render();
-}
-
-document.getElementById("goResult").onclick = ()=> location.href = "../../result.html";
-document.getElementById("goStart").onclick = ()=> location.href = "../../index.html";
-
-document.getElementById("clearAll").onclick = ()=>{
+document.getElementById("clearAll").onclick = () => {
   if (!confirm("履歴をすべて削除します。よろしいですか？")) return;
   localStorage.removeItem(KEY);
-  statusEl.textContent = "全削除しました";
+  if (statusEl) statusEl.textContent = "全削除しました";
   render();
 };
 
-document.getElementById("exportJson").onclick = ()=>{
+document.getElementById("exportJson").onclick = () => {
   const arr = loadHistory();
   downloadText(`aura_history_${Date.now()}.json`, JSON.stringify(arr, null, 2), "application/json");
-  statusEl.textContent = "JSONを書き出しました";
+  if (statusEl) statusEl.textContent = "JSONを書き出しました";
 };
 
-document.getElementById("exportCsv").onclick = ()=>{
+document.getElementById("exportCsv").onclick = () => {
   const arr = loadHistory();
   const csv = toCSV(arr);
   downloadText(`aura_history_${Date.now()}.csv`, csv, "text/csv");
-  statusEl.textContent = "CSVを書き出しました";
+  if (statusEl) statusEl.textContent = "CSVを書き出しました";
 };
 
 render();
-
