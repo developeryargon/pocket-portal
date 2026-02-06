@@ -98,28 +98,26 @@ function scoreBottle(b, picked){
  * - CSVに image があればそれを優先
  * - 無ければ name / bottle_id から3種をマップ
  */
-function resolveBottleImagePath(b){
-  const img = toStr(b.image);
-  if (img) {
-    // "assets/..." or "./assets/..." どちらでもOKにする
-    if (img.startsWith("./")) return img;
-    if (img.startsWith("assets/")) return `./${img}`;
-    return `./${img}`;
-  }
-
-  const id = toStr(b.bottle_id).toLowerCase();
+function resolveBottleImagePath(b) {
+  const id = toStr(b.bottle_id).toUpperCase();
   const name = toStr(b.name).toLowerCase();
 
-  const map = [
-    { keys:["heart spring","heart-spring","heart_spring","b003"], path:"./assets/img/bottles/heart-spring.png" },
-    { keys:["shadow bloom","shadow-bloom","shadow_bloom","b002"], path:"./assets/img/bottles/shadow-bloom.png" },
-    { keys:["solar edge","solar-edge","solar_edge","b004"], path:"./assets/img/bottles/solar-edge.png" },
-  ];
-  for (const m of map){
-    if (m.keys.some(k => name.includes(k) || id.includes(k))) return m.path;
+  // 画像列があるならそれを優先（あってもOK）
+  const img = toStr(b.image);
+  if (img) {
+    if (img.startsWith("http")) return img;
+    if (img.startsWith("/")) return img;
+    return "/aura/" + img.replace(/^\.\//, "");
   }
+
+  // ID/名前から確実に当てる（あなたの実ファイル名に合わせる）
+  if (id === "B003" || name.includes("heart"))  return "/aura/assets/img/bottles/heart-spring.png";
+  if (id === "B002" || name.includes("shadow")) return "/aura/assets/img/bottles/shadow-bloom.png";
+  if (id === "B004" || name.includes("solar"))  return "/aura/assets/img/bottles/solar-edge.png";
+
   return "";
 }
+
 
 function setBottleImage(b){
   if (!bottleImgEl) return;
@@ -333,3 +331,4 @@ function roundRect(ctx, x, y, w, h, r){
   ctx.arcTo(x,y,x+w,y,r);
   ctx.closePath();
 }
+
