@@ -11,8 +11,7 @@
         .hero-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .hero-card:hover { transform: scale(1.02); }
     </style>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -24,14 +23,14 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094"
      crossorigin="anonymous"></script>
 </head>
-<body>
+<body class="min-h-screen flex flex-col">
 
     <header class="py-12 px-6 text-center">
         <h1 class="text-4xl font-extrabold text-slate-900 tracking-tighter mb-2">PocketPortal</h1>
         <p class="text-slate-500 text-sm">毎日の「知りたい」「測りたい」を1秒で解決</p>
     </header>
 
-    <main class="container mx-auto px-6 max-w-4xl pb-20">
+    <main class="container mx-auto px-6 max-w-4xl flex-grow pb-10">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             <a href="./area/index.html" class="hero-card group relative overflow-hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 block">
@@ -64,17 +63,31 @@
 
         </div>
 
-        <div class="w-full flex flex-col items-center mt-8">
+        <div class="mt-12">
+            <a href="about.html" class="hero-card group flex flex-col md:flex-row items-center gap-6 bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-100 transition-all hover:bg-blue-50">
+                <div class="shrink-0">
+                    <img src="profile-icon.png" alt="運営者" class="w-16 h-16 rounded-full border-2 border-white shadow-md object-cover">
+                </div>
+                <div class="text-center md:text-left flex-grow">
+                    <h2 class="text-lg font-bold text-slate-800">PocketPortal について</h2>
+                    <p class="text-slate-500 text-xs mt-1 leading-relaxed">地方のパパエンジニアが作る、暮らしに寄り添うITツール。運営者の想いやLINEスタンプはこちら。</p>
+                </div>
+                <div class="text-blue-600 font-bold text-sm pr-4 whitespace-nowrap hidden md:block">
+                    詳細を見る <span class="group-hover:translate-x-1 transition-transform inline-block">→</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="w-full flex flex-col items-center mt-12">
             <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">Sponsor Link</p>
             <div class="bg-white p-1 rounded shadow-sm">
                 <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770128068587";</script><script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
                 </div>
         </div>
     </main>
-</body>
-    <footer class="py-8 text-center text-slate-400 text-[10px]">
+
+    <footer class="py-8 text-center text-slate-400 text-[10px] border-t border-slate-100 bg-white/50">
         <p>© 2026 PocketPortal Tools</p>
     </footer>
+</body>
 </html>
-
-
