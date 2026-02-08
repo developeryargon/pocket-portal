@@ -26,7 +26,7 @@ const hint = document.getElementById("hint");
 
 let questions = [];         // このセッションで使う10問
 let idx = 0;
-const QUESTIONS_COUNT = 10;
+const QUESTIONS_COUNT = 5;
 
 // scores を引き継ぎ。無ければ空で開始
 let scores =
@@ -245,3 +245,4 @@ async function prepareQuestions() {
   aBtn.disabled = true;
   bBtn.disabled = true;
 });
+
