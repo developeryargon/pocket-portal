@@ -6,6 +6,9 @@
   <link rel="stylesheet" href="./assets/css/style.css"/>
   <title>Result</title>
 </head>
+<footer class="py-8 text-center text-slate-400 text-[10px]">
+      <p>© 2026 PocketPortal</p>
+</footer>
 <body>
   <div class="wrap">
     <div class="card">
@@ -16,6 +19,17 @@
         <div class="card" style="flex:1; min-width:300px">
           <div class="small">ボトル</div>
           <div id="bottleName" style="font-size:18px;font-weight:900;margin-top:6px"></div>
+          <div class="flex items-center gap-3 mt-3 opacity-80">
+            <img
+              id="resultBottleImg"
+              class="w-12 h-auto rounded-md shadow"
+              alt="Selected bottle"
+            />
+            <span class="text-xs text-slate-400">
+              あなたが選んだボトル
+            </span>
+          </div>
+
           <div class="small" id="bottleColors" style="margin-top:6px"></div>
 
           <div style="margin-top:14px" class="small">あなたの主題</div>
@@ -72,6 +86,30 @@
 
   <script type="module" src="./assets/js/result.js"></script>
 </body>
+<div class="w-full flex flex-col items-center mt-10">
+  <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">
+    Sponsor Link
+  </p>
+  <div class="bg-white p-1 rounded shadow-sm">
+    <!-- Rakuten Widget -->
+    <script type="text/javascript">
+      rakuten_design="slide";
+      rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";
+      rakuten_items="ranking";
+      rakuten_genreId="0";
+      rakuten_size="300x250";
+      rakuten_target="_blank";
+      rakuten_theme="gray";
+      rakuten_border="off";
+      rakuten_auto_mode="on";
+      rakuten_genre_title="off";
+      rakuten_recommend="on";
+    </script>
+    <script src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+  </div>
+</div>
+
 </html>
+
 
 
