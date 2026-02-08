@@ -20,6 +20,7 @@ const btnRestart = $("restart");
 
 const canvas = $("c");
 
+
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -292,7 +293,22 @@ function buildResultText(main, sub) {
       return;
     }
 
+    
+
     const bottle = state.bottle;
+    const resultBottleImg = document.getElementById("resultBottleImg");
+
+    if (resultBottleImg && bottle.image) {
+      try {
+        resultBottleImg.src = new URL(
+          bottle.image.startsWith("./") ? bottle.image : `./${bottle.image}`,
+          import.meta.url
+        ).toString();
+      } catch {
+        resultBottleImg.src = bottle.image;
+      }
+    }
+
     const top = topColors(state.scores, 2);
     const main = top[0] || bottle.top_color || "Blue";
     const sub = top[1] || bottle.bottom_color || "";
@@ -344,3 +360,4 @@ function buildResultText(main, sub) {
     if (statusEl) statusEl.textContent = "result.js でエラー（Console参照）";
   }
 })();
+
