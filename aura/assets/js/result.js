@@ -305,7 +305,20 @@ function buildResultText(main, sub) {
           import.meta.url
         ).toString();
       } catch {
-        resultBottleImg.src = bottle.image;
+        const resultBottleImg = document.getElementById("resultBottleImg");
+
+if (resultBottleImg) {
+  const raw = (state?.bottle?.image || "").trim();
+
+  // result.html（ページ）基準で解決する
+  const resolved =
+    raw.startsWith("http") ? raw :
+    raw.startsWith("/")    ? raw :
+    new URL(raw.replace(/^\.\//, ""), window.location.href).href;
+
+  resultBottleImg.src = resolved;
+}
+
       }
     }
 
@@ -360,4 +373,5 @@ function buildResultText(main, sub) {
     if (statusEl) statusEl.textContent = "result.js でエラー（Console参照）";
   }
 })();
+
 
