@@ -9,15 +9,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@700&display=swap');
         body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
         .spinning { transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-9V96DZHTH1');
     </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094" crossorigin="anonymous"></script>
@@ -37,23 +37,49 @@
         <div class="bg-white rounded-[3rem] shadow-xl border border-slate-100 p-8 relative overflow-hidden mb-8">
             <h1 class="text-xl font-bold text-slate-800 mb-8">カスタムルーレット</h1>
             
-            <div class="relative inline-block mb-10">
+            <div class="relative inline-block mb-6">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[24px] border-t-red-500 z-10 -mt-2"></div>
                 <canvas id="roulette-canvas" width="320" height="320" class="mx-auto spinning drop-shadow-lg"></canvas>
             </div>
 
             <div id="roulette-result" class="text-2xl font-black text-indigo-600 h-10 mb-8">項目を入力してスタート！</div>
 
+            <div class="max-w-sm mx-auto mb-6 flex gap-2">
+                <select id="mode-select" onchange="toggleMode()" class="flex-1 p-2 bg-slate-100 rounded-lg text-xs font-bold border-none outline-none">
+                    <option value="equal">均等割り（自由入力）</option>
+                    <option value="custom">個別割合（最大10件）</option>
+                </select>
+                <select id="order-select" onchange="drawRoulette()" class="flex-1 p-2 bg-slate-100 rounded-lg text-xs font-bold border-none outline-none">
+                    <option value="normal">設定順</option>
+                    <option value="shuffle">ランダム順</option>
+                </select>
+            </div>
+
             <div class="space-y-4 max-w-sm mx-auto">
-                <textarea id="roulette-items" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-none" placeholder="項目を改行区切りで入力...">ランチ&#13;カフェ&#13;ラーメン&#13;パスタ</textarea>
+                <div id="equal-area">
+                    <textarea id="roulette-items" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-none" placeholder="項目を改行区切りで入力...">ランチ&#13;カフェ&#13;ラーメン&#13;パスタ</textarea>
+                </div>
+
+                <div id="custom-area" class="hidden space-y-2">
+                    <div class="flex justify-between items-center px-2 mb-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">合計: <span id="total-percent">0</span>/100%</span>
+                        <select id="template-select" onchange="applyTemplate()" class="p-1 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold border-none outline-none">
+                            <option value="">テンプレートを選択</option>
+                        </select>
+                    </div>
+                    <div id="weight-inputs" class="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2">
+                        </div>
+                </div>
+
                 <button onclick="spinRoulette()" id="spin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-indigo-100">ルーレットを回す</button>
             </div>
         </div>
+
         <div class="w-full flex flex-col items-center mt-8">
             <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">Sponsor Link</p>
             <div class="bg-white p-1 rounded shadow-sm">
                 <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770128068587";</script><script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                </div>
+            </div>
         </div>
     </main>
 
@@ -65,49 +91,170 @@
         const canvas = document.getElementById('roulette-canvas');
         const ctx = canvas.getContext('2d');
         let currentRotation = 0;
+        let currentItems = []; // 描画用の確定済みアイテム
+
+        const templates = [
+            { name: "Yes or No", items: [{n:"Yes", w:50}, {n:"No", w:50}] },
+            { name: "今日のランチ", items: [{n:"和食", w:25}, {n:"中華", w:25}, {n:"イタリアン", w:25}, {n:"肉料理", w:25}] },
+            { name: "家事分担", items: [{n:"皿洗い", w:20}, {n:"洗濯", w:20}, {n:"掃除機", w:20}, {n:"風呂掃除", w:20}, {n:"ゴミ出し", w:20}] },
+            { name: "自分へのご褒美", items: [{n:"スイーツ", w:50}, {n:"新作ゲーム", w:10}, {n:"ビール", w:30}, {n:"高級焼肉", w:10}] },
+            { name: "次に飲むもの", items: [{n:"ビール", w:25}, {n:"ハイボール", w:25}, {n:"酎ハイ", w:25}, {n:"日本酒", w:25}] },
+            { name: "お出かけ", items: [{n:"海方面", w:25}, {n:"山方面", w:25}, {n:"隣の県", w:25}, {n:"地元", w:25}] },
+            { name: "週末の予定", items: [{n:"映画", w:30}, {n:"買い物", w:30}, {n:"寝倒す", w:30}, {n:"旅行", w:10}] },
+            { name: "飲み会の役割", items: [{n:"幹事", w:10}, {n:"会計", w:20}, {n:"盛り上げ役", w:40}, {n:"介抱係", w:30}] },
+            { name: "筋トレメニュー", items: [{n:"腕立て", w:25}, {n:"腹筋", w:25}, {n:"背筋", w:25}, {n:"スクワット", w:25}] },
+            { name: "明日の運勢", items: [{n:"大吉", w:10}, {n:"中吉", w:30}, {n:"小吉", w:40}, {n:"末吉", w:20}] },
+            { name: "キャバクラ遊び", items: [{n:"LINE交換", w:30}, {n:"ドリンク", w:40}, {n:"同伴", w:15}, {n:"シャンパン", w:5}, {n:"アフター", w:10}] }
+        ];
+
+        // 初期化
+        function init() {
+            const container = document.getElementById('weight-inputs');
+            const select = document.getElementById('template-select');
+            for (let i = 0; i < 10; i++) {
+                container.innerHTML += `
+                    <div class="flex gap-2">
+                        <input type="text" id="name-${i}" placeholder="項目${i+1}" class="flex-[2] p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500">
+                        <input type="number" id="weight-${i}" placeholder="%" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-center outline-none focus:ring-1 focus:ring-indigo-500" min="0" max="100">
+                    </div>`;
+            }
+            templates.forEach((t, i) => {
+                select.innerHTML += `<option value="${i}">${t.name}</option>`;
+            });
+
+            // イベント登録
+            document.querySelectorAll('#weight-inputs input').forEach(el => {
+                el.addEventListener('input', () => { updateTotal(); drawRoulette(); });
+            });
+            document.getElementById('roulette-items').addEventListener('input', drawRoulette);
+            
+            drawRoulette();
+        }
+
+        function toggleMode() {
+            const mode = document.getElementById('mode-select').value;
+            document.getElementById('equal-area').classList.toggle('hidden', mode !== 'equal');
+            document.getElementById('custom-area').classList.toggle('hidden', mode !== 'custom');
+            drawRoulette();
+        }
+
+        function updateTotal() {
+            let sum = 0;
+            for (let i = 0; i < 10; i++) {
+                sum += Number(document.getElementById(`weight-${i}`).value) || 0;
+            }
+            const display = document.getElementById('total-percent');
+            display.innerText = sum;
+            display.className = sum > 100 ? "text-red-500 font-bold" : "text-slate-400 font-bold";
+        }
+
+        function applyTemplate() {
+            const idx = document.getElementById('template-select').value;
+            if (idx === "") return;
+            const items = templates[idx].items;
+            for (let i = 0; i < 10; i++) {
+                document.getElementById(`name-${i}`).value = items[i] ? items[i].n : "";
+                document.getElementById(`weight-${i}`).value = items[i] ? items[i].w : "";
+            }
+            updateTotal();
+            drawRoulette();
+        }
+
+        function getProcessedItems() {
+            const mode = document.getElementById('mode-select').value;
+            const order = document.getElementById('order-select').value;
+            let list = [];
+
+            if (mode === 'equal') {
+                const lines = document.getElementById('roulette-items').value.split('\n').filter(i => i.trim() !== "");
+                list = lines.map(name => ({ name, weight: 100 / lines.length }));
+            } else {
+                for (let i = 0; i < 10; i++) {
+                    const n = document.getElementById(`name-${i}`).value.trim();
+                    const w = Number(document.getElementById(`weight-${i}`).value);
+                    if (n && w > 0) list.push({ name: n, weight: w });
+                }
+            }
+
+            if (order === 'shuffle') {
+                // Fisher-Yates shuffle
+                for (let i = list.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [list[i], list[j]] = [list[j], list[i]];
+                }
+            }
+            return list;
+        }
 
         function drawRoulette() {
-            const items = document.getElementById('roulette-items').value.split('\n').filter(i => i.trim() !== "");
-            if (items.length === 0) return;
-            const arc = (2 * Math.PI) / items.length;
+            const items = getProcessedItems();
+            currentItems = items; // スピン用に保存
+            if (items.length === 0) {
+                ctx.clearRect(0, 0, 320, 320);
+                return;
+            }
+
+            const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+            let currentAngle = 0;
             ctx.clearRect(0, 0, 320, 320);
+
             items.forEach((item, i) => {
-                const angle = i * arc;
+                const arc = (item.weight / totalWeight) * 2 * Math.PI;
                 ctx.beginPath();
                 ctx.fillStyle = `hsl(${(i * 360) / items.length}, 70%, 80%)`;
                 ctx.moveTo(160, 160);
-                ctx.arc(160, 160, 150, angle, angle + arc);
+                ctx.arc(160, 160, 150, currentAngle, currentAngle + arc);
                 ctx.fill();
+
+                // テキスト描画
                 ctx.save();
-                ctx.translate(160, 160); ctx.rotate(angle + arc / 2);
-                ctx.textAlign = "right"; ctx.fillStyle = "#334155"; ctx.font = "bold 14px sans-serif";
-                ctx.fillText(item.substring(0, 8), 140, 5); ctx.restore();
+                ctx.translate(160, 160);
+                ctx.rotate(currentAngle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#334155";
+                ctx.font = "bold 14px sans-serif";
+                ctx.fillText(item.name.substring(0, 8), 140, 5);
+                ctx.restore();
+
+                currentAngle += arc;
             });
         }
 
         function spinRoulette() {
-            const items = document.getElementById('roulette-items').value.split('\n').filter(i => i.trim() !== "");
-            if (items.length === 0) return;
+            if (currentItems.length === 0) return;
             const btn = document.getElementById('spin-btn');
             btn.disabled = true;
             document.getElementById('roulette-result').innerText = "抽選中...";
-            currentRotation += (5 + Math.random() * 5) * 360;
+
+            const rotateDeg = (10 + Math.random() * 5) * 360;
+            currentRotation += rotateDeg;
             canvas.style.transform = `rotate(-${currentRotation}deg)`;
+
             setTimeout(() => {
                 btn.disabled = false;
-                const winnerIndex = Math.floor(items.length - ((currentRotation % 360) / 360) * items.length) % items.length;
-                document.getElementById('roulette-result').innerText = `✨ ${items[winnerIndex]} ✨`;
+                // 当選判定 (針は真上 270度方向)
+                const normalizedRotation = (currentRotation % 360);
+                const totalWeight = currentItems.reduce((sum, item) => sum + item.weight, 0);
+                
+                // 回転後の0度位置が、針(真上)に対してどの位置にあるか計算
+                let needleAngle = (270 + normalizedRotation) % 360;
+                let cumulativeAngle = 0;
+                let winner = currentItems[0];
+
+                for (const item of currentItems) {
+                    const itemAngle = (item.weight / totalWeight) * 360;
+                    if (needleAngle >= cumulativeAngle && needleAngle < cumulativeAngle + itemAngle) {
+                        winner = item;
+                        break;
+                    }
+                    cumulativeAngle += itemAngle;
+                }
+                
+                document.getElementById('roulette-result').innerText = `✨ ${winner.name} ✨`;
             }, 4000);
         }
 
-        document.getElementById('roulette-items').addEventListener('input', drawRoulette);
-        drawRoulette();
+        init();
     </script>
-
 </body>
-
 </html>
-
-
-
-
