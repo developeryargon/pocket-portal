@@ -4,7 +4,7 @@ import { loadCSV } from "./csv.js";
 /**
  * 目的：
  * - questions.csv が読み込めること（100〜200件でもOK）
- * - 毎回ランダムに10問を出す（ただし途中リロードでも同じ10問を維持）
+ * - 毎回ランダムに10問を出す（ただし途中リロードでも同じ5問を維持）
  * - q.text / q.a_text / q.b_text が必ず表示されること
  * - BOM/空白/大小/列名揺れでも壊れないこと
  * - 回答でスコア加算され、10問後 result.html に遷移すること
@@ -24,7 +24,7 @@ const progress = document.getElementById("progress");
 const bar = document.getElementById("bar");
 const hint = document.getElementById("hint");
 
-let questions = [];         // このセッションで使う10問
+let questions = [];         // このセッションで使う5問
 let idx = 0;
 const QUESTIONS_COUNT = 5;
 
@@ -198,7 +198,7 @@ document.getElementById("restart").onclick = () => {
 /**
  * 10問の抽出戦略：
  * - state.sessionQuestions があればそれを使う（リロードしても同じ10問）
- * - 無ければ、CSV全件を読み込んでシャッフル→10件抽出→stateに保存
+ * - 無ければ、CSV全件を読み込んでシャッフル→5件抽出→stateに保存
  */
 async function prepareQuestions() {
   // 既にセッション用の10問が保存されているなら再利用
@@ -211,7 +211,7 @@ async function prepareQuestions() {
 
   if (all.length === 0) return [];
 
-  // 10問だけ抽出（全件が10未満でも落ちないように）
+  // 10問だけ抽出（全件が5未満でも落ちないように）
   const picked = shuffle(all).slice(0, Math.min(QUESTIONS_COUNT, all.length));
 
   // stateに保存（同じセッション中のリロードで固定される）
@@ -245,4 +245,5 @@ async function prepareQuestions() {
   aBtn.disabled = true;
   bBtn.disabled = true;
 });
+
 
