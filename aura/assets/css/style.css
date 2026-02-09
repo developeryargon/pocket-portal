@@ -183,3 +183,26 @@ canvas{
     max-width:60%;
   }
 }
+
+/* =========================
+   Result page: bottle image
+   ========================= */
+
+/* result.html のボトル画像をカード内に収める */
+#resultBottleImg{
+  width: 100%;
+  max-width: 220px;   /* ←好みで 180〜260 */
+  max-height: 160px;  /* ←好みで 140〜200 */
+  height: auto;
+  display: block;
+  margin: 10px auto 0;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 18px rgba(255,255,255,0.18));
+}
+
+/* はみ出し保険（ボトル画像の親側で効く） */
+#resultBottleImg{
+  overflow: hidden;
+}
+
