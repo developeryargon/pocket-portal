@@ -20,7 +20,6 @@ const btnRestart = $("restart");
 
 const canvas = $("c");
 
-
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -143,10 +142,6 @@ function saveHistory(state, memo) {
 
 /* ---------------------------
    結果文：強化パック
-   - core: meaningShort
-   - explain: meaningLong（subで補強）
-   - shadow: 注意点
-   - action: 今日の1つ
 --------------------------- */
 
 const AURA_TEXT = {
@@ -214,44 +209,33 @@ const AURA_TEXT = {
     action: "水を一口飲んで、肩を3回ゆっくり回す。"
   },
 
-  // 予備（もし他色がトップに来た時も落ちない）
   Red: {
     core: "動きたい力が強い状態です。",
-    explain: {
-      Blue: "勢いのまま進むと頭が追いつきません。確認を1回だけ入れると安定します。"
-    },
+    explain: { Blue: "勢いのまま進むと頭が追いつきません。確認を1回だけ入れると安定します。" },
     shadow: "勢いで増やしすぎて後から疲れやすい。",
     action: "次の行動の前に「10秒停止」する。"
   },
   Pink: {
     core: "やさしさと共感が強い状態です。",
-    explain: {
-      Blue: "受け取る量が多いサインです。距離を少し取ると戻ります。"
-    },
+    explain: { Blue: "受け取る量が多いサインです。距離を少し取ると戻ります。" },
     shadow: "相手優先で自分の余白が消えやすい。",
     action: "返信を1件だけ「あとで」にする。"
   },
   Yellow: {
     core: "頭の明るさが出ている状態です。",
-    explain: {
-      Blue: "考えが散りやすいので、短く区切ると形になります。"
-    },
+    explain: { Blue: "考えが散りやすいので、短く区切ると形になります。" },
     shadow: "選択肢を増やしすぎて迷いやすい。",
     action: "今やることを「1つ」だけ決める。"
   },
   Black: {
     core: "守りを固めたい状態です。",
-    explain: {
-      Blue: "緊張が抜けにくいので、少し緩めるほうが進みます。"
-    },
+    explain: { Blue: "緊張が抜けにくいので、少し緩めるほうが進みます。" },
     shadow: "全部自分で抱えようとして重くなりやすい。",
     action: "やらないことを1つ決める。"
   },
   White: {
     core: "整っていたい気持ちが強い状態です。",
-    explain: {
-      Blue: "完璧を求めるほど疲れます。今日は7割で十分です。"
-    },
+    explain: { Blue: "完璧を求めるほど疲れます。今日は7割で十分です。" },
     shadow: "白黒つけたくなって余白が消えやすい。",
     action: "机の上を「1個だけ」片付ける。"
   }
@@ -262,7 +246,6 @@ function buildResultText(main, sub) {
 
   const core = pack.core || "今のあなたは、少し調整が必要な状態です。";
 
-  // subがあるなら優先、無ければ適当に1つ（あるいは空）
   let explain = "";
   if (pack.explain) {
     if (sub && pack.explain[sub]) explain = pack.explain[sub];
@@ -279,6 +262,28 @@ function buildResultText(main, sub) {
   return { core, explain, shadow, action };
 }
 
+/* =========================
+   ここが修正の本体
+   - import.meta.url を使わない
+   - /aura/ 基準（ページ基準）で解決
+========================= */
+function resolveImageUrl(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+
+  // すでに絶対URL
+  if (/^https?:\/\//i.test(s)) return s;
+
+  // /aura/... や /assets/... のような先頭 / はそのまま
+  if (s.startsWith("/")) return s;
+
+  // "./assets/..." → "assets/..."
+  const cleaned = s.replace(/^\.\//, "");
+
+  // ページ基準でURL解決（これが正解）
+  return new URL(cleaned, window.location.href).href;
+}
+
 (async function init() {
   try {
     const state = loadState();
@@ -293,32 +298,17 @@ function buildResultText(main, sub) {
       return;
     }
 
-    
-
     const bottle = state.bottle;
     const resultBottleImg = document.getElementById("resultBottleImg");
 
-    if (resultBottleImg && bottle.image) {
-      try {
-        resultBottleImg.src = new URL(
-          bottle.image.startsWith("./") ? bottle.image : `./${bottle.image}`,
-          import.meta.url
-        ).toString();
-      } catch {
-        const resultBottleImg = document.getElementById("resultBottleImg");
-
-if (resultBottleImg) {
-  const raw = (state?.bottle?.image || "").trim();
-
-  // result.html（ページ）基準で解決する
-  const resolved =
-    raw.startsWith("http") ? raw :
-    raw.startsWith("/")    ? raw :
-    new URL(raw.replace(/^\.\//, ""), window.location.href).href;
-
-  resultBottleImg.src = resolved;
-}
-
+    // ✅ ボトル画像を「必ず」ページ基準で解決
+    if (resultBottleImg) {
+      const url = resolveImageUrl(bottle.image);
+      if (url) {
+        resultBottleImg.src = url;
+        resultBottleImg.onerror = () => {
+          console.warn("Bottle image load failed:", url, "raw:", bottle.image);
+        };
       }
     }
 
@@ -373,5 +363,3 @@ if (resultBottleImg) {
     if (statusEl) statusEl.textContent = "result.js でエラー（Console参照）";
   }
 })();
-
-
