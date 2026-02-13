@@ -15,27 +15,15 @@
 
     <style>
         body { font-family: sans-serif; background-color: #f4f4f4; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* 全体スクロール構造 */
         .outer-scroll { flex: 1; overflow-y: auto; padding-bottom: 80px; }
         #map { height: 250px; width: 100%; flex-shrink: 0; border-bottom: 1px solid #ccc; z-index: 10; }
         #timeline { padding: 10px; display: flex; flex-direction: column; gap: 12px; }
-
-        /* カードデザイン */
         .post-card { background: #fff; border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
         .post-card.highlight { border: 2px solid #2196F3; background: #e3f2fd; }
-        
-        /* 画像サムネイル */
         .thumb { width: 120px; height: auto; cursor: pointer; border: 1px solid #eee; display: block; margin-bottom: 8px; border-radius: 2px; }
-
-        /* テキスト表示（改行対応） */
         .memo-text { font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.5; white-space: pre-wrap; margin-bottom: 10px; }
-
-        /* ボタン配置（右下寄せ） */
         .btn-group { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9; }
         .card-btn { font-size: 13px; font-weight: bold; background: none; border: none; cursor: pointer; }
-
-        /* 下部ナビゲーション */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: #fff; border-top: 1px solid #ccc;
@@ -57,23 +45,13 @@
 
 <div class="outer-scroll">
     <div id="map"></div>
-
     <div class="bg-white p-2 border-b border-slate-200 flex gap-2 sticky top-0 z-40">
-        <input type="text" id="search-text" oninput="filter()" placeholder="検索..." class="flex-1 p-2 text-sm border rounded outline-none focus:border-blue-400">
+        <input type="text" id="search-text" oninput="filter()" placeholder="検索..." class="flex-1 p-2 text-sm border rounded outline-none">
         <select id="tag-list" onchange="filter()" class="p-2 text-sm border rounded bg-slate-50 w-24">
             <option value="">タグ</option>
         </select>
     </div>
-
     <div id="timeline"></div>
-
-    <div class="w-full flex flex-col items-center py-6 bg-white border-t border-slate-100">
-        <p class="text-[8px] text-slate-400 font-bold mb-1 tracking-widest uppercase">Sponsor Link</p>
-        <div class="scale-90">
-            <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x160";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";</script>
-            <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-        </div>
-    </div>
 </div>
 
 <div class="bottom-nav">
@@ -84,13 +62,53 @@
     <button class="nav-btn" onclick="openHelp()">❓<span>ヘルプ</span></button>
 </div>
 
+<div id="help-modal" class="hidden fixed inset-0 bg-black/60 z-[7000] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[85vh]">
+        <h3 class="text-xl font-black mb-6 border-b pb-2 text-slate-800">ヘルプ・設定</h3>
+        
+        <section class="mb-8">
+            <h4 class="font-bold text-blue-600 mb-2 flex items-center gap-1">📖 使い方</h4>
+            <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4">
+                <li>下部メニューから写真やテキストを投稿できます。</li>
+                <li>投稿には自動で現在の住所と緯度経度が付与されます。</li>
+                <li>地図上のピンをタップすると該当のメモへ移動します。</li>
+                <li>メモ内のハッシュタグ（#散歩 など）でフィルタリング可能です。</li>
+            </ul>
+        </section>
+
+        <section class="mb-8">
+            <h4 class="font-bold text-blue-600 mb-2 flex items-center gap-1">🛡 プライバシーとデータ</h4>
+            <div class="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg leading-relaxed">
+                本アプリで保存した写真や位置情報は、すべて<b>お客様のブラウザ内（IndexedDB）</b>のみに保存されます。サーバーへ送信されることはありませんので、オフラインでも閲覧可能です。
+            </div>
+        </section>
+
+        <section class="mb-8">
+            <h4 class="font-bold text-blue-600 mb-2 flex items-center gap-1">📲 機種変更時の手順</h4>
+            <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                データはブラウザ保存のため、端末を変えると消えてしまいます。新しい端末へ引き継ぐには以下の手順を行ってください。
+            </p>
+            <ol class="text-[11px] text-slate-600 space-y-2 list-decimal pl-4 mb-4">
+                <li>下のボタンから<b>「バックアップ用HTML」</b>をダウンロードします。</li>
+                <li>そのファイルを新しい端末へ送ります（メールやクラウド経由など）。</li>
+                <li>新しい端末でそのファイルを開くと、データが復元された状態で閲覧・利用できます。</li>
+            </ol>
+            <button onclick="exportAll()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
+                全データをバックアップ（機種変用）
+            </button>
+        </section>
+
+        <button onclick="closeHelp()" class="w-full py-3 border border-slate-200 text-slate-400 font-bold rounded-xl text-sm mt-2">閉じる</button>
+    </div>
+</div>
+
 <div id="input-modal" class="hidden fixed inset-0 bg-black/60 z-[4000] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
         <h3 class="text-lg font-bold mb-4 text-slate-800">メモを入力</h3>
-        <textarea id="memo-textarea" rows="5" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="内容を入力してください（改行できます） #タグもOK"></textarea>
+        <textarea id="memo-textarea" rows="5" class="w-full p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="内容を入力（改行OK） #タグ"></textarea>
         <div class="flex gap-3 mt-6">
             <button onclick="closeInputModal()" class="flex-1 py-3 text-slate-400 font-bold text-sm">キャンセル</button>
-            <button id="submit-memo-btn" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100">保存する</button>
+            <button id="submit-memo-btn" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm">保存する</button>
         </div>
     </div>
 </div>
@@ -103,22 +121,17 @@
 </div>
 
 <script>
-    let db, map, markers = {};
-    let tempImgData = null;
-
+    let db, map, markers = {}, tempImgData = null;
     const request = indexedDB.open("PocketMemo_vFinal", 1);
     request.onupgradeneeded = e => e.target.result.createObjectStore("memos", { keyPath: "id" });
     request.onsuccess = e => { db = e.target.result; initMap(); load(); };
 
     function initMap() {
         map = L.map('map', { zoomControl: true }).setView([35.68, 139.76], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OSM'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     }
 
     function triggerInput(type) { document.getElementById(type === 'camera' ? 'file-camera' : 'file-folder').click(); }
-
     async function processFile(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -127,7 +140,6 @@
         reader.onload = e => openInputModal(e.target.result, 'image');
         reader.readAsDataURL(file);
     }
-
     function addTextMemo() { openInputModal(null, 'text'); }
     function getGPSOnly() { openInputModal(null, 'gps'); }
 
@@ -138,17 +150,14 @@
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('memo-textarea').focus();
     }
+    function closeInputModal() { document.getElementById('input-modal').classList.add('hidden'); }
+    function openHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
+    function closeHelp() { document.getElementById('help-modal').classList.add('hidden'); }
 
-    function closeInputModal() {
-        document.getElementById('input-modal').classList.add('hidden');
-    }
-
-    // 保存実行処理
     document.getElementById('submit-memo-btn').onclick = async function() {
         const memoText = document.getElementById('memo-textarea').value;
         closeInputModal();
         document.getElementById('loading').classList.remove('hidden');
-        
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
             let addr = "住所取得中...";
@@ -157,26 +166,13 @@
                 const json = await res.json();
                 addr = json.display_name.replace("日本, ", "");
             } catch(e) {}
-
-            const entry = { 
-                id: Date.now(), 
-                img: tempImgData, 
-                text: memoText, 
-                date: new Date().toLocaleString(), 
-                address: addr, 
-                lat: latitude, 
-                lng: longitude 
-            };
-            
+            const entry = { id: Date.now(), img: tempImgData, text: memoText, date: new Date().toLocaleString(), address: addr, lat: latitude, lng: longitude };
             db.transaction("memos", "readwrite").objectStore("memos").add(entry);
             render(entry);
             updateTags();
             map.setView([latitude, longitude], 16);
             document.getElementById('loading').classList.add('hidden');
-        }, () => { 
-            alert("GPSをオンにしてください"); 
-            document.getElementById('loading').classList.add('hidden'); 
-        }, {enableHighAccuracy: true});
+        }, () => { alert("GPSを確認してください"); document.getElementById('loading').classList.add('hidden'); }, {enableHighAccuracy: true});
     };
 
     function load() { 
@@ -184,11 +180,7 @@
             const memos = e.target.result;
             memos.forEach(render); 
             updateTags();
-            // 最新のピンの位置に遷移
-            if(memos.length > 0) {
-                const latest = memos[memos.length - 1];
-                map.setView([latest.lat, latest.lng], 15);
-            }
+            if(memos.length > 0) map.setView([memos[memos.length-1].lat, memos[memos.length-1].lng], 15);
         }; 
     }
 
@@ -197,72 +189,27 @@
         const card = document.createElement('div');
         card.className = 'post-card';
         card.id = `post-${entry.id}`;
-        
         const media = entry.img ? `<img src="${entry.img}" class="thumb" onclick="zoom('${entry.img}')">` : "";
         const saveBtn = entry.img ? `<button onclick="downloadOne(${entry.id})" class="card-btn text-blue-500">保存</button>` : "";
-
-        card.innerHTML = `
-            ${media}
-            <div class="info">
-                <div class="flex justify-between items-start mb-1">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase">${entry.date}</span>
-                    <span class="text-[8px] text-blue-400 font-mono">LAT:${entry.lat.toFixed(4)} LNG:${entry.lng.toFixed(4)}</span>
-                </div>
-                <span class="text-[10px] text-slate-600 block mb-1">📍 ${entry.address}</span>
-                <div class="memo-text">${entry.text}</div>
-            </div>
-            <div class="btn-group">
-                <button onclick="shareMemo(${entry.id})" class="card-btn text-slate-400">共有</button>
-                ${saveBtn}
-                <button onclick="del(${entry.id})" class="card-btn text-red-400">削除</button>
-            </div>
-        `;
+        card.innerHTML = `${media}<div class="info"><div class="flex justify-between items-start mb-1"><span class="text-[10px] text-slate-400 font-bold uppercase">${entry.date}</span><span class="text-[8px] text-blue-400 font-mono">LAT:${entry.lat.toFixed(4)} LNG:${entry.lng.toFixed(4)}</span></div><span class="text-[10px] text-slate-600 block mb-1">📍 ${entry.address}</span><div class="memo-text">${entry.text}</div></div><div class="btn-group"><button onclick="shareMemo(${entry.id})" class="card-btn text-slate-400">共有</button>${saveBtn}<button onclick="del(${entry.id})" class="card-btn text-red-400">削除</button></div>`;
         container.insertBefore(card, container.firstChild);
-
-        // 全てのピンを地図に配置
-        const marker = L.marker([entry.lat, entry.lng]).addTo(map).on('click', () => {
+        markers[entry.id] = L.marker([entry.lat, entry.lng]).addTo(map).on('click', () => {
             document.getElementById(`post-${entry.id}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
             document.querySelectorAll('.post-card').forEach(c => c.classList.remove('highlight'));
             document.getElementById(`post-${entry.id}`).classList.add('highlight');
         });
-        markers[entry.id] = marker;
     }
 
     function zoom(src) { document.getElementById('full-img').src = src; document.getElementById('overlay').classList.remove('hidden'); }
-    function openHelp() { if(confirm("バックアップを出力しますか？")) exportAll(); }
-
-    function del(id) { 
-        if(confirm("削除しますか？")){ 
-            db.transaction("memos","readwrite").objectStore("memos").delete(id); 
-            document.getElementById(`post-${id}`).remove(); 
-            if(markers[id]) map.removeLayer(markers[id]); 
-            updateTags(); 
-        } 
-    }
-
-    async function shareMemo(id) {
-        db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = async e => {
-            const item = e.target.result;
-            const text = `${item.text}\n📍 ${item.address}`;
-            if (item.img && navigator.share) {
-                const blob = await (await fetch(item.img)).blob();
-                const file = new File([blob], `memo.jpg`, { type: "image/jpeg" });
-                navigator.share({ files: [file], text: text });
-            } else { navigator.share({ text: text }); }
-        };
-    }
-
-    function downloadOne(id) {
-        db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = e => {
-            const a = document.createElement('a'); a.href = e.target.result.img; a.download = `memo_${id}.jpg`; a.click();
-        };
-    }
-
+    function del(id) { if(confirm("削除しますか？")){ db.transaction("memos","readwrite").objectStore("memos").delete(id); document.getElementById(`post-${id}`).remove(); if(markers[id]) map.removeLayer(markers[id]); updateTags(); } }
+    function downloadOne(id) { db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = e => { const a = document.createElement('a'); a.href = e.target.result.img; a.download = `memo_${id}.jpg`; a.click(); }; }
+    
     function exportAll() {
         db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => {
             const data = JSON.stringify(e.target.result);
             const blob = new Blob([document.documentElement.outerHTML.replace('load()', `(function(){let d=${data}; d.forEach(render);})()`) ], {type: 'text/html'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "memo_backup.html"; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "pocket_memo_backup.html"; a.click();
+            alert("バックアップファイルをダウンロードしました。これを新しい端末で開くとデータが復元されます。");
         };
     }
 
@@ -274,7 +221,6 @@
             card.style.display = (content.includes(q) && (tag === "" || content.includes(tag))) ? 'block' : 'none';
         });
     }
-
     function updateTags() {
         db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => {
             const tags = new Set();
@@ -282,9 +228,7 @@
             const select = document.getElementById('tag-list');
             select.innerHTML = '<option value="">タグ</option>';
             tags.forEach(t => { 
-                const opt = document.createElement('option'); opt.value = t; 
-                opt.textContent = t.length > 8 ? t.substring(0, 8) + '..' : t; 
-                select.appendChild(opt); 
+                const opt = document.createElement('option'); opt.value = t; opt.textContent = t.length > 8 ? t.substring(0, 8) + '..' : t; select.appendChild(opt); 
             });
         };
     }
