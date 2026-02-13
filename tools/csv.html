@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1200, initial-scale=1" />
+  <title>CSV/TSV 何でも屋 PRO | PocketPortal</title>
+
+  <!-- Google tag (gtag.js) : color-picker.html と同じ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-9V96DZHTH1');
+  </script>
+
+  <!-- Google AdSense : color-picker.html と同じ -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094" crossorigin="anonymous"></script>
+
+  <!-- 同じフォルダに置く -->
+  <script src="./papaparse.min.js"></script>
+  <script src="./encoding.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#070A12; --fg:#E9EEFF; --muted:#9AA4C0;
+      --card: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.12);
+      --accent:#7aa0ff;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --ok:#66ffcc;
+
+      --ctl-bg: rgba(255,255,255,.06);
+      --ctl-bd: rgba(255,255,255,.14);
+      --ctl-bg-2: rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    /* ★重要：フォームUIをダークとして描かせる（Chrome/Edgeで効く） */
+    body{ color-scheme: dark; }
+
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 600px at 50% -200px, rgba(120,160,255,.10), transparent 60%),
+        var(--bg);
+      color:var(--fg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      letter-spacing:.02em;
+    }
+
+    /* ===== PocketPortal header (簡易) ===== */
+    .topbar{
+      position: sticky; top:0; z-index: 50;
+      background: rgba(10,14,26,.78);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .topbar .inner{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800;
+      color: var(--fg);
+      text-decoration:none;
+    }
+    .brand .home{
+      display:inline-flex;
+      width:30px; height:30px;
+      border-radius:10px;
+      align-items:center; justify-content:center;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+    .navlink{
+      font-size:12px;
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+    }
+    .navlink:hover{ color: var(--fg); border-color: rgba(122,160,255,.35); }
+
+    /* ===== Layout ===== */
+    .wrap{max-width:1400px; margin:0 auto; padding:16px}
+    h1{font-size:18px; margin:6px 0 14px}
+    h2{font-size:14px; margin:0 0 10px; color:var(--muted)}
+    .grid{display:grid; gap:12px; grid-template-columns: 600px 1fr;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      min-width:0;
+    }
+    .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px}
+
+    /* ===== Controls ===== */
+    input, select, button, textarea{
+      background: var(--ctl-bg);
+      border:1px solid var(--ctl-bd);
+      color:var(--fg);
+      border-radius:10px;
+      padding:10px;
+      outline:none;
+      width:100%;
+    }
+
+    /* ★ここが本題：select / option / multiple の見え方を強制 */
+    select{
+      background: var(--ctl-bg-2);
+      color: var(--fg);
+    }
+    /* ドロップダウンの候補（効く環境ではこれで黒くなる） */
+    select option{
+      background: #0b1020;
+      color: var(--fg);
+    }
+    /* 複数選択リストボックス（dedupeCols）を確実に黒に */
+    select[multiple]{
+      background: #0b1020;
+      color: var(--fg);
+      border-color: rgba(255,255,255,.16);
+    }
+    select[multiple] option{
+      background: #0b1020;
+      color: var(--fg);
+    }
+    /* 選択中の視認性 */
+    select option:checked{
+      background: rgba(122,160,255,.35);
+      color: var(--fg);
+    }
+
+    textarea{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;}
+    select, button{cursor:pointer}
+    button{
+      background: rgba(122,160,255,.14);
+      border-color: rgba(122,160,255,.35);
+    }
+    button.secondary{ background: rgba(255,255,255,.06); border-color: var(--line); }
+    button.tiny{ width:auto; padding:7px 10px; border-radius:999px; font-size:12px; }
+
+    .mini{font-size:12px; color:var(--muted)}
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      font-size:12px; color:var(--muted);
+    }
+    .pill.ok{border-color: rgba(102,255,204,.35); color: var(--ok)}
+    .pill.warn{border-color: rgba(255,204,102,.35); color: var(--warn)}
+    .pill.bad{border-color: rgba(255,107,107,.35); color: var(--bad)}
+    .split{height:1px; background: var(--line); margin:12px 0}
+
+    .two{display:grid; gap:10px; grid-template-columns: 1fr 1fr;}
+    .three{display:grid; gap:10px; grid-template-columns: 1fr 1fr 1fr;}
+
+    /* Drop zone */
+    .dropzone{
+      border: 1px dashed rgba(122,160,255,.45);
+      background: rgba(122,160,255,.08);
+      border-radius:14px;
+      padding:12px;
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      user-select:none;
+    }
+    .dropzone.dragover{
+      border-color: rgba(102,255,204,.55);
+      background: rgba(102,255,204,.08);
+    }
+
+    /* Column list */
+    .list{
+      max-height:280px;
+      overflow:auto;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .colItem{
+      display:grid;
+      grid-template-columns: 22px 1fr 1fr 34px;
+      gap:8px;
+      padding:8px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      align-items:center;
+      min-width:0;
+    }
+    .colItem:last-child{border-bottom:none}
+    .colItem input[type="checkbox"]{width:18px; height:18px}
+    .drag{
+      width:28px; height:28px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+      cursor:grab;
+      user-select:none;
+      font-size:14px;
+      color:var(--muted);
+    }
+    .colItem.dragging{opacity:.6}
+    .colName{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+    .colRename{padding:8px}
+    .colIndex{font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+    /* chips */
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.10);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      display:inline-flex; gap:8px; align-items:center;
+      max-width:100%;
+    }
+    .chip span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:520px}
+    .chip button{
+      width:auto; padding:4px 8px; border-radius:999px; font-size:12px;
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.12);
+    }
+
+    /* Preview */
+    table{width:100%; border-collapse:collapse; font-size:12px}
+    th,td{
+      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:8px;
+      vertical-align:top;
+      white-space:nowrap;
+      max-width:260px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    th{
+      color:var(--muted); font-weight:600; position:sticky; top:0;
+      background: rgba(7,10,18,.95); backdrop-filter: blur(4px);
+    }
+    .tablewrap{overflow:auto; max-height:680px; border:1px solid var(--line); border-radius:12px}
+
+    /* Sponsor */
+    .sponsorBox{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:10px;
+      background: rgba(255,255,255,.03);
+    }
+    .footer{
+      padding:18px 0 26px;
+      text-align:center;
+      color: var(--muted);
+      font-size:12px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="topbar">
+    <div class="inner">
+      <a class="brand" href="../index.html">
+        <span class="home">🏠</span>
+        <span>PocketPortal</span>
+      </a>
+      <a class="navlink" href="./index.html">Web便利ツール集へ</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <h1>CSV/TSV 何でも屋 PRO（安定版：D&D対応・同梱・PC想定）</h1>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card">
+        <h2>1) 取り込み</h2>
+
+        <div id="dropzone" class="dropzone">
+          <div>
+            <div class="mini"><b>ここにCSV/TSVをドラッグ＆ドロップ</b>（またはファイル選択）</div>
+            <div class="mini">※ サーバ送信なし（ブラウザ内だけで処理）</div>
+          </div>
+          <div class="mini" id="dropHint">Drop</div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div style="width:100%">
+            <label>ファイル選択（.csv / .tsv / .txt）</label>
+            <input id="file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" />
+          </div>
+        </div>
+
+        <div class="two" style="margin-top:10px">
+          <div>
+            <label>読み込み文字コード</label>
+            <select id="inEncoding">
+              <option value="utf-8" selected>UTF-8</option>
+              <option value="shift_jis">Shift_JIS</option>
+              <option value="euc-jp">EUC-JP</option>
+              <option value="utf-16le">UTF-16LE</option>
+              <option value="utf-16be">UTF-16BE</option>
+            </select>
+          </div>
+          <div>
+            <label>読み込み区切り</label>
+            <select id="inDelimiter">
+              <option value="auto" selected>自動推定</option>
+              <option value=",">カンマ (,)</option>
+              <option value="\t">タブ (TSV)</option>
+              <option value=";">セミコロン (;)</option>
+              <option value="|">パイプ (|)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="two" style="margin-top:10px">
+          <div>
+            <label>1行目はヘッダー？</label>
+            <select id="hasHeader">
+              <option value="yes" selected>はい（1行目を項目名）</option>
+              <option value="no">いいえ（col_1...を付与）</option>
+            </select>
+          </div>
+          <div>
+            <label>空行をスキップ</label>
+            <select id="skipEmpty">
+              <option value="yes" selected>はい</option>
+              <option value="no">いいえ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="split"></div>
+
+        <div class="row">
+          <button id="loadBtn">読み込み</button>
+          <button id="clearBtn" class="secondary">クリア</button>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <span class="pill" id="statusPill">未読み込み</span>
+          <span class="pill" id="metaPill">-</span>
+        </div>
+
+        <div class="split"></div>
+
+        <h2>2) 列（抽出 / 改名 / 並び替え）</h2>
+        <div class="row">
+          <button id="allCols" class="secondary tiny">全選択</button>
+          <button id="noneCols" class="secondary tiny">全解除</button>
+          <button id="invertCols" class="secondary tiny">反転</button>
+          <button id="resetOrder" class="secondary tiny">順序リセット</button>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="list" id="colList"></div>
+          <div class="mini" style="margin-top:6px">ドラッグで列順変更。チェックOFFは出力対象外。</div>
+        </div>
+
+        <div class="two" style="margin-top:10px">
+          <div>
+            <label>No.列を先頭に追加</label>
+            <select id="addNo">
+              <option value="no" selected>追加しない</option>
+              <option value="yes">追加する（1,2,3...）</option>
+            </select>
+          </div>
+          <div>
+            <label>No.列名</label>
+            <input id="noName" type="text" value="No." />
+          </div>
+        </div>
+
+        <div class="split"></div>
+
+        <h2>3) クレンジング / 置換</h2>
+        <div class="three">
+          <div>
+            <label>前後空白トリム（全セル）</label>
+            <select id="trimAll">
+              <option value="no" selected>しない</option>
+              <option value="yes">する</option>
+            </select>
+          </div>
+          <div>
+            <label>空行を除去（全列が空）</label>
+            <select id="dropEmptyRows">
+              <option value="no" selected>しない</option>
+              <option value="yes">する</option>
+            </select>
+          </div>
+          <div>
+            <label>空列を除去（出力対象の中で全行が空）</label>
+            <select id="dropEmptyOutCols">
+              <option value="no" selected>しない</option>
+              <option value="yes">する</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="two">
+            <div>
+              <label>置換：検索</label>
+              <input id="findText" placeholder="例: ㈱ / 全角スペース など" />
+            </div>
+            <div>
+              <label>置換：置換後</label>
+              <input id="replaceText" placeholder="例: 株式会社 / 半角スペース" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:8px">
+            <div style="width:200px">
+              <label>正規表現</label>
+              <select id="replaceRegex">
+                <option value="no" selected>OFF</option>
+                <option value="yes">ON</option>
+              </select>
+            </div>
+            <div style="width:260px">
+              <label>対象列</label>
+              <select id="replaceTarget"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="split"></div>
+
+        <h2>4) フィルタ</h2>
+        <div class="row">
+          <div style="width:160px">
+            <label>結合</label>
+            <select id="filterMode">
+              <option value="AND" selected>AND</option>
+              <option value="OR">OR</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <select id="filterCol" style="width:220px"></select>
+          <select id="filterOp" style="width:220px">
+            <option value="eq">=（一致）</option>
+            <option value="neq">!=（不一致）</option>
+            <option value="contains" selected>含む</option>
+            <option value="ncontains">含まない</option>
+            <option value="starts">前方一致</option>
+            <option value="ends">後方一致</option>
+            <option value="regex">正規表現</option>
+            <option value="gt">&gt;（数値）</option>
+            <option value="gte">&gt;=（数値）</option>
+            <option value="lt">&lt;（数値）</option>
+            <option value="lte">&lt;=（数値）</option>
+            <option value="empty">空</option>
+            <option value="nempty">空でない</option>
+          </select>
+          <input id="filterVal" style="width:220px" placeholder="値（regex/数値）" />
+          <button id="addFilterBtn" class="secondary tiny">追加</button>
+          <button id="clearFiltersBtn" class="secondary tiny">全削除</button>
+        </div>
+
+        <div class="chips" style="margin-top:10px" id="filterChips"></div>
+
+        <div class="split"></div>
+
+        <h2>5) ソート</h2>
+        <div class="row">
+          <select id="sortCol" style="width:220px"></select>
+          <select id="sortDir" style="width:160px">
+            <option value="asc" selected>昇順</option>
+            <option value="desc">降順</option>
+          </select>
+          <select id="sortAs" style="width:160px">
+            <option value="text" selected>文字</option>
+            <option value="number">数値</option>
+          </select>
+          <button id="addSortBtn" class="secondary tiny">追加</button>
+          <button id="clearSortsBtn" class="secondary tiny">全削除</button>
+        </div>
+        <div class="chips" style="margin-top:10px" id="sortChips"></div>
+
+        <div class="split"></div>
+
+        <h2>6) 重複削除</h2>
+        <div class="two">
+          <div>
+            <label>重複削除</label>
+            <select id="dedupeMode">
+              <option value="none" selected>しない</option>
+              <option value="all">全列で重複削除</option>
+              <option value="bycols">指定列で重複削除</option>
+            </select>
+          </div>
+          <div>
+            <label>指定列（bycols時）</label>
+            <select id="dedupeCols" multiple size="7"></select>
+            <div class="mini">Ctrl/Shiftで複数選択（環境により）</div>
+          </div>
+        </div>
+
+        <div class="split"></div>
+
+        <h2>7) 出力</h2>
+        <div class="three">
+          <div>
+            <label>出力区切り</label>
+            <select id="outDelimiter">
+              <option value=",">カンマ (,)</option>
+              <option value="\t">タブ (TSV)</option>
+              <option value=";">セミコロン (;)</option>
+              <option value="|">パイプ (|)</option>
+            </select>
+          </div>
+          <div>
+            <label>出力文字コード</label>
+            <select id="outEncoding">
+              <option value="utf-8-bom" selected>UTF-8 with BOM（Excel向け）</option>
+              <option value="utf-8">UTF-8（BOMなし）</option>
+              <option value="shift_jis">Shift_JIS</option>
+              <option value="euc-jp">EUC-JP</option>
+            </select>
+          </div>
+          <div>
+            <label>ファイル名</label>
+            <input id="outName" value="export.csv" />
+          </div>
+        </div>
+
+        <div class="two" style="margin-top:10px">
+          <div>
+            <label>分割エクスポート</label>
+            <select id="splitExport">
+              <option value="no" selected>しない</option>
+              <option value="yes">する（N行ごと）</option>
+            </select>
+          </div>
+          <div>
+            <label>分割：1ファイルあたり行数（ヘッダ除く）</label>
+            <input id="splitRows" type="number" min="100" step="100" value="50000" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button id="updatePreviewBtn" class="secondary">プレビュー更新</button>
+          <button id="copyTSVBtn" class="secondary">抽出結果をTSVでコピー</button>
+          <button id="downloadBtn">抽出して保存</button>
+        </div>
+
+        <!-- 楽天アフィ（color-picker.html を参考に） -->
+        <div class="sponsorBox">
+          <div class="mini" style="margin-bottom:8px; text-transform:uppercase; letter-spacing:.12em;">Sponsor Link</div>
+          <div style="display:flex; justify-content:center;">
+            <div style="max-width:640px; width:100%;">
+              <script type="text/javascript">
+                rakuten_design="slide";
+                rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";
+                rakuten_items="ctsmatch";
+                rakuten_genreId="0";
+                rakuten_size="600x200";
+                rakuten_target="_blank";
+                rakuten_theme="gray";
+                rakuten_border="off";
+                rakuten_auto_mode="on";
+                rakuten_genre_title="off";
+                rakuten_recommend="on";
+                rakuten_ts="1770130145196";
+              </script>
+              <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+
+              <div style="height:10px"></div>
+
+              <script type="text/javascript">
+                rakuten_design="slide";
+                rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";
+                rakuten_items="ranking";
+                rakuten_genreId="0";
+                rakuten_size="600x200";
+                rakuten_target="_blank";
+                rakuten_theme="gray";
+                rakuten_border="off";
+                rakuten_auto_mode="on";
+                rakuten_genre_title="off";
+                rakuten_recommend="on";
+                rakuten_ts="1770130169366";
+              </script>
+              <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="card">
+        <h2>プレビュー</h2>
+
+        <div class="two">
+          <div>
+            <label>プレビュー最大行数</label>
+            <input id="previewMaxRows" type="number" min="10" step="10" value="100" />
+          </div>
+          <div>
+            <label>プレビュー検索（表示中だけ絞る）</label>
+            <input id="previewSearch" placeholder="キーワード" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <span class="pill" id="previewPill">-</span>
+          <span class="pill" id="transformPill">-</span>
+        </div>
+
+        <div class="split"></div>
+
+        <div class="tablewrap">
+          <table id="previewTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="footer">© 2026 PocketPortal Tools</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  function guardLibs(){
+    if(typeof Papa === "undefined"){
+      alert("PapaParse が読み込めていません。papaparse.min.js を csv.html と同じフォルダに置き、<script src=\"./papaparse.min.js\"> を確認してください。");
+      return false;
+    }
+    if(typeof Encoding === "undefined"){
+      alert("Encoding.js が読み込めていません。encoding.min.js を csv.html と同じフォルダに置き、<script src=\"./encoding.min.js\"> を確認してください。");
+      return false;
+    }
+    return true;
+  }
+
+  var originalHeaders = [];
+  var originalRows = [];
+  var columns = [];
+  var filters = [];
+  var sorts = [];
+
+  function $(id){ return document.getElementById(id); }
+
+  var statusPill = $("statusPill");
+  var metaPill = $("metaPill");
+  var previewPill = $("previewPill");
+  var transformPill = $("transformPill");
+
+  var colList = $("colList");
+  var replaceTarget = $("replaceTarget");
+  var filterCol = $("filterCol");
+  var sortCol = $("sortCol");
+  var dedupeCols = $("dedupeCols");
+
+  var filterChips = $("filterChips");
+  var sortChips = $("sortChips");
+
+  var thead = $("previewTable").querySelector("thead");
+  var tbody = $("previewTable").querySelector("tbody");
+
+  function setPill(el, text, kind){
+    el.className = "pill" + (kind ? (" " + kind) : "");
+    el.textContent = text;
+  }
+  function safe(v){ return (v === null || v === undefined) ? "" : String(v); }
+  function normalizeDelimiter(v){ return (v === "\\t") ? "\t" : v; }
+
+  function escapeHtml(s){
+    var x = safe(s);
+    x = x.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    return x;
+  }
+  function bytesToHuman(b){
+    var units = ["B","KB","MB","GB"];
+    var x = b, i = 0;
+    while(x >= 1024 && i < units.length-1){ x = x/1024; i++; }
+    return x.toFixed(i===0?0:2) + " " + units[i];
+  }
+  function guessDelimiter(text){
+    var sampleLines = text.split(/\r\n|\n|\r/).slice(0, 30).filter(function(l){ return l.trim().length > 0; });
+    var candidates = [",", "\t", ";", "|"];
+    var bestD = ",", bestScore = -1e18;
+
+    for(var ci=0; ci<candidates.length; ci++){
+      var d = candidates[ci];
+      var counts = [];
+      for(var li=0; li<sampleLines.length; li++){
+        var line = sampleLines[li].replace(/"([^"]|"")*"/g, "\"\"");
+        counts.push(line.split(d).length);
+      }
+      var sum = 0;
+      for(var k=0;k<counts.length;k++) sum += counts[k];
+      var avg = sum / Math.max(1, counts.length);
+
+      var varSum = 0;
+      for(var k2=0;k2<counts.length;k2++){
+        var diff = counts[k2] - avg;
+        var varSum2 = diff*diff;
+        varSum += varSum2;
+      }
+      var variance = varSum / Math.max(1, counts.length);
+      var score = avg * 10 - variance;
+      if(score > bestScore){ bestScore = score; bestD = d; }
+    }
+    return bestD;
+  }
+
+  function readFileAsText(file, encoding){
+    return file.arrayBuffer().then(function(buf){
+      try{
+        var dec = new TextDecoder(encoding, { fatal:false });
+        return dec.decode(buf);
+      }catch(e){
+        var dec2 = new TextDecoder("utf-8", { fatal:false });
+        return dec2.decode(buf);
+      }
+    });
+  }
+
+  function getColById(id){
+    for(var i=0;i<columns.length;i++){
+      if(columns[i].id === id) return columns[i];
+    }
+    return null;
+  }
+
+  function selectedCols(){
+    return columns.filter(function(c){ return c.selected; });
+  }
+
+  function rebuildSelects(){
+    var opts = columns.map(function(c){
+      return { v:String(c.id), t:(c.outName || c.name) };
+    });
+
+    function fill(sel, withAll){
+      sel.innerHTML = "";
+      if(withAll){
+        var o0 = document.createElement("option");
+        o0.value = "__ALL__";
+        o0.textContent = "（全列）";
+        sel.appendChild(o0);
+      }
+      for(var i=0;i<opts.length;i++){
+        var o = document.createElement("option");
+        o.value = opts[i].v;
+        o.textContent = opts[i].t;
+        sel.appendChild(o);
+      }
+    }
+
+    fill(replaceTarget, true);
+    fill(filterCol, false);
+    fill(sortCol, false);
+
+    dedupeCols.innerHTML = "";
+    for(var j=0;j<columns.length;j++){
+      var op = document.createElement("option");
+      op.value = String(columns[j].id);
+      op.textContent = columns[j].outName || columns[j].name;
+      dedupeCols.appendChild(op);
+    }
+  }
+
+  function renderColumns(){
+    colList.innerHTML = "";
+    var frag = document.createDocumentFragment();
+
+    for(var i=0;i<columns.length;i++){
+      (function(c, idx){
+        var row = document.createElement("div");
+        row.className = "colItem";
+        row.dataset.colId = String(c.id);
+
+        row.innerHTML =
+          '<input type="checkbox" ' + (c.selected ? "checked" : "") + ' data-role="select" />' +
+          '<div>' +
+            '<div class="colName"><b>' + escapeHtml(c.name) + '</b></div>' +
+            '<div class="colIndex">orig:' + c.origIndex + ' / now:' + idx + '</div>' +
+          '</div>' +
+          '<input class="colRename" data-role="rename" value="' + escapeHtml(c.outName) + '" placeholder="出力列名（空なら元名）" />' +
+          '<div class="drag" title="ドラッグで並び替え" data-role="drag" draggable="true">::</div>';
+
+        row.querySelector('[data-role="select"]').addEventListener("change", function(e){
+          c.selected = !!e.target.checked;
+          rebuildSelects();
+        });
+
+        row.querySelector('[data-role="rename"]').addEventListener("input", function(e){
+          c.outName = e.target.value;
+          rebuildSelects();
+        });
+
+        var handle = row.querySelector('[data-role="drag"]');
+        handle.addEventListener("dragstart", function(e){
+          row.classList.add("dragging");
+          e.dataTransfer.setData("text/plain", String(c.id));
+          e.dataTransfer.effectAllowed = "move";
+        });
+        handle.addEventListener("dragend", function(){ row.classList.remove("dragging"); });
+
+        row.addEventListener("dragover", function(e){ e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+
+        row.addEventListener("drop", function(e){
+          e.preventDefault();
+          var srcId = Number(e.dataTransfer.getData("text/plain"));
+          var dstId = Number(row.dataset.colId);
+          if(!srcId || !dstId || srcId === dstId) return;
+
+          var si = columns.findIndex(function(x){ return x.id === srcId; });
+          var di = columns.findIndex(function(x){ return x.id === dstId; });
+
+          var moved = columns.splice(si, 1)[0];
+          columns.splice(di, 0, moved);
+
+          renderColumns();
+          rebuildSelects();
+        });
+
+        frag.appendChild(row);
+      })(columns[i], i);
+    }
+    colList.appendChild(frag);
+  }
+
+  function opLabel(op){
+    var m = {
+      eq:"=", neq:"!=", contains:"含む", ncontains:"含まない",
+      starts:"前方一致", ends:"後方一致", regex:"regex",
+      gt:">", gte:">=", lt:"<", lte:"<=", empty:"空", nempty:"空でない"
+    };
+    return m[op] || op;
+  }
+  function renderFilterChips(){
+    filterChips.innerHTML = "";
+    for(var i=0;i<filters.length;i++){
+      (function(f, idx){
+        var col = getColById(f.colId);
+        var name = col ? (col.outName || col.name) : "?";
+        var label = (name + " " + opLabel(f.op) + " " + safe(f.val)).trim();
+
+        var chip = document.createElement("span");
+        chip.className = "chip";
+
+        var span = document.createElement("span");
+        span.textContent = label;
+
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "削除";
+        btn.addEventListener("click", function(){
+          filters.splice(idx, 1);
+          renderFilterChips();
+        });
+
+        chip.appendChild(span);
+        chip.appendChild(btn);
+        filterChips.appendChild(chip);
+      })(filters[i], i);
+    }
+  }
+  function renderSortChips(){
+    sortChips.innerHTML = "";
+    for(var i=0;i<sorts.length;i++){
+      (function(s, idx){
+        var col = getColById(s.colId);
+        var name = col ? (col.outName || col.name) : "?";
+        var label = name + " " + s.dir.toUpperCase() + " (" + s.as + ")";
+
+        var chip = document.createElement("span");
+        chip.className = "chip";
+
+        var span = document.createElement("span");
+        span.textContent = label;
+
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "削除";
+        btn.addEventListener("click", function(){
+          sorts.splice(idx, 1);
+          renderSortChips();
+        });
+
+        chip.appendChild(span);
+        chip.appendChild(btn);
+        sortChips.appendChild(chip);
+      })(sorts[i], i);
+    }
+  }
+
+  function evalFilter(f, row){
+    var col = getColById(f.colId);
+    if(!col) return true;
+
+    var v = safe(row[col.origIndex]);
+    var op = f.op;
+    var val = safe(f.val);
+
+    var t = v.toLowerCase();
+    var q = val.toLowerCase();
+
+    var numV = Number(v);
+    var numQ = Number(val);
+
+    if(op === "eq") return v === val;
+    if(op === "neq") return v !== val;
+    if(op === "contains") return t.indexOf(q) >= 0;
+    if(op === "ncontains") return t.indexOf(q) < 0;
+    if(op === "starts") return t.indexOf(q) === 0;
+    if(op === "ends") return t.lastIndexOf(q) === (t.length - q.length);
+    if(op === "regex"){ try{ return (new RegExp(val)).test(v); }catch(e){ return false; } }
+    if(op === "gt") return isFinite(numV) && isFinite(numQ) && numV > numQ;
+    if(op === "gte") return isFinite(numV) && isFinite(numQ) && numV >= numQ;
+    if(op === "lt") return isFinite(numV) && isFinite(numQ) && numV < numQ;
+    if(op === "lte") return isFinite(numV) && isFinite(numQ) && numV <= numQ;
+    if(op === "empty") return v.trim() === "";
+    if(op === "nempty") return v.trim() !== "";
+    return true;
+  }
+
+  function multiCompare(rowA, rowB, keyDefs){
+    for(var i=0;i<keyDefs.length;i++){
+      var k = keyDefs[i];
+      var col = getColById(k.colId);
+      if(!col) continue;
+
+      var a = safe(rowA[col.origIndex]);
+      var b = safe(rowB[col.origIndex]);
+
+      var cmp = 0;
+      if(k.as === "number"){
+        var na = Number(a), nb = Number(b);
+        var fa = isFinite(na), fb = isFinite(nb);
+        if(fa && fb) cmp = (na === nb) ? 0 : (na < nb ? -1 : 1);
+        else if(fa && !fb) cmp = -1;
+        else if(!fa && fb) cmp = 1;
+        else cmp = a.localeCompare(b);
+      }else{
+        cmp = a.localeCompare(b);
+      }
+      if(cmp !== 0) return (k.dir === "desc") ? -cmp : cmp;
+    }
+    return 0;
+  }
+
+  function applyTransforms(){
+    if(!originalHeaders.length) throw new Error("未読み込みです。");
+
+    var data = originalRows.map(function(r){ return r.slice(); });
+    var steps = [];
+
+    if($("trimAll").value === "yes"){
+      data = data.map(function(r){ return r.map(function(c){ return safe(c).trim(); }); });
+      steps.push("trim");
+    }
+
+    var find = $("findText").value || "";
+    if(find.length > 0){
+      var rep = $("replaceText").value || "";
+      var useRegex = $("replaceRegex").value === "yes";
+      var target = $("replaceTarget").value;
+      var re = null;
+
+      if(useRegex){ try{ re = new RegExp(find, "g"); }catch(e){ throw new Error("置換：正規表現が無効です。"); } }
+
+      function applyToCell(s){
+        var str = safe(s);
+        return useRegex ? str.replace(re, rep) : str.split(find).join(rep);
+      }
+
+      if(target === "__ALL__"){
+        data = data.map(function(r){ return r.map(applyToCell); });
+      }else{
+        var col = getColById(Number(target));
+        if(col){
+          data = data.map(function(r){
+            if(col.origIndex < r.length) r[col.origIndex] = applyToCell(r[col.origIndex]);
+            return r;
+          });
+        }
+      }
+      steps.push("replace");
+    }
+
+    if($("dropEmptyRows").value === "yes"){
+      data = data.filter(function(r){
+        for(var i=0;i<r.length;i++) if(safe(r[i]).trim() !== "") return true;
+        return false;
+      });
+      steps.push("dropEmptyRows");
+    }
+
+    if(filters.length){
+      var mode = $("filterMode").value;
+      data = data.filter(function(r){
+        var evals = filters.map(function(f){ return evalFilter(f, r); });
+        if(mode === "AND"){
+          for(var i=0;i<evals.length;i++) if(!evals[i]) return false;
+          return true;
+        }else{
+          for(var j=0;j<evals.length;j++) if(evals[j]) return true;
+          return false;
+        }
+      });
+      steps.push("filter(" + mode + ")");
+    }
+
+    if(sorts.length){
+      var defs = sorts.map(function(s){ return {colId:s.colId, dir:s.dir, as:s.as}; });
+      data.sort(function(a,b){ return multiCompare(a,b,defs); });
+      steps.push("sort(" + sorts.length + ")");
+    }
+
+    var sel = selectedCols();
+    if(sel.length === 0) throw new Error("出力対象の列が0です。");
+
+    var outHdr = sel.map(function(c){
+      var nm = safe(c.outName).trim();
+      return nm ? nm : safe(c.name).trim();
+    });
+
+    var outRows = data.map(function(r){
+      return sel.map(function(c){ return safe(r[c.origIndex]); });
+    });
+
+    if($("dropEmptyOutCols").value === "yes"){
+      var keep = [];
+      for(var ci=0; ci<outHdr.length; ci++){
+        var allEmpty = true;
+        for(var ri=0; ri<outRows.length; ri++){
+          if(safe(outRows[ri][ci]).trim() !== ""){ allEmpty = false; break; }
+        }
+        if(!allEmpty) keep.push(ci);
+      }
+      outHdr = keep.map(function(i){ return outHdr[i]; });
+      outRows = outRows.map(function(rr){ return keep.map(function(i){ return rr[i]; }); });
+      steps.push("dropEmptyOutCols");
+    }
+
+    var dedupeMode = $("dedupeMode").value;
+    if(dedupeMode !== "none"){
+      var keyIdxs = [];
+      if(dedupeMode === "all"){
+        for(var ii=0; ii<outHdr.length; ii++) keyIdxs.push(ii);
+      }else{
+        var selected = Array.from(dedupeCols.selectedOptions).map(function(o){ return Number(o.value); });
+        if(selected.length === 0) throw new Error("重複削除: 指定列が未選択です。");
+
+        var outIds = sel.map(function(c){ return c.id; });
+        for(var k=0;k<selected.length;k++){
+          var pos = outIds.indexOf(selected[k]);
+          if(pos >= 0) keyIdxs.push(pos);
+        }
+        if(keyIdxs.length === 0) throw new Error("重複削除: 指定列が出力対象に含まれていません。");
+      }
+
+      var seen = new Set();
+      var ded = [];
+      for(var rrI=0; rrI<outRows.length; rrI++){
+        var rr = outRows[rrI];
+        var parts = [];
+        for(var ki=0; ki<keyIdxs.length; ki++) parts.push(safe(rr[keyIdxs[ki]]));
+        var key = parts.join("\u0001");
+        if(seen.has(key)) continue;
+        seen.add(key);
+        ded.push(rr);
+      }
+      outRows = ded;
+      steps.push("dedupe(" + dedupeMode + ")");
+    }
+
+    if($("addNo").value === "yes"){
+      var nn = safe($("noName").value).trim() || "No.";
+      outHdr = [nn].concat(outHdr);
+      outRows = outRows.map(function(r,i){ return [String(i+1)].concat(r); });
+      steps.push("No");
+    }
+
+    return { headers: outHdr, rows: outRows, steps: steps };
+  }
+
+  function renderPreview(headers, rows){
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    var trh = document.createElement("tr");
+    for(var i=0;i<headers.length;i++){
+      var th = document.createElement("th");
+      th.innerHTML = escapeHtml(headers[i]);
+      trh.appendChild(th);
+    }
+    thead.appendChild(trh);
+
+    var search = safe($("previewSearch").value).toLowerCase().trim();
+    var maxRows = Math.max(10, Number($("previewMaxRows").value || 100));
+
+    var shown = 0;
+    for(var r=0; r<rows.length && shown < maxRows; r++){
+      var row = rows[r];
+
+      if(search){
+        var hit = false;
+        for(var c=0;c<row.length;c++){
+          if(safe(row[c]).toLowerCase().indexOf(search) >= 0){ hit = true; break; }
+        }
+        if(!hit) continue;
+      }
+
+      var tr = document.createElement("tr");
+      for(var c2=0;c2<row.length;c2++){
+        var td = document.createElement("td");
+        td.innerHTML = escapeHtml(row[c2]);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+      shown++;
+    }
+
+    setPill(previewPill, "表示: " + shown + "行 / " + headers.length + "列（全" + rows.length + "行）", "");
+  }
+
+  function updatePreview(){
+    var t0 = performance.now();
+    var obj = applyTransforms();
+    renderPreview(obj.headers, obj.rows);
+    var dt = Math.round(performance.now() - t0);
+    var steps = obj.steps.length ? obj.steps.join(" -> ") : "なし";
+    setPill(transformPill, "変換: " + steps + " / " + dt + "ms", obj.steps.length ? "ok" : "");
+  }
+
+  function rowsToDelimitedText(headers, rows, delimiter){
+    return Papa.unparse([headers].concat(rows), {
+      delimiter: delimiter,
+      quotes: false,
+      quoteChar: '"',
+      escapeChar: '"',
+      newline: "\r\n",
+      skipEmptyLines: false
+    });
+  }
+
+  function makeBlob(text, outEnc){
+    if(outEnc === "utf-8-bom") return new Blob(["\uFEFF" + text], { type:"text/plain;charset=utf-8" });
+    if(outEnc === "utf-8") return new Blob([text], { type:"text/plain;charset=utf-8" });
+
+    if(outEnc === "shift_jis" || outEnc === "euc-jp"){
+      var unicodeArray = Encoding.stringToCode(text);
+      var converted = Encoding.convert(unicodeArray, { to: (outEnc === "shift_jis") ? "SJIS" : "EUCJP", from:"UNICODE" });
+      return new Blob([new Uint8Array(converted)], { type:"application/octet-stream" });
+    }
+    return new Blob([text], { type:"text/plain;charset=utf-8" });
+  }
+
+  function downloadBlob(blob, filename){
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  function doDownload(){
+    var obj = applyTransforms();
+    var outDel = normalizeDelimiter($("outDelimiter").value);
+    var outEnc = $("outEncoding").value;
+    var baseName = safe($("outName").value).trim() || "export.csv";
+
+    var split = $("splitExport").value === "yes";
+    if(!split){
+      var text = rowsToDelimitedText(obj.headers, obj.rows, outDel);
+      var blob = makeBlob(text, outEnc);
+      downloadBlob(blob, baseName);
+      return;
+    }
+
+    var per = Math.max(100, Number($("splitRows").value || 50000));
+    var total = obj.rows.length;
+    var parts = Math.ceil(total / per);
+
+    var dot = baseName.lastIndexOf(".");
+    var name = (dot >= 0) ? baseName.slice(0, dot) : baseName;
+    var ext = (dot >= 0) ? baseName.slice(dot) : ".csv";
+
+    for(var p=0;p<parts;p++){
+      var chunk = obj.rows.slice(p*per, (p+1)*per);
+      var text2 = rowsToDelimitedText(obj.headers, chunk, outDel);
+      var blob2 = makeBlob(text2, outEnc);
+      var fn = name + "_part" + String(p+1).padStart(3,"0") + ext;
+      downloadBlob(blob2, fn);
+    }
+  }
+
+  function copyAsTSV(){
+    var obj = applyTransforms();
+    var text = rowsToDelimitedText(obj.headers, obj.rows, "\t");
+    return navigator.clipboard.writeText(text).then(function(){
+      alert("TSVをクリップボードにコピーしました。");
+    }).catch(function(){
+      alert("コピーに失敗しました（HTTPS/権限制約の可能性）。");
+    });
+  }
+
+  function loadFromFile(file){
+    if(!file){ alert("ファイルがありません。"); return Promise.resolve(); }
+    if(!guardLibs()) return Promise.resolve();
+
+    setPill(statusPill, "読み込み中...", "warn");
+    setPill(metaPill, file.name + " / " + bytesToHuman(file.size), "");
+
+    var enc = $("inEncoding").value;
+    return readFileAsText(file, enc).then(function(text){
+      var inDelRaw = $("inDelimiter").value;
+      var delim = (inDelRaw === "auto") ? guessDelimiter(text) : normalizeDelimiter(inDelRaw);
+
+      var skipEmpty = ($("skipEmpty").value === "yes");
+      var hasHeader = ($("hasHeader").value === "yes");
+
+      var parsed = Papa.parse(text, {
+        delimiter: delim,
+        skipEmptyLines: skipEmpty,
+        quoteChar: '"',
+        escapeChar: '"',
+        dynamicTyping: false
+      });
+
+      var data = (parsed.data || []).filter(function(r){
+        if(!Array.isArray(r)) return false;
+        for(var i=0;i<r.length;i++) if(safe(r[i]).trim() !== "") return true;
+        return false;
+      });
+
+      if(data.length === 0){
+        setPill(statusPill, "データが空です", "bad");
+        return;
+      }
+
+      if(hasHeader){
+        originalHeaders = (data[0] || []).map(function(x,i){ var s = safe(x); return s ? s : ("col_" + (i+1)); });
+        originalRows = data.slice(1).map(function(r){ return r.map(function(c){ return safe(c); }); });
+      }else{
+        var maxCols = 0;
+        for(var i2=0;i2<data.length;i2++) if(data[i2].length > maxCols) maxCols = data[i2].length;
+        originalHeaders = [];
+        for(var ci=0; ci<maxCols; ci++) originalHeaders.push("col_" + (ci+1));
+        originalRows = data.map(function(r){
+          var rr = [];
+          for(var ci2=0; ci2<maxCols; ci2++) rr.push(safe(r[ci2]));
+          return rr;
+        });
+      }
+
+      columns = originalHeaders.map(function(h, i){
+        var name = safe(h) || ("col_" + (i+1));
+        return { id:i+1, origIndex:i, name:name, outName:name, selected:true };
+      });
+
+      filters = [];
+      sorts = [];
+      renderFilterChips();
+      renderSortChips();
+
+      renderColumns();
+      rebuildSelects();
+
+      setPill(statusPill, "読み込み完了", (parsed.errors && parsed.errors.length) ? "warn" : "ok");
+      setPill(metaPill, file.name + " / " + bytesToHuman(file.size) + " / 区切り: " + (delim === "\t" ? "TAB" : delim), "");
+
+      updatePreview();
+    }).catch(function(e){
+      console.error(e);
+      setPill(statusPill, "エラー: " + e.message, "bad");
+      alert(e.message);
+    });
+  }
+
+  function clearAll(){
+    originalHeaders = [];
+    originalRows = [];
+    columns = [];
+    filters = [];
+    sorts = [];
+
+    $("file").value = "";
+    $("findText").value = "";
+    $("replaceText").value = "";
+    $("previewSearch").value = "";
+
+    colList.innerHTML = "";
+    filterChips.innerHTML = "";
+    sortChips.innerHTML = "";
+
+    replaceTarget.innerHTML = "";
+    filterCol.innerHTML = "";
+    sortCol.innerHTML = "";
+    dedupeCols.innerHTML = "";
+
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    setPill(statusPill, "未読み込み", "");
+    setPill(metaPill, "-", "");
+    setPill(previewPill, "-", "");
+    setPill(transformPill, "-", "");
+  }
+
+  $("loadBtn").addEventListener("click", function(){
+    var f = $("file").files && $("file").files[0];
+    if(!f){ alert("ファイルを選択するか、ドラッグ＆ドロップしてください。"); return; }
+    loadFromFile(f);
+  });
+  $("file").addEventListener("change", function(){
+    var f = $("file").files && $("file").files[0];
+    if(!f) return;
+    loadFromFile(f);
+  });
+  $("clearBtn").addEventListener("click", function(){ clearAll(); });
+
+  $("allCols").addEventListener("click", function(){ columns.forEach(function(c){ c.selected = true; }); renderColumns(); rebuildSelects(); });
+  $("noneCols").addEventListener("click", function(){ columns.forEach(function(c){ c.selected = false; }); renderColumns(); rebuildSelects(); });
+  $("invertCols").addEventListener("click", function(){ columns.forEach(function(c){ c.selected = !c.selected; }); renderColumns(); rebuildSelects(); });
+  $("resetOrder").addEventListener("click", function(){ columns.sort(function(a,b){ return a.origIndex - b.origIndex; }); renderColumns(); rebuildSelects(); });
+
+  $("addFilterBtn").addEventListener("click", function(){
+    if(!columns.length) return;
+    filters.push({ colId:Number(filterCol.value), op:$("filterOp").value, val:$("filterVal").value || "" });
+    renderFilterChips();
+  });
+  $("clearFiltersBtn").addEventListener("click", function(){ filters = []; renderFilterChips(); });
+
+  $("addSortBtn").addEventListener("click", function(){
+    if(!columns.length) return;
+    sorts.push({ colId:Number(sortCol.value), dir:$("sortDir").value, as:$("sortAs").value });
+    renderSortChips();
+  });
+  $("clearSortsBtn").addEventListener("click", function(){ sorts = []; renderSortChips(); });
+
+  $("updatePreviewBtn").addEventListener("click", function(){ if(originalHeaders.length) updatePreview(); });
+  $("previewSearch").addEventListener("input", function(){ if(originalHeaders.length) updatePreview(); });
+  $("previewMaxRows").addEventListener("change", function(){ if(originalHeaders.length) updatePreview(); });
+
+  var autoIds = ["addNo","noName","trimAll","dropEmptyRows","dropEmptyOutCols","findText","replaceText","replaceRegex","replaceTarget","filterMode","dedupeMode","outDelimiter","outEncoding","outName","splitExport","splitRows"];
+  autoIds.forEach(function(id){
+    var el = $(id);
+    if(!el) return;
+    el.addEventListener("change", function(){ if(originalHeaders.length){ try{ updatePreview(); }catch(e){} } });
+    el.addEventListener("input", function(){ if(originalHeaders.length){ try{ updatePreview(); }catch(e){} } });
+  });
+
+  $("downloadBtn").addEventListener("click", function(){ try{ doDownload(); }catch(e){ console.error(e); alert(e.message); } });
+  $("copyTSVBtn").addEventListener("click", function(){ copyAsTSV(); });
+
+  var dz = $("dropzone");
+  function setDZ(on){ if(on) dz.classList.add("dragover"); else dz.classList.remove("dragover"); }
+  ["dragenter","dragover"].forEach(function(ev){
+    dz.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); setDZ(true); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    dz.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); setDZ(false); });
+  });
+  dz.addEventListener("drop", function(e){
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!file) return;
+    loadFromFile(file);
+  });
+
+  setPill(statusPill, "未読み込み", "");
+  setPill(metaPill, "-", "");
+  setPill(previewPill, "-", "");
+  setPill(transformPill, "-", "");
+})();
+</script>
+</body>
+</html>
