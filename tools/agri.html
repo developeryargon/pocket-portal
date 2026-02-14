@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriHelper Pro v22</title>
+    <title>AgriHelper Pro v23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -25,7 +25,6 @@
                 <p id="gpsDisplay" class="text-[9px] font-mono opacity-70">GPS Loading...</p>
             </div>
             <div class="flex gap-5 items-center">
-                <button onclick="document.getElementById('importInput').click()" class="text-xl text-emerald-400"><i class="bi bi-cloud-arrow-up"></i></button>
                 <button onclick="openHelp()" class="text-xl opacity-80"><i class="bi bi-question-circle"></i></button>
             </div>
         </div>
@@ -41,7 +40,7 @@
     </div>
 
     <div id="regModal" class="fixed inset-0 modal-overlay z-[150] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[32px] w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
             <h2 class="text-xl font-black mb-4 text-emerald-800 italic">新規登録</h2>
             <div class="space-y-4">
                 <select id="cropSelect" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none"></select>
@@ -57,28 +56,27 @@
     </div>
 
     <div id="actionModal" class="fixed inset-0 modal-overlay z-[160] hidden flex items-end">
-        <div class="bg-white w-full rounded-t-[40px] p-6">
+        <div class="bg-white w-full rounded-t-[40px] p-6 shadow-2xl">
             <h2 class="text-xl font-black mb-4 italic">作業・状況を記録</h2>
-            <textarea id="memoInput" class="w-full bg-slate-100 p-4 rounded-2xl h-32 text-sm mb-4 outline-none" placeholder="記録内容..."></textarea>
-            <input type="file" id="photoInput" accept="image/*" class="w-full text-xs text-slate-400 mb-4">
-            <button onclick="saveAction()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-3xl">保存</button>
+            <textarea id="memoInput" class="w-full bg-slate-100 p-4 rounded-2xl h-40 text-sm mb-4 outline-none" placeholder="記録内容を入力してください..."></textarea>
+            <button onclick="saveAction()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-3xl">記録を保存</button>
             <button onclick="closeAction()" class="w-full py-3 text-slate-400 font-bold">キャンセル</button>
         </div>
     </div>
 
     <div id="taskMenu" class="fixed inset-0 modal-overlay z-[200] hidden flex items-center justify-center p-6">
-        <div class="bg-white rounded-[32px] w-full max-w-xs p-6 space-y-3">
-            <button onclick="duplicateTask('before')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold">上に複製 (割り込み)</button>
-            <button onclick="duplicateTask('after')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold">下に複製</button>
-            <button onclick="deleteTaskActual()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold">工程を削除</button>
+        <div class="bg-white rounded-[32px] w-full max-w-xs p-6 space-y-3 shadow-2xl">
+            <button onclick="duplicateTask('before')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold text-sm text-slate-700">上に複製 (割り込み)</button>
+            <button onclick="duplicateTask('after')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold text-sm text-slate-700">下に複製</button>
+            <button onclick="deleteTaskActual()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold text-sm">工程を削除</button>
             <button onclick="closeTaskMenu()" class="w-full py-2 text-slate-400">閉じる</button>
         </div>
     </div>
 
     <div id="weatherModal" class="fixed inset-0 modal-overlay z-[210] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[32px] w-full max-w-xs p-6">
+        <div class="bg-white rounded-[32px] w-full max-w-xs p-6 shadow-2xl">
             <h3 class="font-black mb-4">地域設定 (緯度経度)</h3>
-            <p class="text-[10px] text-slate-400 mb-4 italic">Open-Meteoを使用中(無料/登録不要)</p>
+            <p class="text-[10px] text-slate-400 mb-4 italic">Open-Meteo API (登録不要) を使用</p>
             <input type="text" id="latInput" placeholder="緯度" class="w-full bg-slate-100 p-3 rounded-xl mb-2 text-sm">
             <input type="text" id="lonInput" placeholder="経度" class="w-full bg-slate-100 p-3 rounded-xl mb-4 text-sm">
             <button onclick="saveWeatherSettings()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black">天気を更新</button>
@@ -87,36 +85,36 @@
     </div>
 
     <div id="helpModal" class="fixed inset-0 modal-overlay z-[220] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[32px] w-full max-w-md max-h-[85vh] overflow-y-auto p-8">
+        <div class="bg-white rounded-[32px] w-full max-w-md max-h-[85vh] overflow-y-auto p-8 shadow-2xl">
             <h2 class="text-2xl font-black mb-6 text-emerald-800 italic underline decoration-emerald-200">Help & Manage</h2>
             <div class="space-y-6 text-sm">
                 <section>
-                    <h3 class="font-black text-slate-800 mb-1 italic">使いかた</h3>
+                    <h3 class="font-black text-slate-800 mb-1 italic underline decoration-emerald-500">使いかた</h3>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        ・[+]で作目を選択。カテゴリー内は「あいうえお順」です。<br>
-                        ・工程タップで完了。完了時には「いつ・どこ」のデータが刻印されます。<br>
-                        ・[⋯]で工程を自由に増やしたり削除できます。<br>
-                        ・右下の天気アイコンで、現在地の予報を確認・地域変更できます。
+                        ・中央下の[+]で作目を選択。カテゴリー内はあいうえお順です。<br>
+                        ・工程タップで完了。完了時は日時と位置情報が刻印されます。<br>
+                        ・[⋯]ボタンから、工程の割り込み追加や削除ができます。<br>
+                        ・完了後は「引継」で、記録を引き継ぎつつ日付をスライドできます。
                     </p>
                 </section>
                 <section>
-                    <h3 class="font-black text-slate-800 mb-1 italic">保存と引継</h3>
-                    <p class="text-[11px] text-slate-500 mb-3">
-                        ・[引継]ボタンで昨年の記録を元に新しい年のカードを作れます。<br>
-                        ・記録はブラウザ内に保存されます。定期的に下の[自身のデータを保存]を押してバックアップしてください。
+                    <h3 class="font-black text-slate-800 mb-1 italic underline decoration-emerald-500">保存と引継</h3>
+                    <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                        ・[引継]ボタンで昨年の記録を元に新しい年のカードを作成できます。<br>
+                        ・本アプリは写真を扱いません。テキストデータのみをブラウザに保存するため、非常に軽量です。
                     </p>
-                    <button onclick="exportData()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs italic"><i class="bi bi-download"></i> 自身のデータを保存する</button>
+                    <button onclick="exportData()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs italic shadow-lg"><i class="bi bi-download"></i> 自身のデータを保存する</button>
                 </section>
-                <section class="bg-red-50 p-4 rounded-2xl">
-                    <h3 class="font-black text-red-800 text-[11px] mb-1 italic">免責事項</h3>
-                    <p class="text-[10px] text-red-700 leading-tight">データ消失、不具合、サービス終了、誤情報、及び本アプリ利用で生じたいかなる損害も責任を負いません。本アプリはオフライン動作を基本とする補助ツールです。</p>
+                <section class="bg-red-50 p-4 rounded-2xl border border-red-100">
+                    <h3 class="font-black text-red-800 text-[11px] mb-1 italic underline decoration-red-300">免責事項</h3>
+                    <p class="text-[10px] text-red-700 leading-tight">データ消失、不具合、サービス終了、不都合、及び本アプリの利用で生じたいかなる損害も責任を負いません。定期的なバックアップを推奨します。</p>
                 </section>
             </div>
-            <button onclick="closeHelp()" class="w-full bg-slate-200 text-slate-600 font-black py-4 rounded-2xl mt-6">閉じる</button>
+            <button onclick="closeHelp()" class="w-full bg-slate-200 text-slate-600 font-black py-4 rounded-2xl mt-6 shadow-md">閉じる</button>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 border-t z-[100] pb-8">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 border-t z-[100] pb-8 shadow-2xl">
         <div class="max-w-xl mx-auto flex justify-around items-center h-16">
             <button onclick="render()" class="text-emerald-700"><i class="bi bi-house-door-fill text-2xl"></i></button>
             <button onclick="openRegModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-10 shadow-xl border-4 border-white"><i class="bi bi-plus-lg text-2xl"></i></button>
@@ -124,12 +122,10 @@
         </div>
     </nav>
 
-    <input type="file" id="importInput" class="hidden" onchange="importData(event)">
-
     <script>
-        let db = JSON.parse(localStorage.getItem('agri_v22_db') || '[]');
+        let db = JSON.parse(localStorage.getItem('agri_v23_db') || '[]');
         let MASTER = { crops: {} };
-        let activeId = null, activeTIdx = null, currentPos = "N/A";
+        let activeId = null, activeTIdx = null, currentPos = "取得中...";
         let config = JSON.parse(localStorage.getItem('agri_config') || '{"lat":35.68,"lon":139.76}');
 
         async function loadMaster() {
@@ -140,7 +136,6 @@
                 sel.innerHTML = '<option value="">-- 作目を選択 --</option>';
                 for (let cat in MASTER.crops) {
                     const group = document.createElement('optgroup'); group.label = cat;
-                    // あいうえお順ソート
                     const sortedKeys = Object.keys(MASTER.crops[cat]).sort((a,b) => 
                         MASTER.crops[cat][a].name.localeCompare(MASTER.crops[cat][b].name, 'ja')
                     );
@@ -151,7 +146,7 @@
                     });
                     sel.appendChild(group);
                 }
-            } catch(e) { console.warn("Master error"); }
+            } catch(e) { console.warn("Master missing"); }
         }
 
         async function getStatsWeather() {
@@ -178,7 +173,7 @@
             db.unshift({
                 id: Date.now(), name: m.name, variety: document.getElementById('varietyInput').value || m.varieties[0],
                 field: document.getElementById('fieldInput').value || "指定なし", season: new Date(start).getFullYear(),
-                memo: "", photo: null, stamp: "", tasks: m.tasks.map(t => ({ name: t, date: start, isDone: false }))
+                memo: "", stamp: "", tasks: m.tasks.map(t => ({ name: t, date: start, isDone: false }))
             });
             save(); render(); closeRegModal();
         }
@@ -186,62 +181,66 @@
         function toggleTask(id, idx) { 
             const item = db.find(x => x.id === id);
             item.tasks[idx].isDone = !item.tasks[idx].isDone;
-            item.stamp = item.tasks[idx].isDone ? `最終更新: ${new Date().toLocaleString()} (${currentPos})` : item.stamp;
+            if(item.tasks[idx].isDone) {
+                item.stamp = `最終工程完了: ${new Date().toLocaleString()} (${currentPos})`;
+            }
             save(); render(); 
         }
 
         function openAction(id) { activeId = id; document.getElementById('actionModal').classList.remove('hidden'); }
+        function closeAction() { document.getElementById('actionModal').classList.add('hidden'); }
         function saveAction() {
             const item = db.find(x => x.id === activeId);
             item.memo = document.getElementById('memoInput').value;
-            item.stamp = `最終記録: ${new Date().toLocaleString()} (${currentPos})`;
-            const file = document.getElementById('photoInput').files[0];
-            if(file) {
-                const reader = new FileReader(); reader.onload = (e) => { item.photo = e.target.result; save(); render(); closeAction(); };
-                reader.readAsDataURL(file);
-            } else { save(); render(); closeAction(); }
+            item.stamp = `最終メモ更新: ${new Date().toLocaleString()} (${currentPos})`;
+            save(); render(); closeAction();
         }
 
-        function deleteCard(id) { if(confirm("この作付けを完全に削除しますか？")) { db = db.filter(x => x.id !== id); save(); render(); } }
-        function save() { localStorage.setItem('agri_v22_db', JSON.stringify(db)); }
+        function deleteCard(id) { if(confirm("この作付けカードを削除しますか？")) { db = db.filter(x => x.id !== id); save(); render(); } }
+        function save() { localStorage.setItem('agri_v23_db', JSON.stringify(db)); }
         
         function render() {
             const list = document.getElementById('mainList');
-            list.innerHTML = db.length ? "" : '<p class="text-center py-20 text-slate-300 font-bold">＋から開始してください</p>';
+            list.innerHTML = db.length ? "" : '<div class="text-center py-24 text-slate-300 font-black italic">NO RECORDS<br><span class="text-[10px] font-normal">下の＋ボタンから開始</span></div>';
             db.forEach(item => {
                 const card = document.createElement('div');
                 card.className = "task-card";
                 card.innerHTML = `
                     <div class="p-5 bg-emerald-900 text-white flex justify-between items-start">
-                        <div><h3 class="font-black text-lg">${item.name}</h3><p class="text-[10px] opacity-60">${item.variety} @ ${item.field}</p></div>
+                        <div>
+                            <span class="text-[9px] font-black bg-emerald-700 px-2 py-1 rounded-md mb-1 inline-block">${item.season}年</span>
+                            <h3 class="font-black text-lg">${item.name}</h3>
+                            <p class="text-[10px] opacity-60 italic">${item.variety} / ${item.field}</p>
+                        </div>
                         <div class="flex gap-2">
                             <button onclick="openRepeat(${item.id})" class="text-[9px] font-bold bg-white/10 p-2 rounded-lg">引継</button>
                             <button onclick="deleteCard(${item.id})" class="text-[9px] font-bold bg-red-900/40 p-2 rounded-lg"><i class="bi bi-trash"></i></button>
                         </div>
                     </div>
                     <div class="p-5 space-y-4">
-                        ${item.stamp ? `<p class="text-[8px] text-slate-400 italic">${item.stamp}</p>`:''}
-                        ${item.memo ? `<div class="memo-display bg-slate-50 p-3 rounded-xl text-xs text-slate-600">${item.memo}</div>`:''}
-                        ${item.photo ? `<img src="${item.photo}" class="w-full h-40 object-cover rounded-xl shadow-inner">`:''}
+                        ${item.stamp ? `<p class="text-[8px] text-slate-400 italic font-mono border-l-2 border-emerald-500 pl-2">${item.stamp}</p>`:''}
+                        ${item.memo ? `<div class="memo-display bg-slate-50 p-4 rounded-2xl text-xs text-slate-600 border border-slate-100 italic">${item.memo}</div>`:''}
                         <div class="space-y-2">
                             ${item.tasks.map((t, idx) => `
                                 <div class="flex items-center gap-2">
-                                    <div onclick="toggleTask(${item.id}, ${idx})" class="flex-1 flex justify-between items-center p-3 rounded-xl border-2 ${t.isDone?'status-done':'bg-white'}">
-                                        <span class="text-xs font-bold"><i class="bi ${t.isDone?'bi-check-circle-fill':'bi-circle'} mr-2"></i>${t.name}</span>
-                                        <input type="date" value="${t.date}" onchange="updateDate(${item.id}, ${idx}, this.value)" class="text-[10px] bg-transparent border-none font-bold" onclick="event.stopPropagation()">
+                                    <div onclick="toggleTask(${item.id}, ${idx})" class="flex-1 flex justify-between items-center p-3 rounded-xl border-2 ${t.isDone?'status-done':'bg-white shadow-sm'} transition-all">
+                                        <div class="flex items-center gap-2">
+                                            <i class="bi ${t.isDone?'bi-check-circle-fill':'bi-circle'} text-xs"></i>
+                                            <span class="text-xs font-bold">${t.name}</span>
+                                        </div>
+                                        <input type="date" value="${t.date}" onchange="updateDate(${item.id}, ${idx}, this.value)" class="text-[10px] bg-transparent border-none font-bold outline-none" onclick="event.stopPropagation()">
                                     </div>
                                     <button onclick="openTaskMenu(${item.id}, ${idx})" class="text-slate-300 px-2 font-black text-xl">⋯</button>
                                 </div>
                             `).join('')}
                         </div>
-                        <button onclick="openAction(${item.id})" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-xs font-black">記録・写真を残す</button>
+                        <button onclick="openAction(${item.id})" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-xs font-black shadow-lg">記録を残す</button>
                     </div>
                 `;
                 list.appendChild(card);
             });
         }
 
-        // 天気設定
         function openWeatherSettings() { 
             document.getElementById('latInput').value = config.lat;
             document.getElementById('lonInput').value = config.lon;
@@ -255,7 +254,6 @@
             document.getElementById('weatherModal').classList.add('hidden');
         }
 
-        // 他、v21からの継承関数 (duplicateTask, deleteTaskActual, updateDate, importData, exportData, openHelp, closeHelp, closeAction, closeTaskMenu, openRepeat) は同様に配置。
         function updateDate(id, idx, v) { db.find(x => x.id === id).tasks[idx].date = v; save(); }
         function openTaskMenu(id, idx) { activeId = id; activeTIdx = idx; document.getElementById('taskMenu').classList.remove('hidden'); }
         function closeTaskMenu() { document.getElementById('taskMenu').classList.add('hidden'); }
@@ -264,23 +262,21 @@
             task.isDone = false; item.tasks.splice(dir === 'before' ? activeTIdx : activeTIdx + 1, 0, task);
             save(); render(); closeTaskMenu();
         }
-        function deleteTaskActual() { if(confirm("消去？")) { db.find(x => x.id === activeId).tasks.splice(activeTIdx, 1); save(); render(); closeTaskMenu(); } }
+        function deleteTaskActual() { if(confirm("工程を削除しますか？")) { db.find(x => x.id === activeId).tasks.splice(activeTIdx, 1); save(); render(); closeTaskMenu(); } }
+        
         function openRepeat(id) {
             const item = JSON.parse(JSON.stringify(db.find(x => x.id === id)));
-            item.id = Date.now(); item.season++; item.memo = ""; item.photo = null; item.stamp = "";
+            item.id = Date.now(); item.season++; item.memo = ""; item.stamp = "";
             item.tasks.forEach(t => { t.isDone = false; let d = new Date(t.date); d.setFullYear(d.getFullYear()+1); t.date=d.toISOString().split('T')[0]; });
             db.unshift(item); save(); render();
         }
-        function closeAction() { document.getElementById('actionModal').classList.add('hidden'); }
+
         function exportData() {
             const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = `AgriData_${new Date().toISOString().split('T')[0]}.json`; a.click();
+            a.download = `AgriData_Backup_${new Date().toISOString().split('T')[0]}.json`; a.click();
         }
-        function importData(e) {
-            const r = new FileReader(); r.onload = (f) => { db = JSON.parse(f.target.result); save(); render(); };
-            r.readAsText(e.target.files[0]);
-        }
+
         function openHelp() { document.getElementById('helpModal').classList.remove('hidden'); }
         function closeHelp() { document.getElementById('helpModal').classList.add('hidden'); }
 
