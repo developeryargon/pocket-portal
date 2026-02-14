@@ -22,8 +22,12 @@
         .post-card.highlight { border: 2px solid #2196F3; background: #e3f2fd; }
         .thumb { width: 120px; height: auto; cursor: pointer; border: 1px solid #eee; display: block; margin-bottom: 8px; border-radius: 2px; }
         .memo-text { font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.5; white-space: pre-wrap; margin-bottom: 10px; }
-        .btn-group { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9; }
-        .card-btn { font-size: 13px; font-weight: bold; background: none; border: none; cursor: pointer; }
+        
+        /* ボタンの装飾修正 */
+        .btn-group { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 8px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+        .card-btn { font-size: 13px; font-weight: bold; background: none; border: none; cursor: pointer; padding: 4px 8px; transition: opacity 0.2s; }
+        .card-btn:active { opacity: 0.5; }
+
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: #fff; border-top: 1px solid #ccc;
@@ -62,50 +66,37 @@
     <button class="nav-btn" onclick="openHelp()">❓<span>ヘルプ</span></button>
 </div>
 
-<div id="help-modal" class="hidden fixed inset-0 bg-black/60 z-[7000] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[85vh]">
+<div id="help-modal" class="hidden fixed inset-0 bg-black/60 z-[7000] flex items-center justify-center p-4" onclick="closeHelp()">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[85vh]" onclick="event.stopPropagation()">
         <h3 class="text-xl font-black mb-6 border-b pb-2 text-slate-800">ヘルプ・設定</h3>
-        
         <section class="mb-8">
-            <h4 class="font-bold text-blue-600 mb-2 flex items-center gap-1">📖 使い方</h4>
+            <h4 class="font-bold text-blue-600 mb-2">📖 使い方</h4>
             <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4">
                 <li>下部メニューから写真やテキストを投稿できます。</li>
-                <li>投稿には自動で現在の住所と緯度経度が付与されます。</li>
                 <li>地図上のピンをタップすると該当のメモへ移動します。</li>
-                <li>メモ内のハッシュタグ（#散歩 など）でフィルタリング可能です。</li>
             </ul>
         </section>
-
         <section class="mb-8">
-            <h4 class="font-bold text-blue-600 mb-2 flex items-center gap-1">🛡 プライバシーとデータ</h4>
-            <div class="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg leading-relaxed">
-                本アプリで保存した写真や位置情報は、すべて<b>お客様のブラウザ内（IndexedDB）</b>のみに保存されます。サーバーへ送信されることはありませんので、オフラインでも閲覧可能です。
+            <h4 class="font-bold text-blue-600 mb-2">🛡 プライバシーとデータ</h4>
+            <div class="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg">
+                データはすべてお客様のブラウザ内（IndexedDB）にのみ保存され、外部送信されません。
             </div>
         </section>
-
         <section class="mb-8">
-            <h4 class="font-bold text-blue-600 mb-2 flex items-center gap-1">📲 機種変更時の手順</h4>
-            <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">
-                データはブラウザ保存のため、端末を変えると消えてしまいます。新しい端末へ引き継ぐには以下の手順を行ってください。
-            </p>
-            <ol class="text-[11px] text-slate-600 space-y-2 list-decimal pl-4 mb-4">
-                <li>下のボタンから<b>「バックアップ用HTML」</b>をダウンロードします。</li>
-                <li>そのファイルを新しい端末へ送ります（メールやクラウド経由など）。</li>
-                <li>新しい端末でそのファイルを開くと、データが復元された状態で閲覧・利用できます。</li>
-            </ol>
-            <button onclick="exportAll()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
+            <h4 class="font-bold text-blue-600 mb-2">📲 機種変更の手順</h4>
+            <p class="text-[11px] text-slate-500 mb-3">端末を変えるとデータは消えるため、バックアップが必要です。</p>
+            <button onclick="exportAll()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md">
                 全データをバックアップ（機種変用）
             </button>
         </section>
-
-        <button onclick="closeHelp()" class="w-full py-3 border border-slate-200 text-slate-400 font-bold rounded-xl text-sm mt-2">閉じる</button>
+        <button onclick="closeHelp()" class="w-full py-3 border border-slate-200 text-slate-400 font-bold rounded-xl text-sm">閉じる</button>
     </div>
 </div>
 
 <div id="input-modal" class="hidden fixed inset-0 bg-black/60 z-[4000] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
         <h3 class="text-lg font-bold mb-4 text-slate-800">メモを入力</h3>
-        <textarea id="memo-textarea" rows="5" class="w-full p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="内容を入力（改行OK） #タグ"></textarea>
+        <textarea id="memo-textarea" rows="5" class="w-full p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="内容を入力（改行OK）"></textarea>
         <div class="flex gap-3 mt-6">
             <button onclick="closeInputModal()" class="flex-1 py-3 text-slate-400 font-bold text-sm">キャンセル</button>
             <button id="submit-memo-btn" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm">保存する</button>
@@ -191,7 +182,22 @@
         card.id = `post-${entry.id}`;
         const media = entry.img ? `<img src="${entry.img}" class="thumb" onclick="zoom('${entry.img}')">` : "";
         const saveBtn = entry.img ? `<button onclick="downloadOne(${entry.id})" class="card-btn text-blue-500">保存</button>` : "";
-        card.innerHTML = `${media}<div class="info"><div class="flex justify-between items-start mb-1"><span class="text-[10px] text-slate-400 font-bold uppercase">${entry.date}</span><span class="text-[8px] text-blue-400 font-mono">LAT:${entry.lat.toFixed(4)} LNG:${entry.lng.toFixed(4)}</span></div><span class="text-[10px] text-slate-600 block mb-1">📍 ${entry.address}</span><div class="memo-text">${entry.text}</div></div><div class="btn-group"><button onclick="shareMemo(${entry.id})" class="card-btn text-slate-400">共有</button>${saveBtn}<button onclick="del(${entry.id})" class="card-btn text-red-400">削除</button></div>`;
+        
+        card.innerHTML = `
+            ${media}
+            <div class="info">
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">${entry.date}</span>
+                    <span class="text-[8px] text-blue-400 font-mono">LAT:${entry.lat.toFixed(4)} LNG:${entry.lng.toFixed(4)}</span>
+                </div>
+                <span class="text-[10px] text-slate-600 block mb-1">📍 ${entry.address}</span>
+                <div class="memo-text">${entry.text}</div>
+            </div>
+            <div class="btn-group">
+                <button onclick="shareMemo(${entry.id})" class="card-btn text-slate-400">共有</button>
+                ${saveBtn}
+                <button onclick="del(${entry.id})" class="card-btn text-red-400">削除</button>
+            </div>`;
         container.insertBefore(card, container.firstChild);
         markers[entry.id] = L.marker([entry.lat, entry.lng]).addTo(map).on('click', () => {
             document.getElementById(`post-${entry.id}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -202,14 +208,40 @@
 
     function zoom(src) { document.getElementById('full-img').src = src; document.getElementById('overlay').classList.remove('hidden'); }
     function del(id) { if(confirm("削除しますか？")){ db.transaction("memos","readwrite").objectStore("memos").delete(id); document.getElementById(`post-${id}`).remove(); if(markers[id]) map.removeLayer(markers[id]); updateTags(); } }
-    function downloadOne(id) { db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = e => { const a = document.createElement('a'); a.href = e.target.result.img; a.download = `memo_${id}.jpg`; a.click(); }; }
+    
+    // 共有機能の修正
+    async function shareMemo(id) {
+        db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = async e => {
+            const item = e.target.result;
+            const shareData = {
+                title: 'PocketPortal Memo',
+                text: `${item.text}\n📍 ${item.address}\nhttps://www.google.com/maps?q=${item.lat},${item.lng}`
+            };
+            try {
+                if (item.img && navigator.canShare && navigator.canShare({ files: [new File([], "t.jpg", {type: "image/jpeg"})] })) {
+                    const response = await fetch(item.img);
+                    const blob = await response.blob();
+                    const file = new File([blob], `memo_${id}.jpg`, { type: blob.type });
+                    await navigator.share({ ...shareData, files: [file] });
+                } else {
+                    await navigator.share(shareData);
+                }
+            } catch (err) { console.log("Share failed", err); }
+        };
+    }
+
+    function downloadOne(id) {
+        db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = e => {
+            const a = document.createElement('a'); a.href = e.target.result.img; a.download = `memo_${id}.jpg`; a.click();
+        };
+    }
     
     function exportAll() {
         db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => {
             const data = JSON.stringify(e.target.result);
             const blob = new Blob([document.documentElement.outerHTML.replace('load()', `(function(){let d=${data}; d.forEach(render);})()`) ], {type: 'text/html'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "pocket_memo_backup.html"; a.click();
-            alert("バックアップファイルをダウンロードしました。これを新しい端末で開くとデータが復元されます。");
+            alert("バックアップを保存しました。");
         };
     }
 
