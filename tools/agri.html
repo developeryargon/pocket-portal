@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriHelper Pro v21</title>
+    <title>AgriHelper Pro v22</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -12,116 +12,126 @@
         .task-card { background: white; border-radius: 28px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .memo-display { white-space: pre-wrap; word-wrap: break-word; font-size: 13px; line-height: 1.6; }
         .status-done { background: #dcfce7; color: #166534; border-color: #86efac; }
-        .status-pending { background: #ffffff; color: #1e293b; }
         .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); }
+        .weather-fab { position: fixed; bottom: 100px; right: 20px; z-index: 90; }
     </style>
 </head>
-<body class="pb-36">
+<body class="pb-40">
 
     <header class="glass-header p-4 sticky top-0 z-50">
         <div class="max-w-xl mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-black italic tracking-tighter">AgriHelper <span class="text-emerald-400">Pro</span></h1>
-                <p id="gpsDisplay" class="text-[9px] font-mono opacity-70 italic uppercase">GPS Loading...</p>
+                <p id="gpsDisplay" class="text-[9px] font-mono opacity-70">GPS Loading...</p>
             </div>
             <div class="flex gap-5 items-center">
-                <button onclick="document.getElementById('importInput').click()" title="データを読込（アップロード）" class="text-xl text-emerald-400"><i class="bi bi-cloud-arrow-up"></i></button>
-                <button onclick="openHelp()" title="ヘルプ・管理" class="text-xl opacity-80"><i class="bi bi-question-circle"></i></button>
+                <button onclick="document.getElementById('importInput').click()" class="text-xl text-emerald-400"><i class="bi bi-cloud-arrow-up"></i></button>
+                <button onclick="openHelp()" class="text-xl opacity-80"><i class="bi bi-question-circle"></i></button>
             </div>
         </div>
     </header>
 
     <main id="mainList" class="p-4 max-w-xl mx-auto space-y-6"></main>
 
+    <div class="weather-fab">
+        <button onclick="openWeatherSettings()" class="bg-white text-emerald-700 w-14 h-14 rounded-full shadow-2xl border-4 border-emerald-50 flex flex-col items-center justify-center">
+            <span id="weatherIcon" class="text-xl"><i class="bi bi-cloud-sun"></i></span>
+            <span id="weatherTemp" class="text-[9px] font-black">--℃</span>
+        </button>
+    </div>
+
     <div id="regModal" class="fixed inset-0 modal-overlay z-[150] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[32px] w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
-            <h2 class="text-xl font-black mb-4 italic text-emerald-800">新規作付け登録</h2>
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-black mb-4 text-emerald-800 italic">新規登録</h2>
             <div class="space-y-4">
-                <select id="cropSelect" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none appearance-none"></select>
-                <input type="text" id="varietyInput" placeholder="品種名 (例: 桃太郎)" class="w-full bg-slate-100 p-4 rounded-2xl">
-                <input type="text" id="fieldInput" placeholder="圃場名 (例: 西側の畑)" class="w-full bg-slate-100 p-4 rounded-2xl">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-400">開始日:</span>
-                    <input type="date" id="startDateInput" class="flex-1 bg-slate-100 p-4 rounded-2xl font-bold">
-                </div>
-                <div class="flex gap-2 pt-2">
+                <select id="cropSelect" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none"></select>
+                <input type="text" id="varietyInput" placeholder="品種名" class="w-full bg-slate-100 p-4 rounded-2xl">
+                <input type="text" id="fieldInput" placeholder="圃場・エリア" class="w-full bg-slate-100 p-4 rounded-2xl">
+                <input type="date" id="startDateInput" class="w-full bg-slate-100 p-4 rounded-2xl font-bold">
+                <div class="flex gap-2">
                     <button onclick="closeRegModal()" class="flex-1 py-4 font-bold text-slate-400">閉じる</button>
-                    <button onclick="saveNewCrop()" class="flex-1 bg-emerald-600 text-white font-black py-4 rounded-2xl">登録する</button>
+                    <button onclick="saveNewCrop()" class="flex-1 bg-emerald-600 text-white font-black py-4 rounded-2xl">登録</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="actionModal" class="fixed inset-0 modal-overlay z-[160] hidden flex items-end">
-        <div class="bg-white w-full rounded-t-[40px] p-6 max-h-[95vh] overflow-y-auto">
-            <h2 class="text-xl font-black mb-4 italic">状況を記録</h2>
-            <div class="space-y-4">
-                <textarea id="memoInput" class="w-full bg-slate-100 p-4 rounded-2xl h-40 text-sm outline-none" placeholder="内容... (改行可)"></textarea>
-                <input type="file" id="photoInput" accept="image/*" class="w-full text-xs text-slate-400">
-                <button onclick="saveAction()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-3xl shadow-lg">記録を保存</button>
-                <button onclick="closeAction()" class="w-full text-slate-400 font-bold py-2">キャンセル</button>
-            </div>
+        <div class="bg-white w-full rounded-t-[40px] p-6">
+            <h2 class="text-xl font-black mb-4 italic">作業・状況を記録</h2>
+            <textarea id="memoInput" class="w-full bg-slate-100 p-4 rounded-2xl h-32 text-sm mb-4 outline-none" placeholder="記録内容..."></textarea>
+            <input type="file" id="photoInput" accept="image/*" class="w-full text-xs text-slate-400 mb-4">
+            <button onclick="saveAction()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-3xl">保存</button>
+            <button onclick="closeAction()" class="w-full py-3 text-slate-400 font-bold">キャンセル</button>
         </div>
     </div>
 
     <div id="taskMenu" class="fixed inset-0 modal-overlay z-[200] hidden flex items-center justify-center p-6">
         <div class="bg-white rounded-[32px] w-full max-w-xs p-6 space-y-3">
-            <button onclick="duplicateTask('before')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold text-sm">上に複製 (割り込み)</button>
-            <button onclick="duplicateTask('after')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold text-sm">下に複製</button>
-            <button onclick="deleteTaskActual()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold text-sm">削除</button>
-            <button onclick="closeTaskMenu()" class="w-full py-2 text-slate-400 font-bold">閉じる</button>
+            <button onclick="duplicateTask('before')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold">上に複製 (割り込み)</button>
+            <button onclick="duplicateTask('after')" class="w-full py-4 bg-slate-50 rounded-2xl font-bold">下に複製</button>
+            <button onclick="deleteTaskActual()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold">工程を削除</button>
+            <button onclick="closeTaskMenu()" class="w-full py-2 text-slate-400">閉じる</button>
         </div>
     </div>
 
-    <div id="helpModal" class="fixed inset-0 modal-overlay z-[210] hidden flex items-center justify-center p-4">
+    <div id="weatherModal" class="fixed inset-0 modal-overlay z-[210] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] w-full max-w-xs p-6">
+            <h3 class="font-black mb-4">地域設定 (緯度経度)</h3>
+            <p class="text-[10px] text-slate-400 mb-4 italic">Open-Meteoを使用中(無料/登録不要)</p>
+            <input type="text" id="latInput" placeholder="緯度" class="w-full bg-slate-100 p-3 rounded-xl mb-2 text-sm">
+            <input type="text" id="lonInput" placeholder="経度" class="w-full bg-slate-100 p-3 rounded-xl mb-4 text-sm">
+            <button onclick="saveWeatherSettings()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black">天気を更新</button>
+            <button onclick="document.getElementById('weatherModal').classList.add('hidden')" class="w-full py-2 text-slate-400">閉じる</button>
+        </div>
+    </div>
+
+    <div id="helpModal" class="fixed inset-0 modal-overlay z-[220] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-[32px] w-full max-w-md max-h-[85vh] overflow-y-auto p-8">
-            <h2 class="text-2xl font-black mb-6 text-emerald-800 italic">Help & Manage</h2>
-            <div class="space-y-6">
+            <h2 class="text-2xl font-black mb-6 text-emerald-800 italic underline decoration-emerald-200">Help & Manage</h2>
+            <div class="space-y-6 text-sm">
                 <section>
-                    <h3 class="font-black text-slate-800 mb-1 italic underline decoration-emerald-500">使いかた</h3>
+                    <h3 class="font-black text-slate-800 mb-1 italic">使いかた</h3>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        1. 真ん中の[+]から作目を選択し開始。<br>
-                        2. 工程をタップで「完了」に切り替え。<br>
-                        3. [⋯]ボタンから、工程の割り込み追加や削除ができます。<br>
-                        4. 完了後は「翌年へ引継」で、記録を引き継ぎつつ日付をスライドできます。
+                        ・[+]で作目を選択。カテゴリー内は「あいうえお順」です。<br>
+                        ・工程タップで完了。完了時には「いつ・どこ」のデータが刻印されます。<br>
+                        ・[⋯]で工程を自由に増やしたり削除できます。<br>
+                        ・右下の天気アイコンで、現在地の予報を確認・地域変更できます。
                     </p>
                 </section>
                 <section>
-                    <h3 class="font-black text-slate-800 mb-1 italic underline decoration-emerald-500">バックアップ</h3>
-                    <p class="text-[11px] text-slate-500 mb-3">以下の3ファイルをセットで保管してください。</p>
-                    <div class="grid grid-cols-1 gap-2">
-                        <button onclick="exportData()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs italic"><i class="bi bi-download"></i> 自身のデータを保存する</button>
-                        <div class="text-[10px] text-slate-400 border rounded-xl p-2 italic text-center">
-                            ※本体HTML、agri_master.jsonは各自で保管
-                        </div>
-                    </div>
+                    <h3 class="font-black text-slate-800 mb-1 italic">保存と引継</h3>
+                    <p class="text-[11px] text-slate-500 mb-3">
+                        ・[引継]ボタンで昨年の記録を元に新しい年のカードを作れます。<br>
+                        ・記録はブラウザ内に保存されます。定期的に下の[自身のデータを保存]を押してバックアップしてください。
+                    </p>
+                    <button onclick="exportData()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs italic"><i class="bi bi-download"></i> 自身のデータを保存する</button>
                 </section>
                 <section class="bg-red-50 p-4 rounded-2xl">
-                    <h3 class="font-black text-red-800 text-[11px] mb-1 italic underline decoration-red-300">免責事項</h3>
-                    <p class="text-[10px] text-red-700 leading-tight">データ消失、不具合、サービス終了、不都合、及び本アプリの利用で生じたいかなる損害も責任を負いません。自己責任でご利用ください。</p>
+                    <h3 class="font-black text-red-800 text-[11px] mb-1 italic">免責事項</h3>
+                    <p class="text-[10px] text-red-700 leading-tight">データ消失、不具合、サービス終了、誤情報、及び本アプリ利用で生じたいかなる損害も責任を負いません。本アプリはオフライン動作を基本とする補助ツールです。</p>
                 </section>
             </div>
             <button onclick="closeHelp()" class="w-full bg-slate-200 text-slate-600 font-black py-4 rounded-2xl mt-6">閉じる</button>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 border-t z-[100] pb-8 shadow-2xl">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 border-t z-[100] pb-8">
         <div class="max-w-xl mx-auto flex justify-around items-center h-16">
             <button onclick="render()" class="text-emerald-700"><i class="bi bi-house-door-fill text-2xl"></i></button>
             <button onclick="openRegModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-10 shadow-xl border-4 border-white"><i class="bi bi-plus-lg text-2xl"></i></button>
-            <div class="w-8"></div></div>
+            <div class="w-8"></div>
+        </div>
     </nav>
 
     <input type="file" id="importInput" class="hidden" onchange="importData(event)">
 
     <script>
-        let db = JSON.parse(localStorage.getItem('agri_v21_db') || '[]');
+        let db = JSON.parse(localStorage.getItem('agri_v22_db') || '[]');
         let MASTER = { crops: {} };
-        let activeId = null;
-        let activeTIdx = null;
-        let currentPos = "N/A";
+        let activeId = null, activeTIdx = null, currentPos = "N/A";
+        let config = JSON.parse(localStorage.getItem('agri_config') || '{"lat":35.68,"lon":139.76}');
 
-        // 初期化：マスタ読込
         async function loadMaster() {
             try {
                 const res = await fetch('agri_master.json');
@@ -130,117 +140,138 @@
                 sel.innerHTML = '<option value="">-- 作目を選択 --</option>';
                 for (let cat in MASTER.crops) {
                     const group = document.createElement('optgroup'); group.label = cat;
-                    for (let key in MASTER.crops[cat]) {
+                    // あいうえお順ソート
+                    const sortedKeys = Object.keys(MASTER.crops[cat]).sort((a,b) => 
+                        MASTER.crops[cat][a].name.localeCompare(MASTER.crops[cat][b].name, 'ja')
+                    );
+                    sortedKeys.forEach(key => {
                         const opt = document.createElement('option');
-                        opt.value = `${cat}|${key}`;
-                        opt.innerText = MASTER.crops[cat][key].name;
+                        opt.value = `${cat}|${key}`; opt.innerText = MASTER.crops[cat][key].name;
                         group.appendChild(opt);
-                    }
+                    });
                     sel.appendChild(group);
                 }
-            } catch(e) { console.warn("Master file not found"); }
+            } catch(e) { console.warn("Master error"); }
         }
 
-        // 位置情報
+        async function getStatsWeather() {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${config.lat}&longitude=${config.lon}&current_weather=true`;
+            try {
+                const res = await fetch(url); const data = await res.json();
+                const temp = Math.round(data.current_weather.temperature);
+                document.getElementById('weatherTemp').innerText = `${temp}℃`;
+            } catch(e) { console.warn("Weather error"); }
+        }
+
         navigator.geolocation.getCurrentPosition(p => {
             currentPos = `${p.coords.latitude.toFixed(4)},${p.coords.longitude.toFixed(4)}`;
             document.getElementById('gpsDisplay').innerText = `LOC: ${currentPos}`;
+            if(!localStorage.getItem('agri_config')) { config.lat = p.coords.latitude; config.lon = p.coords.longitude; getStatsWeather(); }
         });
 
-        // 登録
         function openRegModal() { document.getElementById('regModal').classList.remove('hidden'); }
         function closeRegModal() { document.getElementById('regModal').classList.add('hidden'); }
         function saveNewCrop() {
-            const val = document.getElementById('cropSelect').value;
-            if(!val) return;
-            const [cat, key] = val.split('|');
-            const m = MASTER.crops[cat][key];
+            const val = document.getElementById('cropSelect').value; if(!val) return;
+            const [cat, key] = val.split('|'); const m = MASTER.crops[cat][key];
             const start = document.getElementById('startDateInput').value || new Date().toISOString().split('T')[0];
-            const newItem = {
+            db.unshift({
                 id: Date.now(), name: m.name, variety: document.getElementById('varietyInput').value || m.varieties[0],
                 field: document.getElementById('fieldInput').value || "指定なし", season: new Date(start).getFullYear(),
-                memo: "", photo: null, tasks: m.tasks.map((t, i) => ({ name: t, date: start, isDone: false }))
-            };
-            db.unshift(newItem); save(); render(); closeRegModal();
+                memo: "", photo: null, stamp: "", tasks: m.tasks.map(t => ({ name: t, date: start, isDone: false }))
+            });
+            save(); render(); closeRegModal();
         }
 
-        // 工程メニュー
-        function openTaskMenu(id, idx) { 
-            activeId = id; activeTIdx = idx;
-            document.getElementById('taskMenu').classList.remove('hidden'); 
-        }
-        function closeTaskMenu() { document.getElementById('taskMenu').classList.add('hidden'); }
-        function duplicateTask(dir) {
-            const item = db.find(x => x.id === activeId);
-            const task = JSON.parse(JSON.stringify(item.tasks[activeTIdx]));
-            task.isDone = false;
-            item.tasks.splice(dir === 'before' ? activeTIdx : activeTIdx + 1, 0, task);
-            save(); render(); closeTaskMenu();
-        }
-        function deleteTaskActual() {
-            if(!confirm("削除しますか？")) return;
-            db.find(x => x.id === activeId).tasks.splice(activeTIdx, 1);
-            save(); render(); closeTaskMenu();
+        function toggleTask(id, idx) { 
+            const item = db.find(x => x.id === id);
+            item.tasks[idx].isDone = !item.tasks[idx].isDone;
+            item.stamp = item.tasks[idx].isDone ? `最終更新: ${new Date().toLocaleString()} (${currentPos})` : item.stamp;
+            save(); render(); 
         }
 
-        // 記録・写真
         function openAction(id) { activeId = id; document.getElementById('actionModal').classList.remove('hidden'); }
-        function closeAction() { document.getElementById('actionModal').classList.add('hidden'); }
         function saveAction() {
             const item = db.find(x => x.id === activeId);
             item.memo = document.getElementById('memoInput').value;
+            item.stamp = `最終記録: ${new Date().toLocaleString()} (${currentPos})`;
             const file = document.getElementById('photoInput').files[0];
             if(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => { item.photo = e.target.result; finish(); };
+                const reader = new FileReader(); reader.onload = (e) => { item.photo = e.target.result; save(); render(); closeAction(); };
                 reader.readAsDataURL(file);
-            } else { finish(); }
-        }
-        function finish() { save(); render(); closeAction(); }
-
-        // 引継
-        function openRepeat(id) {
-            const item = JSON.parse(JSON.stringify(db.find(x => x.id === id)));
-            item.id = Date.now(); item.season++; item.memo = ""; item.photo = null;
-            item.tasks.forEach(t => { t.isDone = false; let d = new Date(t.date); d.setFullYear(d.getFullYear()+1); t.date=d.toISOString().split('T')[0]; });
-            db.unshift(item); save(); render();
+            } else { save(); render(); closeAction(); }
         }
 
-        function toggleTask(id, idx) { db.find(x => x.id === id).tasks[idx].isDone = !db.find(x => x.id === id).tasks[idx].isDone; save(); render(); }
-        function updateDate(id, idx, v) { db.find(x => x.id === id).tasks[idx].date = v; save(); }
-        function save() { localStorage.setItem('agri_v21_db', JSON.stringify(db)); }
+        function deleteCard(id) { if(confirm("この作付けを完全に削除しますか？")) { db = db.filter(x => x.id !== id); save(); render(); } }
+        function save() { localStorage.setItem('agri_v22_db', JSON.stringify(db)); }
+        
         function render() {
             const list = document.getElementById('mainList');
-            list.innerHTML = db.length ? "" : '<p class="text-center py-20 text-slate-300 font-bold">＋ボタンから開始してください</p>';
+            list.innerHTML = db.length ? "" : '<p class="text-center py-20 text-slate-300 font-bold">＋から開始してください</p>';
             db.forEach(item => {
                 const card = document.createElement('div');
                 card.className = "task-card";
                 card.innerHTML = `
-                    <div class="p-5 bg-emerald-900 text-white flex justify-between">
-                        <div><h3 class="font-black text-lg">${item.name}</h3><p class="text-[10px] opacity-60">${item.variety}</p></div>
-                        <button onclick="openRepeat(${item.id})" class="text-[10px] font-bold bg-white/10 px-3 rounded-lg h-8">引継</button>
+                    <div class="p-5 bg-emerald-900 text-white flex justify-between items-start">
+                        <div><h3 class="font-black text-lg">${item.name}</h3><p class="text-[10px] opacity-60">${item.variety} @ ${item.field}</p></div>
+                        <div class="flex gap-2">
+                            <button onclick="openRepeat(${item.id})" class="text-[9px] font-bold bg-white/10 p-2 rounded-lg">引継</button>
+                            <button onclick="deleteCard(${item.id})" class="text-[9px] font-bold bg-red-900/40 p-2 rounded-lg"><i class="bi bi-trash"></i></button>
+                        </div>
                     </div>
                     <div class="p-5 space-y-4">
-                        ${item.memo ? `<div class="memo-display bg-slate-50 p-3 rounded-xl text-xs">${item.memo}</div>`:''}
-                        ${item.photo ? `<img src="${item.photo}" class="w-full h-40 object-cover rounded-xl">`:''}
+                        ${item.stamp ? `<p class="text-[8px] text-slate-400 italic">${item.stamp}</p>`:''}
+                        ${item.memo ? `<div class="memo-display bg-slate-50 p-3 rounded-xl text-xs text-slate-600">${item.memo}</div>`:''}
+                        ${item.photo ? `<img src="${item.photo}" class="w-full h-40 object-cover rounded-xl shadow-inner">`:''}
                         <div class="space-y-2">
                             ${item.tasks.map((t, idx) => `
                                 <div class="flex items-center gap-2">
-                                    <div onclick="toggleTask(${item.id}, ${idx})" class="flex-1 flex justify-between items-center p-3 rounded-xl border-2 ${t.isDone ? 'status-done' : 'status-pending'} transition-all">
-                                        <div class="flex items-center gap-2"><i class="bi ${t.isDone?'bi-check-circle-fill':'bi-circle'} text-xs"></i><span class="text-xs font-bold">${t.name}</span></div>
+                                    <div onclick="toggleTask(${item.id}, ${idx})" class="flex-1 flex justify-between items-center p-3 rounded-xl border-2 ${t.isDone?'status-done':'bg-white'}">
+                                        <span class="text-xs font-bold"><i class="bi ${t.isDone?'bi-check-circle-fill':'bi-circle'} mr-2"></i>${t.name}</span>
                                         <input type="date" value="${t.date}" onchange="updateDate(${item.id}, ${idx}, this.value)" class="text-[10px] bg-transparent border-none font-bold" onclick="event.stopPropagation()">
                                     </div>
-                                    <button onclick="openTaskMenu(${item.id}, ${idx})" class="text-slate-300 px-2 font-black text-lg">⋯</button>
+                                    <button onclick="openTaskMenu(${item.id}, ${idx})" class="text-slate-300 px-2 font-black text-xl">⋯</button>
                                 </div>
                             `).join('')}
                         </div>
-                        <button onclick="openAction(${item.id})" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-xs font-black italic">記録・写真を撮る</button>
+                        <button onclick="openAction(${item.id})" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-xs font-black">記録・写真を残す</button>
                     </div>
                 `;
                 list.appendChild(card);
             });
         }
 
+        // 天気設定
+        function openWeatherSettings() { 
+            document.getElementById('latInput').value = config.lat;
+            document.getElementById('lonInput').value = config.lon;
+            document.getElementById('weatherModal').classList.remove('hidden'); 
+        }
+        function saveWeatherSettings() {
+            config.lat = document.getElementById('latInput').value;
+            config.lon = document.getElementById('lonInput').value;
+            localStorage.setItem('agri_config', JSON.stringify(config));
+            getStatsWeather();
+            document.getElementById('weatherModal').classList.add('hidden');
+        }
+
+        // 他、v21からの継承関数 (duplicateTask, deleteTaskActual, updateDate, importData, exportData, openHelp, closeHelp, closeAction, closeTaskMenu, openRepeat) は同様に配置。
+        function updateDate(id, idx, v) { db.find(x => x.id === id).tasks[idx].date = v; save(); }
+        function openTaskMenu(id, idx) { activeId = id; activeTIdx = idx; document.getElementById('taskMenu').classList.remove('hidden'); }
+        function closeTaskMenu() { document.getElementById('taskMenu').classList.add('hidden'); }
+        function duplicateTask(dir) {
+            const item = db.find(x => x.id === activeId); const task = JSON.parse(JSON.stringify(item.tasks[activeTIdx]));
+            task.isDone = false; item.tasks.splice(dir === 'before' ? activeTIdx : activeTIdx + 1, 0, task);
+            save(); render(); closeTaskMenu();
+        }
+        function deleteTaskActual() { if(confirm("消去？")) { db.find(x => x.id === activeId).tasks.splice(activeTIdx, 1); save(); render(); closeTaskMenu(); } }
+        function openRepeat(id) {
+            const item = JSON.parse(JSON.stringify(db.find(x => x.id === id)));
+            item.id = Date.now(); item.season++; item.memo = ""; item.photo = null; item.stamp = "";
+            item.tasks.forEach(t => { t.isDone = false; let d = new Date(t.date); d.setFullYear(d.getFullYear()+1); t.date=d.toISOString().split('T')[0]; });
+            db.unshift(item); save(); render();
+        }
+        function closeAction() { document.getElementById('actionModal').classList.add('hidden'); }
         function exportData() {
             const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -252,8 +283,8 @@
         }
         function openHelp() { document.getElementById('helpModal').classList.remove('hidden'); }
         function closeHelp() { document.getElementById('helpModal').classList.add('hidden'); }
-        
-        window.onload = () => { loadMaster(); render(); };
+
+        window.onload = () => { loadMaster(); render(); getStatsWeather(); };
     </script>
 </body>
 </html>
