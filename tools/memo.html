@@ -3,263 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriHelper Pro</title>
+    <title>写真付きメモ帳 | PocketPortal</title>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-9V96DZHTH1');</script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <style>
-        body { font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-header { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
-        .chip.active { background: #059669; color: white; border-color: #059669; }
-        .task-done { background: #f8fafc; color: #cbd5e1; text-decoration: line-through; }
-        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        body { font-family: sans-serif; background-color: #f4f4f4; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .outer-scroll { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+        #map { height: 250px; width: 100%; flex-shrink: 0; border-bottom: 1px solid #ccc; z-index: 10; }
+        #timeline { padding: 10px; display: flex; flex-direction: column; gap: 12px; }
+        .post-card { background: #fff; border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
+        .post-card.highlight { border: 2px solid #2196F3; background: #e3f2fd; }
+        .thumb { width: 120px; height: auto; cursor: pointer; border: 1px solid #eee; display: block; margin-bottom: 8px; border-radius: 2px; }
+        .memo-text { font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.5; white-space: pre-wrap; margin-bottom: 10px; }
+        .btn-group { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 8px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+        .card-btn { font-size: 13px; font-weight: bold; background: none; border: none; cursor: pointer; padding: 4px 8px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ccc; display: flex; justify-content: space-around; padding: 10px; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+        .nav-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; flex: 1; color: #555; }
+        .nav-btn span { font-size: 0.6rem; margin-top: 2px; font-weight: bold; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen pb-24">
+<body>
 
-    <header class="glass-header text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div class="flex justify-between items-center max-w-xl mx-auto">
-            <div>
-                <h1 class="text-xl font-bold">AgriHelper <span class="text-emerald-400">Pro</span></h1>
-                <p id="currentDate" class="text-[10px] opacity-70"></p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="openHelp()" class="text-xl"><i class="bi bi-question-circle"></i></button>
-                <button onclick="exportData()" class="text-xl"><i class="bi bi-box-arrow-up"></i></button>
-            </div>
-        </div>
-    </header>
+<nav class="bg-white border-b border-slate-200 py-3 px-4 flex-shrink-0 flex justify-between items-center">
+    <a href="./index.html" class="flex items-center gap-1 font-bold text-blue-700 text-sm">🏠 PocketPortal</a>
+    <h1 class="text-sm font-bold text-slate-700">写真付きメモ帳</h1>
+    <a href="./index.html" class="text-[10px] text-slate-400 font-bold hover:text-blue-500">ツール集へ</a>
+</nav>
 
-    <main class="p-4 max-w-xl mx-auto space-y-4">
-        <div class="grid grid-cols-2 gap-3 text-center">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-slate-400 text-[10px] font-bold">栽培中</p>
-                <p id="statActive" class="text-2xl font-black">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-slate-400 text-[10px] font-bold">本日の作業</p>
-                <p id="statTasks" class="text-2xl font-black text-emerald-600">0</p>
-            </div>
-        </div>
+<div class="outer-scroll">
+    <div id="map"></div>
+    <div class="bg-white p-2 border-b border-slate-200 flex gap-2 sticky top-0 z-40">
+        <input type="text" id="search-text" oninput="filter()" placeholder="検索..." class="flex-1 p-2 text-sm border rounded outline-none">
+        <select id="tag-list" onchange="filter()" class="p-2 text-sm border rounded bg-slate-50 w-24">
+            <option value="">タグ</option>
+        </select>
+    </div>
+    
+    <div id="timeline"></div>
 
-        <div id="activeList" class="space-y-4"></div>
-        <div id="emptyState" class="hidden text-center py-20 text-slate-400">
-            <i class="bi bi-seedling text-6xl block mb-2 opacity-20"></i>
-            記録がありません。
-        </div>
-    </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-bottom">
-        <div class="max-w-xl mx-auto flex justify-around items-center h-16">
-            <button onclick="window.scrollTo(0,0)" class="flex flex-col items-center text-emerald-600">
-                <i class="bi bi-house-door-fill text-xl"></i><span class="text-[10px]">ホーム</span>
-            </button>
-            <button onclick="openModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-8 shadow-lg border-4 border-white">
-                <i class="bi bi-plus-lg text-2xl"></i>
-            </button>
-            <button onclick="document.getElementById('importFile').click()" class="flex flex-col items-center text-slate-400">
-                <i class="bi bi-arrow-repeat text-xl"></i><span class="text-[10px]">読込</span>
-            </button>
-        </div>
-    </nav>
-
-    <div id="regModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end">
-        <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto pb-10">
-            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
-            <h2 class="text-xl font-bold mb-4">新規栽培プラン</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 ml-1">栽培区分</label>
-                    <div class="flex gap-2 mt-1">
-                        <button onclick="setEnv('露地')" class="chip flex-1 py-2 border rounded-xl text-sm active" id="env-露地">露地</button>
-                        <button onclick="setEnv('ハウス')" class="chip flex-1 py-2 border rounded-xl text-sm" id="env-ハウス">ハウス</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 ml-1">作目・品種</label>
-                    <select id="cropSelect" class="w-full bg-slate-100 rounded-xl p-3 text-sm appearance-none mb-2">
-                        <option value="custom">-- 自由登録 --</option>
-                        <optgroup label="主要">
-                            <option value="tomato">トマト</option><option value="nasu">ナス</option><option value="kyuri">キュウリ</option>
-                            <option value="kome">お米</option><option value="jagaimo">ジャガイモ</option>
-                        </optgroup>
-                        </select>
-                    <input type="text" id="varietyName" placeholder="品種名を入力 (例: 桃太郎T93)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="date" id="startDate" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                    <input type="text" id="fieldName" placeholder="場所 (例: 東の畑)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                </div>
-
-                <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg mt-4">栽培開始</button>
-                <button onclick="closeModal()" class="w-full text-slate-400 py-2">キャンセル</button>
-            </div>
+    <div class="w-full flex flex-col items-center py-6 bg-white border-t border-slate-100">
+        <p class="text-[8px] text-slate-400 font-bold mb-1 tracking-widest uppercase">Sponsor Link</p>
+        <div class="scale-90">
+            <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x160";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";</script>
+            <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
         </div>
     </div>
+</div>
 
-    <div id="helpModal" class="fixed inset-0 bg-black/60 z-[70] hidden flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[80vh]">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2">ヘルプ・使い方</h2>
-            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
-                <div>
-                    <p class="font-bold text-slate-800">● データの保存先</p>
-                    <p>データはあなたのスマホのみに保存されます。サーバーには送信されません。</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-800">● 機種変更・移行</p>
-                    <p>右上の「↑ボタン」でデータを保存し、新しいスマホで下部の「読込」からそのファイルを選択してください。</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-800">● 作業記録</p>
-                    <p>各カードの作業をタップするとチェックが入り、完了扱いになります。</p>
-                </div>
+<div class="bottom-nav">
+    <button class="nav-btn" onclick="triggerInput('camera')">📷<span>カメラ</span></button>
+    <button class="nav-btn" onclick="triggerInput('folder')">📁<span>写真</span></button>
+    <button class="nav-btn" onclick="addTextMemo()">✍️<span>テキスト</span></button>
+    <button class="nav-btn" onclick="getGPSOnly()">📍<span>GPS</span></button>
+    <button class="nav-btn" onclick="openHelp()">❓<span>ヘルプ</span></button>
+</div>
+
+<div id="help-modal" class="hidden fixed inset-0 bg-black/60 z-[7000] flex items-center justify-center p-4" onclick="closeHelp()">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[85vh]" onclick="event.stopPropagation()">
+        <h3 class="text-xl font-black mb-6 border-b pb-2 text-slate-800">ヘルプ・設定</h3>
+        <section class="mb-6">
+            <h4 class="font-bold text-blue-600 mb-2">📖 使い方</h4>
+            <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4 font-medium">
+                <li>写真やテキストを位置情報と共に保存できます。</li>
+                <li>地図上のピンをタップすると該当のメモへジャンプします。</li>
+            </ul>
+        </section>
+        <section class="mb-6">
+            <h4 class="font-bold text-blue-600 mb-2">🛡 プライバシー</h4>
+            <div class="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg leading-relaxed font-medium">
+                データはブラウザ（IndexedDB）にのみ保存され、外部には送信されません。
             </div>
-            <button onclick="closeHelp()" class="w-full bg-slate-100 font-bold py-3 rounded-xl mt-6">閉じる</button>
+        </section>
+        <section class="mb-6">
+            <h4 class="font-bold text-blue-600 mb-2">📲 機種変更・バックアップ</h4>
+            <p class="text-[11px] text-slate-500 mb-3 font-medium">端末を変える際はバックアップファイルをダウンロードし、新端末で開いてください。</p>
+            <button onclick="exportAll()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform mb-4">
+                全データをバックアップ（機種変用）
+            </button>
+            
+            <div class="w-full flex justify-center py-2 overflow-hidden bg-slate-50 rounded-lg">
+                <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="200x200";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";</script>
+                <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+            </div>
+        </section>
+        <button onclick="closeHelp()" class="w-full py-3 border border-slate-200 text-slate-400 font-bold rounded-xl text-sm mt-2">閉じる</button>
+    </div>
+</div>
+
+<div id="input-modal" class="hidden fixed inset-0 bg-black/60 z-[4000] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-slate-800">メモを入力</h3>
+        <textarea id="memo-textarea" rows="5" class="w-full p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="内容を入力（改行OK）"></textarea>
+        <div class="flex gap-3 mt-6">
+            <button onclick="closeInputModal()" class="flex-1 py-3 text-slate-400 font-bold text-sm">キャンセル</button>
+            <button id="submit-memo-btn" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm">保存する</button>
         </div>
     </div>
+</div>
 
-    <input type="file" id="importFile" class="hidden" onchange="processFile(event)">
+<input type="file" id="file-camera" accept="image/*" capture="camera" onchange="processFile(event)" class="hidden">
+<input type="file" id="file-folder" accept="image/*" onchange="processFile(event)" class="hidden">
+<div id="loading" class="hidden fixed inset-0 bg-black/50 z-[5000] flex items-center justify-center text-white font-bold text-sm">位置情報を取得中...</div>
+<div id="overlay" class="hidden fixed inset-0 bg-black/90 z-[6000] flex items-center justify-center" onclick="this.classList.add('hidden')">
+    <img id="full-img" class="max-w-[95%] max-h-[95%] shadow-2xl rounded">
+</div>
 
-    <script>
-        const MASTER = {
-            "tomato": { name: "トマト", days: 100, tasks: ["苗植え", "わき芽かき", "追肥", "収穫"] },
-            "nasu": { name: "ナス", days: 110, tasks: ["苗植え", "3本仕立て", "追肥", "収穫"] },
-            "kyuri": { name: "キュウリ", days: 60, tasks: ["苗植え", "ネット張り", "収穫"] },
-            "kome": { name: "お米", days: 160, tasks: ["田植え", "中干し", "出穂", "稲刈り"] },
-            "default": { name: "カスタム", days: 90, tasks: ["定植", "管理", "収穫"] }
+<script>
+    let db, map, markers = {}, tempImgData = null;
+    const request = indexedDB.open("PocketMemo_vFinal", 1);
+    request.onupgradeneeded = e => e.target.result.createObjectStore("memos", { keyPath: "id" });
+    request.onsuccess = e => { db = e.target.result; initMap(); load(); };
+
+    function initMap() {
+        map = L.map('map', { zoomControl: true }).setView([35.68, 139.76], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    }
+
+    function triggerInput(type) { document.getElementById(type === 'camera' ? 'file-camera' : 'file-folder').click(); }
+    async function processFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        document.getElementById('loading').classList.remove('hidden');
+        const reader = new FileReader();
+        reader.onload = e => openInputModal(e.target.result, 'image');
+        reader.readAsDataURL(file);
+    }
+    function addTextMemo() { openInputModal(null, 'text'); }
+    function getGPSOnly() { openInputModal(null, 'gps'); }
+
+    function openInputModal(imgData, type) {
+        tempImgData = imgData;
+        document.getElementById('memo-textarea').value = (type === 'gps') ? "📍 GPSチェックイン" : "";
+        document.getElementById('input-modal').classList.remove('hidden');
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('memo-textarea').focus();
+    }
+    function closeInputModal() { document.getElementById('input-modal').classList.add('hidden'); }
+    function openHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
+    function closeHelp() { document.getElementById('help-modal').classList.add('hidden'); }
+
+    document.getElementById('submit-memo-btn').onclick = async function() {
+        const memoText = document.getElementById('memo-textarea').value;
+        closeInputModal();
+        document.getElementById('loading').classList.remove('hidden');
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            let addr = "住所取得中...";
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=ja`);
+                const json = await res.json();
+                addr = json.display_name.replace("日本, ", "");
+            } catch(e) {}
+            const entry = { id: Date.now(), img: tempImgData, text: memoText, date: new Date().toLocaleString(), address: addr, lat: latitude, lng: longitude };
+            db.transaction("memos", "readwrite").objectStore("memos").add(entry);
+            render(entry);
+            updateTags();
+            map.setView([latitude, longitude], 16);
+            document.getElementById('loading').classList.add('hidden');
+        }, () => { alert("GPSを確認してください"); document.getElementById('loading').classList.add('hidden'); }, {enableHighAccuracy: true});
+    };
+
+    function load() { 
+        db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => { 
+            const memos = e.target.result;
+            memos.forEach(render); 
+            updateTags();
+            if(memos.length > 0) map.setView([memos[memos.length-1].lat, memos[memos.length-1].lng], 15);
+        }; 
+    }
+
+    function render(entry) {
+        const container = document.getElementById('timeline');
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        card.id = `post-${entry.id}`;
+        const media = entry.img ? `<img src="${entry.img}" class="thumb" onclick="zoom('${entry.img}')">` : "";
+        const saveBtn = entry.img ? `<button onclick="downloadOne(${entry.id})" class="card-btn text-blue-500">保存</button>` : "";
+        card.innerHTML = `${media}<div class="info"><div class="flex justify-between items-start mb-1"><span class="text-[10px] text-slate-400 font-bold uppercase">${entry.date}</span><span class="text-[8px] text-blue-400 font-mono">LAT:${entry.lat.toFixed(4)} LNG:${entry.lng.toFixed(4)}</span></div><span class="text-[10px] text-slate-600 block mb-1">📍 ${entry.address}</span><div class="memo-text">${entry.text}</div></div><div class="btn-group"><button onclick="shareMemo(${entry.id})" class="card-btn text-slate-400">共有</button>${saveBtn}<button onclick="del(${entry.id})" class="card-btn text-red-400">削除</button></div>`;
+        container.insertBefore(card, container.firstChild);
+        markers[entry.id] = L.marker([entry.lat, entry.lng]).addTo(map).on('click', () => {
+            document.getElementById(`post-${entry.id}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.querySelectorAll('.post-card').forEach(c => c.classList.remove('highlight'));
+            document.getElementById(`post-${entry.id}`).classList.add('highlight');
+        });
+    }
+
+    function zoom(src) { document.getElementById('full-img').src = src; document.getElementById('overlay').classList.remove('hidden'); }
+    function del(id) { if(confirm("削除しますか？")){ db.transaction("memos","readwrite").objectStore("memos").delete(id); document.getElementById(`post-${id}`).remove(); if(markers[id]) map.removeLayer(markers[id]); updateTags(); } }
+    
+    async function shareMemo(id) {
+        db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = async e => {
+            const item = e.target.result;
+            const shareData = { title: 'Pocket Memo', text: `${item.text}\n📍 ${item.address}\nhttps://www.google.com/maps?q=${item.lat},${item.lng}` };
+            if (item.img && navigator.share) {
+                try {
+                    const blob = await (await fetch(item.img)).blob();
+                    const file = new File([blob], "memo.jpg", { type: blob.type });
+                    await navigator.share({ ...shareData, files: [file] });
+                } catch { await navigator.share(shareData); }
+            } else if (navigator.share) { await navigator.share(shareData); }
         };
+    }
 
-        let db = JSON.parse(localStorage.getItem('agri_v7_db') || '[]');
-        let currentEnv = '露地';
-
-        function setEnv(val) {
-            currentEnv = val;
-            document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.innerText === val));
-        }
-
-        function openModal() { document.getElementById('regModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('regModal').classList.add('hidden'); }
-        function openHelp() { document.getElementById('helpModal').classList.remove('hidden'); }
-        function closeHelp() { document.getElementById('helpModal').classList.add('hidden'); }
-
-        function saveRecord() {
-            const sel = document.getElementById('cropSelect');
-            const variety = document.getElementById('varietyName').value;
-            const start = document.getElementById('startDate').value;
-            const field = document.getElementById('fieldName').value;
-
-            if(!start || !field) return alert("必須項目を埋めてください");
-
-            const preset = MASTER[sel.value] || MASTER["default"];
-            const cropName = sel.value === 'custom' ? variety : sel.options[sel.selectedIndex].text;
-            
-            const record = {
-                id: Date.now(),
-                name: cropName,
-                variety: variety,
-                env: currentEnv,
-                field: field,
-                start: start,
-                tasks: preset.tasks.map((t, i) => ({
-                    name: t, isDone: false,
-                    date: calculateDate(start, (preset.days / preset.tasks.length) * i)
-                }))
-            };
-
-            db.unshift(record);
-            localStorage.setItem('agri_v7_db', JSON.stringify(db));
-            closeModal();
-            render();
-        }
-
-        function calculateDate(base, d) {
-            const date = new Date(base);
-            date.setDate(date.getDate() + d);
-            return date.toISOString().split('T')[0];
-        }
-
-        function render() {
-            const container = document.getElementById('activeList');
-            container.innerHTML = "";
-            document.getElementById('emptyState').classList.toggle('hidden', db.length > 0);
-            
-            db.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden";
-                card.innerHTML = `
-                    <div class="p-4 bg-slate-50 border-b flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] font-bold text-emerald-600 bg-white border border-emerald-200 px-2 py-0.5 rounded-full mr-1">${item.env}</span>
-                            <span class="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">${item.field}</span>
-                            <h3 class="font-bold text-lg mt-1">${item.name} <span class="text-sm font-normal text-slate-400">${item.variety || ''}</span></h3>
-                        </div>
-                        <button onclick="deleteItem(${item.id})" class="text-slate-300 p-2"><i class="bi bi-trash"></i></button>
-                    </div>
-                    <div class="p-2 space-y-1">
-                        ${item.tasks.map((t, idx) => `
-                            <div onclick="toggleTask(${item.id}, ${idx})" class="flex items-center justify-between p-3 rounded-xl transition-all ${t.isDone ? 'task-done' : 'bg-white border border-slate-100'}">
-                                <div class="flex items-center gap-3">
-                                    <i class="bi ${t.isDone ? 'bi-check-circle-fill' : 'bi-circle'} text-emerald-500"></i>
-                                    <span class="text-sm font-bold">${t.name}</span>
-                                </div>
-                                <span class="text-[10px] font-mono">${t.date}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-            updateStats();
-        }
-
-        function toggleTask(pId, tIdx) {
-            const p = db.find(x => x.id === pId);
-            p.tasks[tIdx].isDone = !p.tasks[tIdx].isDone;
-            localStorage.setItem('agri_v7_db', JSON.stringify(db));
-            render();
-        }
-
-        function deleteItem(id) {
-            if(confirm("この栽培記録を削除しますか？")) {
-                db = db.filter(x => x.id !== id);
-                localStorage.setItem('agri_v7_db', JSON.stringify(db));
-                render();
-            }
-        }
-
-        function updateStats() {
-            document.getElementById('statActive').innerText = db.length;
-            const today = new Date().toISOString().split('T')[0];
-            let count = 0;
-            db.forEach(item => item.tasks.forEach(t => { if(t.date === today && !t.isDone) count++; }));
-            document.getElementById('statTasks').innerText = count;
-            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
-        }
-
-        function exportData() {
-            const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `AgriData_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-        }
-
-        function processFile(event) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                db = JSON.parse(e.target.result);
-                localStorage.setItem('agri_v7_db', JSON.stringify(db));
-                render();
-            };
-            reader.readAsText(event.target.files[0]);
-        }
-
-        window.onload = () => {
-            document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-            render();
+    function downloadOne(id) { db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = e => { const a = document.createElement('a'); a.href = e.target.result.img; a.download = `memo_${id}.jpg`; a.click(); }; }
+    function exportAll() {
+        db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => {
+            const data = JSON.stringify(e.target.result);
+            const blob = new Blob([document.documentElement.outerHTML.replace('load()', `(function(){let d=${data}; d.forEach(render);})()`) ], {type: 'text/html'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "pocket_memo_backup.html"; a.click();
         };
-    </script>
+    }
+    function filter() {
+        const q = document.getElementById('search-text').value.toLowerCase();
+        const tag = document.getElementById('tag-list').value;
+        document.querySelectorAll('.post-card').forEach(card => {
+            const content = card.innerText.toLowerCase();
+            card.style.display = (content.includes(q) && (tag === "" || content.includes(tag))) ? 'block' : 'none';
+        });
+    }
+    function updateTags() {
+        db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => {
+            const tags = new Set();
+            e.target.result.forEach(item => { const found = item.text.match(/#(\S+)/g); if (found) found.forEach(t => tags.add(t)); });
+            const select = document.getElementById('tag-list');
+            select.innerHTML = '<option value="">タグ</option>';
+            tags.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
+        };
+    }
+</script>
 </body>
 </html>
