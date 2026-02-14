@@ -3,152 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriHelper Pro 100+</title>
+    <title>AgriHelper Pro v12</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
+        .glass-header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
         .chip.active { background: #059669; color: white; border-color: #059669; }
-        .task-done { background: #f8fafc; color: #cbd5e1; text-decoration: line-through; }
-        optgroup { font-weight: bold; color: #059669; }
-        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .task-done { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; opacity: 0.7; }
+        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 12px; }
+        .tab-btn.active { border-bottom: 3px solid #10b981; color: #10b981; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen pb-24">
+<body class="bg-slate-50 text-slate-900 min-h-screen pb-32">
 
     <header class="glass-header text-white p-4 sticky top-0 z-50 shadow-lg">
         <div class="flex justify-between items-center max-w-xl mx-auto">
             <div>
-                <h1 class="text-xl font-bold">AgriHelper <span class="text-emerald-400">Pro</span></h1>
-                <p id="currentDate" class="text-[10px] opacity-70"></p>
+                <h1 class="text-xl font-black italic tracking-tighter">AgriHelper <span class="text-emerald-400">Pro v12</span></h1>
+                <p id="headerWeather" class="text-[9px] font-mono opacity-80 uppercase mt-1">Weather Loading...</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="openHelp()" class="text-xl"><i class="bi bi-question-circle"></i></button>
-                <button onclick="exportData()" class="text-xl"><i class="bi bi-box-arrow-up"></i></button>
+            <div class="flex gap-4">
+                <button onclick="toggleFertCalc()" class="text-xl text-yellow-400"><i class="bi bi-calculator"></i></button>
+                <button onclick="exportData()" class="text-xl text-emerald-400"><i class="bi bi-share-fill"></i></button>
             </div>
         </div>
     </header>
 
     <main class="p-4 max-w-xl mx-auto space-y-4">
-        <div class="grid grid-cols-2 gap-3 text-center">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-slate-400 text-[10px] font-bold">栽培中</p>
-                <p id="statActive" class="text-2xl font-black">0</p>
+        <div class="grid grid-cols-3 gap-2">
+            <div class="stat-card text-center">
+                <p class="text-[8px] font-bold text-slate-400">進行中</p>
+                <p id="statActive" class="text-lg font-black">0</p>
             </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-slate-400 text-[10px] font-bold">本日の作業</p>
-                <p id="statTasks" class="text-2xl font-black text-emerald-600">0</p>
+            <div class="stat-card text-center">
+                <p class="text-[8px] font-bold text-slate-400">総収穫量</p>
+                <p id="statHarvest" class="text-lg font-black text-emerald-600">0<span class="text-[10px]">kg</span></p>
+            </div>
+            <div class="stat-card text-center">
+                <p class="text-[8px] font-bold text-slate-400">総売上</p>
+                <p id="statSales" class="text-lg font-black text-blue-600">¥0</p>
             </div>
         </div>
 
-        <div id="activeList" class="space-y-4"></div>
-        <div id="emptyState" class="hidden text-center py-20 text-slate-400">
-            <i class="bi bi-seedling text-6xl block mb-2 opacity-20"></i>
-            記録がありません。
-        </div>
+        <div id="activeList" class="space-y-6"></div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-bottom">
-        <div class="max-w-xl mx-auto flex justify-around items-center h-16">
-            <button onclick="window.scrollTo(0,0)" class="flex flex-col items-center text-emerald-600">
-                <i class="bi bi-house-door-fill text-xl"></i><span class="text-[10px]">ホーム</span>
-            </button>
-            <button onclick="openModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-8 shadow-lg border-4 border-white">
-                <i class="bi bi-plus-lg text-2xl"></i>
-            </button>
-            <button onclick="document.getElementById('importFile').click()" class="flex flex-col items-center text-slate-400">
-                <i class="bi bi-arrow-repeat text-xl"></i><span class="text-[10px]">読込</span>
-            </button>
-        </div>
-    </nav>
-
-    <div id="regModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end">
-        <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto pb-10 shadow-2xl">
-            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
-            <h2 class="text-xl font-bold mb-4">新規栽培プラン</h2>
+    <div id="actionModal" class="fixed inset-0 bg-slate-900/90 z-[70] hidden flex items-end">
+        <div class="bg-white w-full rounded-t-[40px] p-6 max-h-[90vh] overflow-y-auto">
+            <div class="w-16 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
             
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 ml-1">栽培区分</label>
-                    <div class="flex gap-2 mt-1">
-                        <button onclick="setEnv('露地')" class="chip flex-1 py-2 border rounded-xl text-sm active" id="env-露地">露地</button>
-                        <button onclick="setEnv('ハウス')" class="chip flex-1 py-2 border rounded-xl text-sm" id="env-ハウス">ハウス</button>
+            <div class="flex border-b mb-6">
+                <button onclick="switchTab('harvest')" id="tab-harvest" class="tab-btn flex-1 py-3 font-black active">収穫/売上</button>
+                <button onclick="switchTab('pesticide')" id="tab-pesticide" class="tab-btn flex-1 py-3 font-black">農薬記録</button>
+            </div>
+
+            <div id="pane-harvest" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold ml-1">追加収穫量 (kg)</label>
+                        <input type="number" id="inputKg" class="w-full bg-slate-100 p-4 rounded-2xl font-black text-xl" placeholder="0.0">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold ml-1">今回の売上 (円)</label>
+                        <input type="number" id="inputYen" class="w-full bg-slate-100 p-4 rounded-2xl font-black text-xl" placeholder="0">
                     </div>
                 </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 ml-1">作目（主要100品目）</label>
-                    <select id="cropSelect" class="w-full bg-slate-100 rounded-xl p-3 text-sm appearance-none mb-2">
-                        <option value="custom">-- 自由登録 (リストにないもの) --</option>
-                        <optgroup label="穀物・工芸作物">
-                            <option value="kome">お米 (水稲)</option><option value="mugi">小麦/大麦</option><option value="soba">そば</option>
-                            <option value="sugarcane">サトウキビ</option><option value="tensai">テンサイ (ビート)</option>
-                            <option value="igusa">い草</option><option value="daizu">大豆</option><option value="azuki">小豆</option>
-                            <option value="rakusei">落花生</option><option value="konnyaku">コンニャク芋</option>
-                        </optgroup>
-                        <optgroup label="果菜 (実もの)">
-                            <option value="tomato">トマト</option><option value="nasu">ナス</option><option value="kyuri">キュウリ</option>
-                            <option value="piman">ピーマン</option><option value="shishito">シシトウ</option><option value="okra">オクラ</option>
-                            <option value="pumpkin">カボチャ</option><option value="suika">スイカ</option><option value="melon">メロン</option>
-                            <option value="uri">ウリ (マクワウリ等)</option><option value="strawberry">イチゴ</option><option value="corn">トウモロコシ</option>
-                            <option value="edamame">枝豆</option><option value="soramame">そら豆</option><option value="ingen">インゲン</option>
-                            <option value="nigauri">ゴーヤ (苦瓜)</option><option value="tougan">冬瓜</option>
-                        </optgroup>
-                        <optgroup label="葉菜 (葉もの)">
-                            <option value="kyabetsu">キャベツ</option><option value="hakusai">ハクサイ</option><option value="lettuce">レタス</option>
-                            <option value="hourensou">ほうれん草</option><option value="komatsuna">小松菜</option><option value="shungiku">春菊</option>
-                            <option value="negi">ネギ</option><option value="nira">ニラ</option><option value="broccoli">ブロッコリー</option>
-                            <option value="karifurawa">カリフラワー</option><option value="chingensai">チンゲンサイ</option><option value="mizuna">水菜</option>
-                            <option value="mitsuba">三つ葉</option><option value="asparagasu">アスパラガス</option><option value="celery">セロリ</option>
-                            <option value="shiso">シソ</option><option value="parsley">パセリ</option>
-                        </optgroup>
-                        <optgroup label="根菜 (土もの)">
-                            <option value="daikon">ダイコン</option><option value="ninjin">ニンジン</option><option value="tamanegi">タマネギ</option>
-                            <option value="jagaimo">ジャガイモ</option><option value="satsumaimo">サツマイモ</option><option value="satoimo">サトイモ</option>
-                            <option value="nagaimo">山芋 (長芋/大和芋)</option><option value="gobo">ゴボウ</option><option value="renkon">レンコン</option>
-                            <option value="kabu">カブ</option><option value="ninniku">ニンニク</option><option value="shoga">ショウガ</option>
-                            <option value="rakkyo">ラッキョウ</option>
-                        </optgroup>
-                        <optgroup label="果樹 (仁果・核果・柑橘)">
-                            <option value="ringo">リンゴ</option><option value="nashi">日本梨</option><option value="momo">モモ</option>
-                            <option value="cherry">サクランボ</option><option value="ume">ウメ</option><option value="anzu">アンズ</option>
-                            <option value="budo">ブドウ (巨峰等)</option><option value="muscat">マスカット (シャイン等)</option>
-                            <option value="kaki">カキ</option><option value="biwa">ビワ</option><option value="ichijiku">イチジク</option>
-                            <option value="mikan">温州ミカン</option><option value="hassaku">はっさく</option><option value="natsumikan">夏みかん</option>
-                            <option value="kinkan">きんかん</option><option value="iyokan">伊予柑</option><option value="dekopon">デコポン</option>
-                            <option value="yuzu">ユズ</option><option value="lemon">レモン</option><option value="sudachi">スダチ</option>
-                        </optgroup>
-                        <optgroup label="果樹 (その他・熱帯)">
-                            <option value="kurumi">クルミ</option><option value="kuri">クリ</option><option value="kiwi">キウイ</option>
-                            <option value="blueberry">ブルーベリー</option><option value="olive">オリーブ</option>
-                            <option value="mango">マンゴー</option><option value="avocado">アボカド</option><option value="banana">バナナ</option>
-                            <option value="passion">パッションフルーツ</option><option value="papaya">パパイヤ</option>
-                        </optgroup>
-                    </select>
-                    <input type="text" id="varietyName" placeholder="品種名・自由入力 (例: 紅はるか, 桃太郎)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="date" id="startDate" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                    <input type="text" id="fieldName" placeholder="場所 (例: 西の畑)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                </div>
-
-                <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg mt-4">栽培開始</button>
-                <button onclick="closeModal()" class="w-full text-slate-400 py-2 text-sm">キャンセル</button>
+                <button onclick="saveAction('harvest')" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg">記録を更新</button>
             </div>
+
+            <div id="pane-pesticide" class="space-y-4 hidden">
+                <input type="text" id="pestName" class="w-full bg-slate-100 p-4 rounded-2xl font-bold" placeholder="農薬名 (例: トレボン乳剤)">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="pestRatio" class="w-full bg-slate-100 p-4 rounded-2xl font-bold" placeholder="希釈倍率 (1000倍)">
+                    <input type="date" id="pestDate" class="w-full bg-slate-100 p-4 rounded-2xl font-bold">
+                </div>
+                <button onclick="saveAction('pesticide')" class="w-full bg-slate-800 text-white font-black py-4 rounded-2xl shadow-lg">散布履歴を追加</button>
+            </div>
+
+            <button onclick="closeAction()" class="w-full text-slate-400 font-bold py-4">閉じる</button>
         </div>
     </div>
 
-    <div id="helpModal" class="fixed inset-0 bg-black/60 z-[70] hidden flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[80vh]">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2">AgriHelper 使い方</h2>
-            <div class="space-y-4 text-sm text-slate-600">
-                <p>● <strong>100品目対応</strong>: 日本の主要作物から、地域特有の「サトウキビ」「い草」等まで網羅しています。</p>
-                <p>● <strong>自由入力</strong>: 品種名は自由に入力できます。リストにないものは「自由登録」を選んでください。</p>
-                <p>● <strong>データ保存</strong>: このツールはサーバーを使いません。データはスマホ内に保存されます。機種変更時は右上の「↑ボタン」で書き出して移行してください。</p>
+    <div id="fertCalc" class="fixed inset-x-4 top-20 bg-white border border-slate-200 rounded-3xl shadow-2xl z-[100] p-6 hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-black text-lg">施肥量計算機</h3>
+            <button onclick="toggleFertCalc()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <input type="number" id="targetN" placeholder="目標N量(kg/10a)" class="w-full bg-slate-100 p-3 rounded-xl mb-2">
+        <input type="number" id="fertN" placeholder="肥料N成分(%)" class="w-full bg-slate-100 p-3 rounded-xl mb-4">
+        <button onclick="calcFert()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold">計算</button>
+        <div id="fertResult" class="mt-4 p-3 bg-emerald-50 text-emerald-800 rounded-xl font-bold text-center hidden"></div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t z-50 pb-[env(safe-area-inset-bottom)]">
+        <div class="max-w-xl mx-auto flex justify-around items-center h-20">
+            <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="flex flex-col items-center text-emerald-600"><i class="bi bi-house-door-fill text-2xl"></i><span class="text-[10px] font-bold">ホーム</span></button>
+            <button onclick="openRegModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-8 shadow-xl border-4 border-white"><i class="bi bi-plus-lg text-2xl"></i></button>
+            <button onclick="document.getElementById('importFile').click()" class="flex flex-col items-center text-slate-400"><i class="bi bi-cloud-arrow-down-fill text-2xl"></i><span class="text-[10px] font-bold">読込</span></button>
+        </div>
+    </nav>
+
+    <div id="regModal" class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex items-end">
+        <div class="bg-white w-full rounded-t-[40px] p-8 max-h-[90vh] overflow-y-auto">
+            <div class="w-16 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-xl font-black mb-6">新規栽培・区画登録</h2>
+            <div class="space-y-4">
+                <select id="cropSelect" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none">
+                    <option value="tomato">トマト</option><option value="budo">ブドウ</option><option value="jagaimo">ジャガイモ</option><option value="kome">お米</option>
+                    <option value="custom">-- 自由登録 --</option>
+                </select>
+                <input type="text" id="varietyName" placeholder="品種名" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none">
+                <input type="text" id="fieldName" placeholder="圃場名" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none">
+                <input type="date" id="startDate" class="w-full bg-slate-100 p-4 rounded-2xl font-bold border-none">
+                <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg mt-4">栽培開始</button>
+                <button onclick="closeRegModal()" class="w-full text-slate-400 font-bold py-2">戻る</button>
             </div>
-            <button onclick="closeHelp()" class="w-full bg-slate-100 font-bold py-3 rounded-xl mt-6">閉じる</button>
         </div>
     </div>
 
@@ -156,148 +126,162 @@
 
     <script>
         const MASTER = {
-            "kome": { days: 160, tasks: ["苗代", "田植え", "中干し", "出穂", "稲刈り"] },
-            "sugarcane": { days: 400, tasks: ["植付け", "培土", "追肥", "防鳥", "収穫"] },
-            "tensai": { days: 180, tasks: ["育苗", "定植", "防除", "収穫"] },
-            "igusa": { days: 200, tasks: ["株分け", "泥染め準備", "網張り", "刈取り"] },
-            "tomato": { days: 100, tasks: ["定植", "わき芽かき", "追肥", "収穫"] },
-            "muscat": { days: 150, tasks: ["剪定", "ジベレリン処理", "摘粒", "袋掛け", "収穫"] },
-            "jagaimo": { days: 100, tasks: ["芽出し", "植付け", "土寄せ", "収穫"] },
-            "satsumaimo": { days: 140, tasks: ["苗植え", "つる返し", "収穫"] },
-            "hassaku": { days: 300, tasks: ["剪定", "防除", "収穫", "貯蔵"] },
-            "default": { days: 90, tasks: ["定植/播種", "管理作業", "収穫"] }
+            "tomato": { days: 100, tasks: ["定植", "わき芽かき", "追肥", "収穫開始"] },
+            "budo": { days: 180, tasks: ["芽かき", "ジベ処理", "袋掛け", "収穫開始"] },
+            "default": { days: 90, tasks: ["定植", "管理", "収穫"] }
         };
 
-        let db = JSON.parse(localStorage.getItem('agri_v8_db') || '[]');
-        let currentEnv = '露地';
+        let db = JSON.parse(localStorage.getItem('agri_v12_db') || '[]');
+        let activeId = null;
 
-        function setEnv(val) {
-            currentEnv = val;
-            document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.innerText === val));
+        // 1. 基本UI制御
+        function openRegModal() { document.getElementById('regModal').classList.remove('hidden'); }
+        function closeRegModal() { document.getElementById('regModal').classList.add('hidden'); }
+        function openAction(id) { activeId = id; document.getElementById('actionModal').classList.remove('hidden'); }
+        function closeAction() { document.getElementById('actionModal').classList.add('hidden'); }
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-${t}`));
+            document.querySelectorAll('#pane-harvest, #pane-pesticide').forEach(p => p.classList.toggle('hidden', p.id !== `pane-${t}`));
         }
 
-        function openModal() { document.getElementById('regModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('regModal').classList.add('hidden'); }
-        function openHelp() { document.getElementById('helpModal').classList.remove('hidden'); }
-        function closeHelp() { document.getElementById('helpModal').classList.add('hidden'); }
-
+        // 2. 記録保存ロジック
         function saveRecord() {
             const sel = document.getElementById('cropSelect');
             const variety = document.getElementById('varietyName').value;
-            const start = document.getElementById('startDate').value;
             const field = document.getElementById('fieldName').value;
-
-            if(!start || !field) return alert("日付と場所を入力してください");
+            const start = document.getElementById('startDate').value;
+            if(!start || !field) return alert("入力してください");
 
             const preset = MASTER[sel.value] || MASTER["default"];
-            const cropName = sel.value === 'custom' ? (variety || "不明") : sel.options[sel.selectedIndex].text;
-            
             const record = {
                 id: Date.now(),
-                name: cropName,
+                name: sel.options[sel.selectedIndex].text,
                 variety: variety,
-                env: currentEnv,
                 field: field,
                 start: start,
+                harvestTotal: 0,
+                salesTotal: 0,
+                pestLogs: [],
                 tasks: preset.tasks.map((t, i) => ({
                     name: t, isDone: false,
-                    date: calculateDate(start, (preset.days / preset.tasks.length) * i)
+                    date: calculateDate(start, (preset.days / (preset.tasks.length - 1)) * i)
                 }))
             };
-
             db.unshift(record);
-            localStorage.setItem('agri_v8_db', JSON.stringify(db));
-            closeModal();
-            render();
+            save(); closeRegModal(); render();
         }
 
+        function saveAction(type) {
+            const p = db.find(x => x.id === activeId);
+            if(type === 'harvest') {
+                p.harvestTotal += parseFloat(document.getElementById('inputKg').value || 0);
+                p.salesTotal += parseInt(document.getElementById('inputYen').value || 0);
+            } else {
+                p.pestLogs.push({
+                    name: document.getElementById('pestName').value,
+                    ratio: document.getElementById('pestRatio').value,
+                    date: document.getElementById('pestDate').value
+                });
+            }
+            save(); closeAction(); render();
+        }
+
+        // 3. ユーティリティ
         function calculateDate(base, d) {
             const date = new Date(base);
-            date.setDate(date.getDate() + d);
+            date.setDate(date.getDate() + Math.floor(d));
             return date.toISOString().split('T')[0];
+        }
+        function save() { localStorage.setItem('agri_v12_db', JSON.stringify(db)); }
+        function toggleFertCalc() { document.getElementById('fertCalc').classList.toggle('hidden'); }
+        function calcFert() {
+            const res = (document.getElementById('targetN').value / (document.getElementById('fertN').value / 100)).toFixed(1);
+            document.getElementById('fertResult').innerText = `必要量: ${res}kg / 10a`;
+            document.getElementById('fertResult').classList.remove('hidden');
         }
 
         function render() {
             const container = document.getElementById('activeList');
             container.innerHTML = "";
-            document.getElementById('emptyState').classList.toggle('hidden', db.length > 0);
-            
+            let [totalKg, totalYen] = [0, 0];
+
             db.forEach(item => {
+                totalKg += item.harvestTotal;
+                totalYen += item.salesTotal;
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden";
+                card.className = "bg-white rounded-[30px] shadow-sm border border-slate-200 overflow-hidden";
                 card.innerHTML = `
-                    <div class="p-4 bg-slate-50 border-b flex justify-between items-start">
+                    <div class="p-5 bg-slate-50/80 border-b flex justify-between items-start">
                         <div>
-                            <span class="text-[9px] font-bold text-emerald-600 bg-white border border-emerald-200 px-2 py-0.5 rounded-full mr-1">${item.env}</span>
-                            <span class="text-[9px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">${item.field}</span>
-                            <h3 class="font-bold text-lg mt-1">${item.name} <span class="text-xs font-normal text-slate-400">${item.variety || ''}</span></h3>
+                            <span class="text-[9px] font-black text-emerald-600 bg-white border px-2 py-0.5 rounded-full mr-1">${item.field}</span>
+                            <h3 class="font-black text-lg mt-1">${item.name} <small class="text-slate-400 font-medium">${item.variety}</small></h3>
                         </div>
-                        <button onclick="deleteItem(${item.id})" class="text-slate-300 p-2"><i class="bi bi-trash"></i></button>
+                        <div class="text-right">
+                            <p class="text-[14px] font-black text-blue-600">¥${item.salesTotal.toLocaleString()}</p>
+                            <p class="text-[10px] font-bold text-slate-400">${item.harvestTotal.toFixed(1)}kg</p>
+                        </div>
                     </div>
-                    <div class="p-2 space-y-1">
-                        ${item.tasks.map((t, idx) => `
-                            <div onclick="toggleTask(${item.id}, ${idx})" class="flex items-center justify-between p-3 rounded-xl transition-all ${t.isDone ? 'task-done' : 'bg-white border border-slate-100'}">
-                                <div class="flex items-center gap-3">
-                                    <i class="bi ${t.isDone ? 'bi-check-circle-fill' : 'bi-circle'} text-emerald-500"></i>
-                                    <span class="text-sm font-bold">${t.name}</span>
-                                </div>
-                                <span class="text-[10px] font-mono">${t.date.replace(/-/g,'/')}</span>
+                    
+                    <div class="p-4 space-y-3">
+                        <div class="flex gap-2">
+                            <button onclick="openAction(${item.id})" class="flex-1 bg-emerald-50 text-emerald-700 py-3 rounded-2xl text-xs font-black"><i class="bi bi-plus-circle mr-1"></i>収穫・売上</button>
+                            <button onclick="openAction(${item.id}); switchTab('pesticide');" class="flex-1 bg-slate-50 text-slate-700 py-3 rounded-2xl text-xs font-black"><i class="bi bi-shield-check mr-1"></i>農薬記録</button>
+                        </div>
+
+                        ${item.pestLogs.length > 0 ? `
+                            <div class="bg-yellow-50/50 p-3 rounded-xl border border-yellow-100">
+                                <p class="text-[8px] font-black text-yellow-600 uppercase mb-1">Pesticide Log</p>
+                                ${item.pestLogs.map(l => `<p class="text-[10px] font-bold text-slate-600">・${l.date} | ${l.name} (${l.ratio})</p>`).join('')}
                             </div>
-                        `).join('')}
+                        ` : ''}
+
+                        <div class="space-y-1.5 pt-2">
+                            ${item.tasks.map((t, idx) => `
+                                <div class="flex items-center justify-between p-3 rounded-xl ${t.isDone ? 'task-done' : 'bg-white border border-slate-50 shadow-sm'}" onclick="toggleTask(${item.id}, ${idx})">
+                                    <div class="flex items-center gap-3">
+                                        <i class="bi ${t.isDone ? 'bi-check-circle-fill text-emerald-500' : 'bi-circle text-slate-200'} text-xl"></i>
+                                        <span class="text-[13px] font-black">${t.name}</span>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-slate-400">${t.date}</span>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 `;
                 container.appendChild(card);
             });
-            updateStats();
+            document.getElementById('statActive').innerText = db.length;
+            document.getElementById('statHarvest').innerText = totalKg.toFixed(1);
+            document.getElementById('statSales').innerText = `¥${totalYen.toLocaleString()}`;
         }
 
         function toggleTask(pId, tIdx) {
             const p = db.find(x => x.id === pId);
             p.tasks[tIdx].isDone = !p.tasks[tIdx].isDone;
-            localStorage.setItem('agri_v8_db', JSON.stringify(db));
-            render();
-        }
-
-        function deleteItem(id) {
-            if(confirm("削除しますか？")) {
-                db = db.filter(x => x.id !== id);
-                localStorage.setItem('agri_v8_db', JSON.stringify(db));
-                render();
-            }
-        }
-
-        function updateStats() {
-            document.getElementById('statActive').innerText = db.length;
-            const today = new Date().toISOString().split('T')[0];
-            let count = 0;
-            db.forEach(item => item.tasks.forEach(t => { if(t.date === today && !t.isDone) count++; }));
-            document.getElementById('statTasks').innerText = count;
-            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
+            save(); render();
         }
 
         function exportData() {
-            const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `AgriData_Export.json`;
-            a.click();
+            const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `AgriHelper_v12_FullBackup.json`; a.click();
         }
-
+        
         function processFile(event) {
             const reader = new FileReader();
-            reader.onload = (e) => {
-                db = JSON.parse(e.target.result);
-                localStorage.setItem('agri_v8_db', JSON.stringify(db));
-                render();
-                alert("データを読み込みました");
-            };
+            reader.onload = (e) => { db = JSON.parse(e.target.result); save(); render(); alert("復元完了"); };
             reader.readAsText(event.target.files[0]);
         }
 
-        window.onload = () => {
-            document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-            render();
-        };
+        // 天気取得 (Open-Meteo)
+        navigator.geolocation.getCurrentPosition(pos => {
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`)
+            .then(r => r.json()).then(d => {
+                document.getElementById('headerWeather').innerText = `NOW: ${d.current_weather.temperature}°C / Loc: ${pos.coords.latitude.toFixed(2)},${pos.coords.longitude.toFixed(2)}`;
+            });
+        });
+
+        window.onload = () => { document.getElementById('startDate').value = new Date().toISOString().split('T')[0]; render(); };
     </script>
 </body>
 </html>
