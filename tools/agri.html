@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriHelper Pro</title>
+    <title>AgriHelper Pro 100+</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-header { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
+        .glass-header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
         .chip.active { background: #059669; color: white; border-color: #059669; }
         .task-done { background: #f8fafc; color: #cbd5e1; text-decoration: line-through; }
+        optgroup { font-weight: bold; color: #059669; }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
@@ -63,7 +64,7 @@
     </nav>
 
     <div id="regModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end">
-        <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto pb-10">
+        <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto pb-10 shadow-2xl">
             <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
             <h2 class="text-xl font-bold mb-4">新規栽培プラン</h2>
             
@@ -77,44 +78,75 @@
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-bold text-slate-500 ml-1">作目・品種</label>
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">作目（主要100品目）</label>
                     <select id="cropSelect" class="w-full bg-slate-100 rounded-xl p-3 text-sm appearance-none mb-2">
-                        <option value="custom">-- 自由登録 --</option>
-                        <optgroup label="主要">
-                            <option value="tomato">トマト</option><option value="nasu">ナス</option><option value="kyuri">キュウリ</option>
-                            <option value="kome">お米</option><option value="jagaimo">ジャガイモ</option>
+                        <option value="custom">-- 自由登録 (リストにないもの) --</option>
+                        <optgroup label="穀物・工芸作物">
+                            <option value="kome">お米 (水稲)</option><option value="mugi">小麦/大麦</option><option value="soba">そば</option>
+                            <option value="sugarcane">サトウキビ</option><option value="tensai">テンサイ (ビート)</option>
+                            <option value="igusa">い草</option><option value="daizu">大豆</option><option value="azuki">小豆</option>
+                            <option value="rakusei">落花生</option><option value="konnyaku">コンニャク芋</option>
                         </optgroup>
-                        </select>
-                    <input type="text" id="varietyName" placeholder="品種名を入力 (例: 桃太郎T93)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
+                        <optgroup label="果菜 (実もの)">
+                            <option value="tomato">トマト</option><option value="nasu">ナス</option><option value="kyuri">キュウリ</option>
+                            <option value="piman">ピーマン</option><option value="shishito">シシトウ</option><option value="okra">オクラ</option>
+                            <option value="pumpkin">カボチャ</option><option value="suika">スイカ</option><option value="melon">メロン</option>
+                            <option value="uri">ウリ (マクワウリ等)</option><option value="strawberry">イチゴ</option><option value="corn">トウモロコシ</option>
+                            <option value="edamame">枝豆</option><option value="soramame">そら豆</option><option value="ingen">インゲン</option>
+                            <option value="nigauri">ゴーヤ (苦瓜)</option><option value="tougan">冬瓜</option>
+                        </optgroup>
+                        <optgroup label="葉菜 (葉もの)">
+                            <option value="kyabetsu">キャベツ</option><option value="hakusai">ハクサイ</option><option value="lettuce">レタス</option>
+                            <option value="hourensou">ほうれん草</option><option value="komatsuna">小松菜</option><option value="shungiku">春菊</option>
+                            <option value="negi">ネギ</option><option value="nira">ニラ</option><option value="broccoli">ブロッコリー</option>
+                            <option value="karifurawa">カリフラワー</option><option value="chingensai">チンゲンサイ</option><option value="mizuna">水菜</option>
+                            <option value="mitsuba">三つ葉</option><option value="asparagasu">アスパラガス</option><option value="celery">セロリ</option>
+                            <option value="shiso">シソ</option><option value="parsley">パセリ</option>
+                        </optgroup>
+                        <optgroup label="根菜 (土もの)">
+                            <option value="daikon">ダイコン</option><option value="ninjin">ニンジン</option><option value="tamanegi">タマネギ</option>
+                            <option value="jagaimo">ジャガイモ</option><option value="satsumaimo">サツマイモ</option><option value="satoimo">サトイモ</option>
+                            <option value="nagaimo">山芋 (長芋/大和芋)</option><option value="gobo">ゴボウ</option><option value="renkon">レンコン</option>
+                            <option value="kabu">カブ</option><option value="ninniku">ニンニク</option><option value="shoga">ショウガ</option>
+                            <option value="rakkyo">ラッキョウ</option>
+                        </optgroup>
+                        <optgroup label="果樹 (仁果・核果・柑橘)">
+                            <option value="ringo">リンゴ</option><option value="nashi">日本梨</option><option value="momo">モモ</option>
+                            <option value="cherry">サクランボ</option><option value="ume">ウメ</option><option value="anzu">アンズ</option>
+                            <option value="budo">ブドウ (巨峰等)</option><option value="muscat">マスカット (シャイン等)</option>
+                            <option value="kaki">カキ</option><option value="biwa">ビワ</option><option value="ichijiku">イチジク</option>
+                            <option value="mikan">温州ミカン</option><option value="hassaku">はっさく</option><option value="natsumikan">夏みかん</option>
+                            <option value="kinkan">きんかん</option><option value="iyokan">伊予柑</option><option value="dekopon">デコポン</option>
+                            <option value="yuzu">ユズ</option><option value="lemon">レモン</option><option value="sudachi">スダチ</option>
+                        </optgroup>
+                        <optgroup label="果樹 (その他・熱帯)">
+                            <option value="kurumi">クルミ</option><option value="kuri">クリ</option><option value="kiwi">キウイ</option>
+                            <option value="blueberry">ブルーベリー</option><option value="olive">オリーブ</option>
+                            <option value="mango">マンゴー</option><option value="avocado">アボカド</option><option value="banana">バナナ</option>
+                            <option value="passion">パッションフルーツ</option><option value="papaya">パパイヤ</option>
+                        </optgroup>
+                    </select>
+                    <input type="text" id="varietyName" placeholder="品種名・自由入力 (例: 紅はるか, 桃太郎)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <input type="date" id="startDate" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
-                    <input type="text" id="fieldName" placeholder="場所 (例: 東の畑)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
+                    <input type="text" id="fieldName" placeholder="場所 (例: 西の畑)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
                 </div>
 
                 <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg mt-4">栽培開始</button>
-                <button onclick="closeModal()" class="w-full text-slate-400 py-2">キャンセル</button>
+                <button onclick="closeModal()" class="w-full text-slate-400 py-2 text-sm">キャンセル</button>
             </div>
         </div>
     </div>
 
     <div id="helpModal" class="fixed inset-0 bg-black/60 z-[70] hidden flex items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[80vh]">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2">ヘルプ・使い方</h2>
-            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
-                <div>
-                    <p class="font-bold text-slate-800">● データの保存先</p>
-                    <p>データはあなたのスマホのみに保存されます。サーバーには送信されません。</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-800">● 機種変更・移行</p>
-                    <p>右上の「↑ボタン」でデータを保存し、新しいスマホで下部の「読込」からそのファイルを選択してください。</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-800">● 作業記録</p>
-                    <p>各カードの作業をタップするとチェックが入り、完了扱いになります。</p>
-                </div>
+            <h2 class="text-xl font-bold mb-4 border-b pb-2">AgriHelper 使い方</h2>
+            <div class="space-y-4 text-sm text-slate-600">
+                <p>● <strong>100品目対応</strong>: 日本の主要作物から、地域特有の「サトウキビ」「い草」等まで網羅しています。</p>
+                <p>● <strong>自由入力</strong>: 品種名は自由に入力できます。リストにないものは「自由登録」を選んでください。</p>
+                <p>● <strong>データ保存</strong>: このツールはサーバーを使いません。データはスマホ内に保存されます。機種変更時は右上の「↑ボタン」で書き出して移行してください。</p>
             </div>
             <button onclick="closeHelp()" class="w-full bg-slate-100 font-bold py-3 rounded-xl mt-6">閉じる</button>
         </div>
@@ -124,14 +156,19 @@
 
     <script>
         const MASTER = {
-            "tomato": { name: "トマト", days: 100, tasks: ["苗植え", "わき芽かき", "追肥", "収穫"] },
-            "nasu": { name: "ナス", days: 110, tasks: ["苗植え", "3本仕立て", "追肥", "収穫"] },
-            "kyuri": { name: "キュウリ", days: 60, tasks: ["苗植え", "ネット張り", "収穫"] },
-            "kome": { name: "お米", days: 160, tasks: ["田植え", "中干し", "出穂", "稲刈り"] },
-            "default": { name: "カスタム", days: 90, tasks: ["定植", "管理", "収穫"] }
+            "kome": { days: 160, tasks: ["苗代", "田植え", "中干し", "出穂", "稲刈り"] },
+            "sugarcane": { days: 400, tasks: ["植付け", "培土", "追肥", "防鳥", "収穫"] },
+            "tensai": { days: 180, tasks: ["育苗", "定植", "防除", "収穫"] },
+            "igusa": { days: 200, tasks: ["株分け", "泥染め準備", "網張り", "刈取り"] },
+            "tomato": { days: 100, tasks: ["定植", "わき芽かき", "追肥", "収穫"] },
+            "muscat": { days: 150, tasks: ["剪定", "ジベレリン処理", "摘粒", "袋掛け", "収穫"] },
+            "jagaimo": { days: 100, tasks: ["芽出し", "植付け", "土寄せ", "収穫"] },
+            "satsumaimo": { days: 140, tasks: ["苗植え", "つる返し", "収穫"] },
+            "hassaku": { days: 300, tasks: ["剪定", "防除", "収穫", "貯蔵"] },
+            "default": { days: 90, tasks: ["定植/播種", "管理作業", "収穫"] }
         };
 
-        let db = JSON.parse(localStorage.getItem('agri_v7_db') || '[]');
+        let db = JSON.parse(localStorage.getItem('agri_v8_db') || '[]');
         let currentEnv = '露地';
 
         function setEnv(val) {
@@ -150,10 +187,10 @@
             const start = document.getElementById('startDate').value;
             const field = document.getElementById('fieldName').value;
 
-            if(!start || !field) return alert("必須項目を埋めてください");
+            if(!start || !field) return alert("日付と場所を入力してください");
 
             const preset = MASTER[sel.value] || MASTER["default"];
-            const cropName = sel.value === 'custom' ? variety : sel.options[sel.selectedIndex].text;
+            const cropName = sel.value === 'custom' ? (variety || "不明") : sel.options[sel.selectedIndex].text;
             
             const record = {
                 id: Date.now(),
@@ -169,7 +206,7 @@
             };
 
             db.unshift(record);
-            localStorage.setItem('agri_v7_db', JSON.stringify(db));
+            localStorage.setItem('agri_v8_db', JSON.stringify(db));
             closeModal();
             render();
         }
@@ -191,9 +228,9 @@
                 card.innerHTML = `
                     <div class="p-4 bg-slate-50 border-b flex justify-between items-start">
                         <div>
-                            <span class="text-[10px] font-bold text-emerald-600 bg-white border border-emerald-200 px-2 py-0.5 rounded-full mr-1">${item.env}</span>
-                            <span class="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">${item.field}</span>
-                            <h3 class="font-bold text-lg mt-1">${item.name} <span class="text-sm font-normal text-slate-400">${item.variety || ''}</span></h3>
+                            <span class="text-[9px] font-bold text-emerald-600 bg-white border border-emerald-200 px-2 py-0.5 rounded-full mr-1">${item.env}</span>
+                            <span class="text-[9px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">${item.field}</span>
+                            <h3 class="font-bold text-lg mt-1">${item.name} <span class="text-xs font-normal text-slate-400">${item.variety || ''}</span></h3>
                         </div>
                         <button onclick="deleteItem(${item.id})" class="text-slate-300 p-2"><i class="bi bi-trash"></i></button>
                     </div>
@@ -204,7 +241,7 @@
                                     <i class="bi ${t.isDone ? 'bi-check-circle-fill' : 'bi-circle'} text-emerald-500"></i>
                                     <span class="text-sm font-bold">${t.name}</span>
                                 </div>
-                                <span class="text-[10px] font-mono">${t.date}</span>
+                                <span class="text-[10px] font-mono">${t.date.replace(/-/g,'/')}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -217,14 +254,14 @@
         function toggleTask(pId, tIdx) {
             const p = db.find(x => x.id === pId);
             p.tasks[tIdx].isDone = !p.tasks[tIdx].isDone;
-            localStorage.setItem('agri_v7_db', JSON.stringify(db));
+            localStorage.setItem('agri_v8_db', JSON.stringify(db));
             render();
         }
 
         function deleteItem(id) {
-            if(confirm("この栽培記録を削除しますか？")) {
+            if(confirm("削除しますか？")) {
                 db = db.filter(x => x.id !== id);
-                localStorage.setItem('agri_v7_db', JSON.stringify(db));
+                localStorage.setItem('agri_v8_db', JSON.stringify(db));
                 render();
             }
         }
@@ -242,7 +279,7 @@
             const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `AgriData_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `AgriData_Export.json`;
             a.click();
         }
 
@@ -250,8 +287,9 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 db = JSON.parse(e.target.result);
-                localStorage.setItem('agri_v7_db', JSON.stringify(db));
+                localStorage.setItem('agri_v8_db', JSON.stringify(db));
                 render();
+                alert("データを読み込みました");
             };
             reader.readAsText(event.target.files[0]);
         }
