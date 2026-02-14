@@ -3,122 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriHelper Mobile</title>
+    <title>AgriHelper Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-header { background: rgba(21, 94, 117, 0.9); backdrop-filter: blur(10px); }
-        .task-card { transition: all 0.2s ease; border: 1px solid #e2e8f0; }
-        .tab-shadow { box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        optgroup { font-weight: bold; color: #059669; background: #f8fafc; }
-        option { color: #334155; }
+        body { font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass-header { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
+        .chip.active { background: #059669; color: white; border-color: #059669; }
+        .task-done { background: #f8fafc; color: #cbd5e1; text-decoration: line-through; }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen pb-24">
+<body class="bg-slate-100 text-slate-900 min-h-screen pb-24">
 
-    <header class="glass-header text-white p-4 sticky top-0 z-50 shadow-md">
+    <header class="glass-header text-white p-4 sticky top-0 z-50 shadow-lg">
         <div class="flex justify-between items-center max-w-xl mx-auto">
             <div>
-                <h1 class="text-xl font-bold tracking-tight">AgriHelper <span class="text-emerald-400">Pro</span></h1>
-                <p id="currentDate" class="text-[10px] opacity-80 uppercase tracking-widest"></p>
+                <h1 class="text-xl font-bold">AgriHelper <span class="text-emerald-400">Pro</span></h1>
+                <p id="currentDate" class="text-[10px] opacity-70"></p>
             </div>
-            <button onclick="exportData()" class="bg-white/20 p-2 rounded-full h-10 w-10 flex items-center justify-center">
-                <i class="bi bi-box-arrow-up"></i>
-            </button>
+            <div class="flex gap-3">
+                <button onclick="openHelp()" class="text-xl"><i class="bi bi-question-circle"></i></button>
+                <button onclick="exportData()" class="text-xl"><i class="bi bi-box-arrow-up"></i></button>
+            </div>
         </div>
     </header>
 
-    <main class="p-4 max-w-xl mx-auto space-y-6">
-        <section class="grid grid-cols-2 gap-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-slate-400 text-[10px] font-bold uppercase">進行中</p>
-                <p id="statActive" class="text-2xl font-black text-slate-800">0</p>
+    <main class="p-4 max-w-xl mx-auto space-y-4">
+        <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-slate-400 text-[10px] font-bold">栽培中</p>
+                <p id="statActive" class="text-2xl font-black">0</p>
             </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-slate-400 text-[10px] font-bold uppercase">本日の作業</p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-slate-400 text-[10px] font-bold">本日の作業</p>
                 <p id="statTasks" class="text-2xl font-black text-emerald-600">0</p>
             </div>
-        </section>
+        </div>
 
         <div id="activeList" class="space-y-4"></div>
-        <div id="emptyState" class="hidden text-center py-20 text-slate-400 text-sm">
-            <i class="bi bi-seedling text-6xl text-slate-200 block mb-4"></i>
+        <div id="emptyState" class="hidden text-center py-20 text-slate-400">
+            <i class="bi bi-seedling text-6xl block mb-2 opacity-20"></i>
             記録がありません。
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 tab-shadow z-50 pb-[env(safe-area-inset-bottom)]">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-bottom">
         <div class="max-w-xl mx-auto flex justify-around items-center h-16">
-            <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="flex flex-col items-center text-emerald-600">
-                <i class="bi bi-grid-fill text-xl"></i>
-                <span class="text-[10px]">ホーム</span>
+            <button onclick="window.scrollTo(0,0)" class="flex flex-col items-center text-emerald-600">
+                <i class="bi bi-house-door-fill text-xl"></i><span class="text-[10px]">ホーム</span>
             </button>
-            <button onclick="openModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-emerald-200 border-4 border-white">
+            <button onclick="openModal()" class="bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center -mt-8 shadow-lg border-4 border-white">
                 <i class="bi bi-plus-lg text-2xl"></i>
             </button>
             <button onclick="document.getElementById('importFile').click()" class="flex flex-col items-center text-slate-400">
-                <i class="bi bi-arrow-repeat text-xl"></i>
-                <span class="text-[10px]">読込</span>
+                <i class="bi bi-arrow-repeat text-xl"></i><span class="text-[10px]">読込</span>
             </button>
         </div>
     </nav>
 
     <div id="regModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end">
-        <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto pb-10">
             <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
-            <h2 class="text-xl font-bold mb-4">新規登録</h2>
+            <h2 class="text-xl font-bold mb-4">新規栽培プラン</h2>
+            
             <div class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-500">品目（100種以上から選択）</label>
-                    <select id="cropSelect" class="w-full bg-slate-100 border-none rounded-xl p-4 text-base appearance-none">
-                        <option value="custom">-- 自由入力（リストにないもの） --</option>
-                        <optgroup label="穀物">
-                            <option value="kome">お米 (水稲)</option><option value="mugi">麦</option><option value="soba">そば</option>
-                        </optgroup>
-                        <optgroup label="果菜類 (実もの野菜)">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">栽培区分</label>
+                    <div class="flex gap-2 mt-1">
+                        <button onclick="setEnv('露地')" class="chip flex-1 py-2 border rounded-xl text-sm active" id="env-露地">露地</button>
+                        <button onclick="setEnv('ハウス')" class="chip flex-1 py-2 border rounded-xl text-sm" id="env-ハウス">ハウス</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">作目・品種</label>
+                    <select id="cropSelect" class="w-full bg-slate-100 rounded-xl p-3 text-sm appearance-none mb-2">
+                        <option value="custom">-- 自由登録 --</option>
+                        <optgroup label="主要">
                             <option value="tomato">トマト</option><option value="nasu">ナス</option><option value="kyuri">キュウリ</option>
-                            <option value="piman">ピーマン</option><option value="shishito">シシトウ</option><option value="okra">オクラ</option>
-                            <option value="pumpkin">カボチャ</option><option value="suika">スイカ</option><option value="melon">メロン</option>
-                            <option value="strawberry">イチゴ</option><option value="corn">トウモロコシ</option><option value="edamame">枝豆</option>
-                            <option value="soramame">そら豆</option><option value="sayaendo">サヤエンドウ</option><option value="ingen">インゲン</option>
+                            <option value="kome">お米</option><option value="jagaimo">ジャガイモ</option>
                         </optgroup>
-                        <optgroup label="葉菜類 (葉もの野菜)">
-                            <option value="kyabetsu">キャベツ</option><option value="hakusai">ハクサイ</option><option value="lettuce">レタス</option>
-                            <option value="hourensou">ほうれん草</option><option value="komatsuna">小松菜</option><option value="shungiku">春菊</option>
-                            <option value="negi">ネギ</option><option value="nira">ニラ</option><option value="broccoli">ブロッコリー</option>
-                            <option value="chingensai">チンゲンサイ</option><option value="mizuna">水菜</option><option value="asparagasu">アスパラガス</option>
-                        </optgroup>
-                        <optgroup label="根菜類 (土の中)">
-                            <option value="daikon">ダイコン</option><option value="ninjin">ニンジン</option><option value="tamanegi">タマネギ</option>
-                            <option value="jagaimo">ジャガイモ</option><option value="satsumaimo">サツマイモ</option><option value="satoimo">サトイモ</option>
-                            <option value="nagaimo">ナガイモ</option><option value="gobo">ゴボウ</option><option value="renkon">レンコン</option>
-                            <option value="kabu">カブ</option><option value="ninniku">ニンニク</option><option value="shoga">ショウガ</option>
-                        </optgroup>
-                        <optgroup label="果樹">
-                            <option value="mikan">ミカン</option><option value="ringo">リンゴ</option><option value="momo">モモ</option>
-                            <option value="budo">ブドウ</option><option value="nashi">ナシ</option><option value="kaki">カキ</option>
-                            <option value="ume">ウメ</option><option value="lemon">レモン</option><option value="kurumi">クルミ</option>
-                            <option value="mango">マンゴー</option><option value="avocado">アボカド</option><option value="banana">バナナ</option>
-                            <option value="kiwi">キウイ</option><option value="blueberry">ブルーベリー</option><option value="olive">オリーブ</option>
-                            <option value="cherry">サクランボ</option><option value="biwa">ビワ</option><option value="ichijiku">イチジク</option>
-                        </optgroup>
-                        <optgroup label="ハーブ・香辛料">
-                            <option value="basil">バジル</option><option value="rosemary">ローズマリー</option><option value="mint">ミント</option>
-                            <option value="coriander">パクチー</option><option value="shiso">シソ</option>
-                        </optgroup>
-                    </select>
+                        </select>
+                    <input type="text" id="varietyName" placeholder="品種名を入力 (例: 桃太郎T93)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
                 </div>
-                <div id="customNameArea">
-                    <input type="text" id="customName" placeholder="品目名を入力" class="w-full bg-slate-100 border-none rounded-xl p-4 text-lg">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" id="startDate" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
+                    <input type="text" id="fieldName" placeholder="場所 (例: 東の畑)" class="w-full bg-slate-100 rounded-xl p-3 text-sm">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="startDate" class="w-full bg-slate-100 border-none rounded-xl p-4">
-                    <input type="text" id="fieldName" placeholder="場所名" class="w-full bg-slate-100 border-none rounded-xl p-4">
-                </div>
-                <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg mt-4">プラン作成</button>
+
+                <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg mt-4">栽培開始</button>
                 <button onclick="closeModal()" class="w-full text-slate-400 py-2">キャンセル</button>
             </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="fixed inset-0 bg-black/60 z-[70] hidden flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[80vh]">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2">ヘルプ・使い方</h2>
+            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+                <div>
+                    <p class="font-bold text-slate-800">● データの保存先</p>
+                    <p>データはあなたのスマホのみに保存されます。サーバーには送信されません。</p>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-800">● 機種変更・移行</p>
+                    <p>右上の「↑ボタン」でデータを保存し、新しいスマホで下部の「読込」からそのファイルを選択してください。</p>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-800">● 作業記録</p>
+                    <p>各カードの作業をタップするとチェックが入り、完了扱いになります。</p>
+                </div>
+            </div>
+            <button onclick="closeHelp()" class="w-full bg-slate-100 font-bold py-3 rounded-xl mt-6">閉じる</button>
         </div>
     </div>
 
@@ -126,45 +124,42 @@
 
     <script>
         const MASTER = {
-            "tomato": { name: "トマト", days: 100, tasks: ["土作り", "苗植え", "追肥", "収穫"] },
+            "tomato": { name: "トマト", days: 100, tasks: ["苗植え", "わき芽かき", "追肥", "収穫"] },
+            "nasu": { name: "ナス", days: 110, tasks: ["苗植え", "3本仕立て", "追肥", "収穫"] },
+            "kyuri": { name: "キュウリ", days: 60, tasks: ["苗植え", "ネット張り", "収穫"] },
             "kome": { name: "お米", days: 160, tasks: ["田植え", "中干し", "出穂", "稲刈り"] },
-            "daikon": { name: "ダイコン", days: 80, tasks: ["種まき", "間引き", "追肥", "収穫"] },
-            "budo": { name: "ブドウ", days: 180, tasks: ["剪定", "開花", "ジベ処理", "収穫"] },
-            "mikan": { name: "ミカン", days: 240, tasks: ["施肥", "摘果", "防除", "収穫"] },
-            "default": { name: "", days: 90, tasks: ["準備", "植付", "管理", "収穫"] }
+            "default": { name: "カスタム", days: 90, tasks: ["定植", "管理", "収穫"] }
         };
 
-        let db = JSON.parse(localStorage.getItem('agri_v5_db') || '[]');
+        let db = JSON.parse(localStorage.getItem('agri_v7_db') || '[]');
+        let currentEnv = '露地';
 
-        function updateStats() {
-            document.getElementById('statActive').innerText = db.length;
-            const today = new Date().toISOString().split('T')[0];
-            let count = 0;
-            db.forEach(item => item.tasks.forEach(t => { if(t.date === today && !t.isDone) count++; }));
-            document.getElementById('statTasks').innerText = count;
-            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
+        function setEnv(val) {
+            currentEnv = val;
+            document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.innerText === val));
         }
 
         function openModal() { document.getElementById('regModal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('regModal').classList.add('hidden'); }
-
-        document.getElementById('cropSelect').addEventListener('change', (e) => {
-            const isCustom = e.target.value === 'custom';
-            document.getElementById('customNameArea').style.display = isCustom ? 'block' : 'none';
-        });
+        function openHelp() { document.getElementById('helpModal').classList.remove('hidden'); }
+        function closeHelp() { document.getElementById('helpModal').classList.add('hidden'); }
 
         function saveRecord() {
             const sel = document.getElementById('cropSelect');
+            const variety = document.getElementById('varietyName').value;
             const start = document.getElementById('startDate').value;
             const field = document.getElementById('fieldName').value;
-            if(!start || !field) return alert("日付と場所を入力してください");
+
+            if(!start || !field) return alert("必須項目を埋めてください");
 
             const preset = MASTER[sel.value] || MASTER["default"];
-            const finalName = sel.value === 'custom' ? document.getElementById('customName').value : sel.options[sel.selectedIndex].text;
-
+            const cropName = sel.value === 'custom' ? variety : sel.options[sel.selectedIndex].text;
+            
             const record = {
                 id: Date.now(),
-                name: finalName,
+                name: cropName,
+                variety: variety,
+                env: currentEnv,
                 field: field,
                 start: start,
                 tasks: preset.tasks.map((t, i) => ({
@@ -172,8 +167,9 @@
                     date: calculateDate(start, (preset.days / preset.tasks.length) * i)
                 }))
             };
+
             db.unshift(record);
-            localStorage.setItem('agri_v5_db', JSON.stringify(db));
+            localStorage.setItem('agri_v7_db', JSON.stringify(db));
             closeModal();
             render();
         }
@@ -188,18 +184,26 @@
             const container = document.getElementById('activeList');
             container.innerHTML = "";
             document.getElementById('emptyState').classList.toggle('hidden', db.length > 0);
+            
             db.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden";
+                card.className = "bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden";
                 card.innerHTML = `
-                    <div class="p-4 bg-slate-50 border-b flex justify-between">
-                        <div><span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 rounded">${item.field}</span><h3 class="font-bold text-lg">${item.name}</h3></div>
-                        <button onclick="deleteItem(${item.id})" class="text-slate-300"><i class="bi bi-trash"></i></button>
+                    <div class="p-4 bg-slate-50 border-b flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-emerald-600 bg-white border border-emerald-200 px-2 py-0.5 rounded-full mr-1">${item.env}</span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">${item.field}</span>
+                            <h3 class="font-bold text-lg mt-1">${item.name} <span class="text-sm font-normal text-slate-400">${item.variety || ''}</span></h3>
+                        </div>
+                        <button onclick="deleteItem(${item.id})" class="text-slate-300 p-2"><i class="bi bi-trash"></i></button>
                     </div>
                     <div class="p-2 space-y-1">
                         ${item.tasks.map((t, idx) => `
-                            <div onclick="toggleTask(${item.id}, ${idx})" class="task-card flex items-center justify-between p-3 rounded-xl ${t.isDone ? 'bg-slate-50 text-slate-300' : 'bg-white'}">
-                                <div class="flex items-center gap-3"><i class="bi ${t.isDone ? 'bi-check-circle-fill text-emerald-500' : 'bi-circle text-slate-200'}"></i><span class="text-sm font-bold">${t.name}</span></div>
+                            <div onclick="toggleTask(${item.id}, ${idx})" class="flex items-center justify-between p-3 rounded-xl transition-all ${t.isDone ? 'task-done' : 'bg-white border border-slate-100'}">
+                                <div class="flex items-center gap-3">
+                                    <i class="bi ${t.isDone ? 'bi-check-circle-fill' : 'bi-circle'} text-emerald-500"></i>
+                                    <span class="text-sm font-bold">${t.name}</span>
+                                </div>
                                 <span class="text-[10px] font-mono">${t.date}</span>
                             </div>
                         `).join('')}
@@ -213,23 +217,32 @@
         function toggleTask(pId, tIdx) {
             const p = db.find(x => x.id === pId);
             p.tasks[tIdx].isDone = !p.tasks[tIdx].isDone;
-            localStorage.setItem('agri_v5_db', JSON.stringify(db));
+            localStorage.setItem('agri_v7_db', JSON.stringify(db));
             render();
         }
 
         function deleteItem(id) {
-            if(confirm("削除しますか？")) {
+            if(confirm("この栽培記録を削除しますか？")) {
                 db = db.filter(x => x.id !== id);
-                localStorage.setItem('agri_v5_db', JSON.stringify(db));
+                localStorage.setItem('agri_v7_db', JSON.stringify(db));
                 render();
             }
+        }
+
+        function updateStats() {
+            document.getElementById('statActive').innerText = db.length;
+            const today = new Date().toISOString().split('T')[0];
+            let count = 0;
+            db.forEach(item => item.tasks.forEach(t => { if(t.date === today && !t.isDone) count++; }));
+            document.getElementById('statTasks').innerText = count;
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
         }
 
         function exportData() {
             const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `AgriData_Backup.json`;
+            a.download = `AgriData_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
         }
 
@@ -237,7 +250,7 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 db = JSON.parse(e.target.result);
-                localStorage.setItem('agri_v5_db', JSON.stringify(db));
+                localStorage.setItem('agri_v7_db', JSON.stringify(db));
                 render();
             };
             reader.readAsText(event.target.files[0]);
@@ -250,4 +263,3 @@
     </script>
 </body>
 </html>
-
