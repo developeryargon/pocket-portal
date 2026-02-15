@@ -55,27 +55,31 @@
         <button class="nav-btn" onclick="openHelp()"><i class="bi bi-shield-check"></i><span>データ管理</span></button>
     </div>
 
-    <div id="regModal" class="fixed inset-0 modal-overlay z-[150] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl">
-            <h2 class="text-lg font-black mb-4 text-emerald-800 italic">栽培計画の登録</h2>
-            <div class="space-y-3">
-                <select id="cropSelect" class="w-full bg-slate-100 p-3 rounded-xl font-bold text-sm"></select>
-                <input type="text" id="varietyInput" placeholder="品種名" class="w-full bg-slate-100 p-3 rounded-xl text-sm outline-none">
-                <input type="text" id="fieldInput" placeholder="場所・圃場" class="w-full bg-slate-100 p-3 rounded-xl text-sm outline-none">
-                <div class="bg-emerald-50 p-4 rounded-xl">
-                    <div class="flex gap-2 mb-2">
-                        <button id="modeStart" onclick="setRegMode('start')" class="flex-1 py-2 rounded-lg text-[10px] font-black bg-emerald-600 text-white">開始日基準</button>
-                        <button id="modeEnd" onclick="setRegMode('end')" class="flex-1 py-2 rounded-lg text-[10px] font-black bg-slate-200 text-slate-500">収穫日から逆算</button>
-                    </div>
-                    <input type="date" id="baseDateInput" class="w-full p-2 rounded-lg font-bold border-none outline-none">
+<div id="regModal" class="fixed inset-0 modal-overlay z-[150] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl">
+        <h2 class="text-lg font-black mb-4 text-emerald-800 italic">栽培計画の登録</h2>
+        <div class="space-y-3">
+            <select id="cropSelect" onchange="toggleCustomInput()" class="w-full bg-slate-100 p-3 rounded-xl font-bold text-sm"></select>
+            
+            <input type="text" id="customCropInput" placeholder="作目名を入力（例：パクチー）" class="w-full bg-emerald-50 border-2 border-emerald-200 p-3 rounded-xl text-sm font-bold outline-none hidden">
+            
+            <input type="text" id="varietyInput" placeholder="品種名" class="w-full bg-slate-100 p-3 rounded-xl text-sm outline-none">
+            <input type="text" id="fieldInput" placeholder="場所・圃場" class="w-full bg-slate-100 p-3 rounded-xl text-sm outline-none">
+            
+            <div class="bg-emerald-50 p-4 rounded-xl">
+                <div class="flex gap-2 mb-2">
+                    <button id="modeStart" onclick="setRegMode('start')" class="flex-1 py-2 rounded-lg text-[10px] font-black bg-emerald-600 text-white">開始日基準</button>
+                    <button id="modeEnd" onclick="setRegMode('end')" class="flex-1 py-2 rounded-lg text-[10px] font-black bg-slate-200 text-slate-500">収穫日から逆算</button>
                 </div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="closeRegModal()" class="flex-1 py-3 font-bold text-slate-400">キャンセル</button>
-                    <button onclick="saveNewCrop()" class="flex-1 bg-emerald-600 text-white font-black py-3 rounded-xl">登録する</button>
-                </div>
+                <input type="date" id="baseDateInput" class="w-full p-2 rounded-lg font-bold border-none outline-none text-emerald-700">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeRegModal()" class="flex-1 py-3 font-bold text-slate-400">キャンセル</button>
+                <button onclick="saveNewCrop()" class="flex-1 bg-emerald-600 text-white font-black py-3 rounded-xl">登録する</button>
             </div>
         </div>
     </div>
+</div>
 
     <div id="helpModal" class="fixed inset-0 modal-overlay z-[220] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-[32px] w-full max-w-sm max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
@@ -264,19 +268,28 @@ let currentCondition = "不明"; // グローバルで天気を保持
             }
         }
 
+
+// 自由入力欄の表示切り替え
+function toggleCustomInput() {
+    const sel = document.getElementById('cropSelect');
+    const custom = document.getElementById('customCropInput');
+    custom.classList.toggle('hidden', sel.value !== 'custom');
+    if (sel.value === 'custom') custom.focus();
+}
+
 // 2. 初期化とソート
 function setupCropSelect() {
     const sel = document.getElementById('cropSelect');
     sel.innerHTML = '<option value="">-- 作目を選択 --</option>';
     
-    // カテゴリを五十音順にソート
+    // 1. カテゴリを五十音順にソート
     const sortedCats = Object.keys(MASTER.crops).sort((a, b) => a.localeCompare(b, 'ja'));
 
     sortedCats.forEach(cat => {
         const group = document.createElement('optgroup');
         group.label = cat;
         
-        // 作目名を五十音順にソート
+        // 2. 作目名を五十音順にソート
         const cropsInCat = Object.keys(MASTER.crops[cat]).sort((a, b) => {
             return MASTER.crops[cat][a].name.localeCompare(MASTER.crops[cat][b].name, 'ja');
         });
@@ -289,6 +302,12 @@ function setupCropSelect() {
         });
         sel.appendChild(group);
     });
+
+    // 3. 最後に自由入力用オプションを追加
+    const optCustom = document.createElement('option');
+    optCustom.value = 'custom';
+    optCustom.innerText = '✨ その他（自由入力）';
+    sel.appendChild(optCustom);
 }
         async function getWeather() {
     try {
@@ -388,16 +407,33 @@ function setupCropSelect() {
 
         // 3. 逆算モード対応の保存ロジック
 function saveNewCrop() {
-    const val = document.getElementById('cropSelect').value; 
-    if(!val) return;
+    const selValue = document.getElementById('cropSelect').value;
+    if (!selValue) return;
+
+    let m, cropName;
     
-    const [cat, key] = val.split('|'); 
-    const m = MASTER.crops[cat][key];
+    // --- データ取得フェーズ ---
+    if (selValue === 'custom') {
+        // 自由入力の場合
+        cropName = document.getElementById('customCropInput').value || "新しい作目";
+        m = {
+            name: cropName,
+            tasks: ["種まき/定植", "追肥/管理", "収穫"],
+            intervals: [0, 30, 30] // 30日おき
+        };
+    } else {
+        // マスター選択の場合
+        const [cat, key] = selValue.split('|');
+        m = MASTER.crops[cat][key];
+        cropName = m.name;
+    }
+
     const baseDate = new Date(document.getElementById('baseDateInput').value);
-    
     let taskData = [];
+
+    // --- 日付計算フェーズ ---
     if (regMode === 'start') {
-        // 開始日からの積み上げ
+        // A. 開始日からの積み上げ
         taskData = m.tasks.map((t, i) => {
             let d = new Date(baseDate);
             const offset = m.intervals.slice(0, i + 1).reduce((a, b) => a + b, 0);
@@ -405,27 +441,32 @@ function saveNewCrop() {
             return { name: t, date: d.toISOString().split('T')[0], isDone: false, weatherLog: null, memo: "" };
         });
     } else {
-        // 収穫日（最後の工程）からの逆算
-        const totalDays = m.intervals.reduce((a, b) => a + b, 0);
+        // B. 収穫日（最後の工程）からの逆算
         taskData = m.tasks.map((t, i) => {
             let d = new Date(baseDate);
+            // 自分の工程より「後」にある間隔の合計分だけ、基準日（収穫日）から引く
             const offsetFromEnd = m.intervals.slice(i + 1).reduce((a, b) => a + b, 0);
             d.setDate(d.getDate() - offsetFromEnd);
             return { name: t, date: d.toISOString().split('T')[0], isDone: false, weatherLog: null, memo: "" };
         });
     }
 
-    db.unshift({ 
-        id: Date.now(), 
-        name: m.name, 
-        variety: document.getElementById('varietyInput').value || (m.varieties ? m.varieties[0] : "標準"), 
-        field: document.getElementById('fieldInput').value || "未設定", 
-        tasks: taskData 
+    // --- 保存フェーズ ---
+    db.unshift({
+        id: Date.now(),
+        name: cropName,
+        variety: document.getElementById('varietyInput').value || (m.varieties ? m.varieties[0] : "標準"),
+        field: document.getElementById('fieldInput').value || "未設定",
+        tasks: taskData
     });
-    
+
     save(); 
     render(); 
     closeRegModal();
+
+    // 入力フォームのクリーンアップ
+    document.getElementById('customCropInput').value = "";
+    document.getElementById('customCropInput').classList.add('hidden');
 }
 
         function addTask(id, pos) {
