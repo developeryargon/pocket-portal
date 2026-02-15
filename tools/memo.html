@@ -67,32 +67,35 @@
 
 <div id="help-modal" class="hidden fixed inset-0 bg-black/60 z-[7000] flex items-center justify-center p-4" onclick="closeHelp()">
     <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[85vh]" onclick="event.stopPropagation()">
-        <h3 class="text-xl font-black mb-6 border-b pb-2 text-slate-800">ヘルプ・設定</h3>
+        <h3 class="text-xl font-black mb-6 border-b pb-2 text-slate-800">ヘルプ・バックアップ</h3>
+        
         <section class="mb-6">
-            <h4 class="font-bold text-blue-600 mb-2">📖 使い方</h4>
-            <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4 font-medium">
-                <li>写真やテキストを位置情報と共に保存できます。</li>
-                <li>地図上のピンをタップすると該当のメモへジャンプします。</li>
-            </ul>
-        </section>
-        <section class="mb-6">
-            <h4 class="font-bold text-blue-600 mb-2">🛡 プライバシー</h4>
+            <h4 class="font-bold text-blue-600 mb-2">🛡 データの扱いと免責事項</h4>
             <div class="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg leading-relaxed font-medium">
-                データはブラウザ（IndexedDB）にのみ保存され、外部には送信されません。
+                ・本アプリは<b>ブラウザの保存領域（キャッシュ）</b>を使用します。<br>
+                ・ブラウザの履歴消去や端末の容量不足によりデータが<b>消失するリスク</b>があります。<br>
+                ・重要なデータは必ず定期的にバックアップを行ってください。<br>
+                ・データの消失について、当サイトは一切の責任を負いかねます。
             </div>
         </section>
+
         <section class="mb-6">
-            <h4 class="font-bold text-blue-600 mb-2">📲 機種変更・バックアップ</h4>
-            <p class="text-[11px] text-slate-500 mb-3 font-medium">端末を変える際はバックアップファイルをダウンロードし、新端末で開いてください。</p>
-            <button onclick="exportAll()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform mb-4">
-                全データをバックアップ（機種変用）
+            <h4 class="font-bold text-blue-600 mb-2">📲 バックアップ・共有</h4>
+            <p class="text-[11px] text-slate-500 mb-3 font-medium">現在の全データをバックアップファイルとして書き出します。端末保存のほか、LINEやメールで自分宛に送っておくと安心です。</p>
+            <button onclick="exportAll()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
+                バックアップを保存・共有
             </button>
-            
-            <div class="w-full flex justify-center py-2 overflow-hidden bg-slate-50 rounded-lg">
-                <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="200x200";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";</script>
-                <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-            </div>
         </section>
+
+        <section class="mb-6 border-t pt-4">
+            <h4 class="font-bold text-green-600 mb-2">📥 データの復旧（インポート）</h4>
+            <p class="text-[11px] text-slate-500 mb-3 font-medium">以前作成したバックアップファイルを読み込み、このブラウザへ復旧します。<br><span class="text-red-500 font-bold">※現在のデータは上書きされます。</span></p>
+            <button onclick="document.getElementById('import-file').click()" class="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
+                ファイルを読み込んで復旧
+            </button>
+            <input type="file" id="import-file" accept=".html" onchange="importData(event)" class="hidden">
+        </section>
+
         <button onclick="closeHelp()" class="w-full py-3 border border-slate-200 text-slate-400 font-bold rounded-xl text-sm mt-2">閉じる</button>
     </div>
 </div>
@@ -110,7 +113,7 @@
 
 <input type="file" id="file-camera" accept="image/*" capture="camera" onchange="processFile(event)" class="hidden">
 <input type="file" id="file-folder" accept="image/*" onchange="processFile(event)" class="hidden">
-<div id="loading" class="hidden fixed inset-0 bg-black/50 z-[5000] flex items-center justify-center text-white font-bold text-sm">位置情報を取得中...</div>
+<div id="loading" class="hidden fixed inset-0 bg-black/50 z-[5000] flex items-center justify-center text-white font-bold text-sm text-center px-4">処理中...<br>（画像が多いと時間がかかる場合があります）</div>
 <div id="overlay" class="hidden fixed inset-0 bg-black/90 z-[6000] flex items-center justify-center" onclick="this.classList.add('hidden')">
     <img id="full-img" class="max-w-[95%] max-h-[95%] shadow-2xl rounded">
 </div>
@@ -213,13 +216,57 @@
     }
 
     function downloadOne(id) { db.transaction("memos", "readonly").objectStore("memos").get(id).onsuccess = e => { const a = document.createElement('a'); a.href = e.target.result.img; a.download = `memo_${id}.jpg`; a.click(); }; }
-    function exportAll() {
-        db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = e => {
-            const data = JSON.stringify(e.target.result);
-            const blob = new Blob([document.documentElement.outerHTML.replace('load()', `(function(){let d=${data}; d.forEach(render);})()`) ], {type: 'text/html'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "pocket_memo_backup.html"; a.click();
+
+    // バックアップ・共有機能
+    async function exportAll() {
+        db.transaction("memos", "readonly").objectStore("memos").getAll().onsuccess = async e => {
+            const memos = e.target.result;
+            const htmlContent = document.documentElement.outerHTML.replace('load()', `(function(){let d=${JSON.stringify(memos)}; d.forEach(render);})()`);
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const file = new File([blob], "pocket_memo_backup.html", { type: 'text/html' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // LINE, メールなどの共有メニューを開く
+                await navigator.share({
+                    files: [file],
+                    title: 'Pocket Memo バックアップ',
+                    text: 'メモデータのバックアップファイルです。大切に保管してください。'
+                });
+            } else {
+                // 非対応ブラウザの場合はダウンロード
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "pocket_memo_backup.html";
+                a.click();
+            }
         };
     }
+
+    // データ復旧（インポート）機能
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const content = e.target.result;
+            const match = content.match(/let d=(.*); d.forEach\(render\)/);
+            if (match && match[1]) {
+                const data = JSON.parse(match[1]);
+                if (confirm(`${data.length}件のデータを復旧しますか？現在のデータは上書きされます。`)) {
+                    document.getElementById('loading').classList.remove('hidden');
+                    const os = db.transaction("memos", "readwrite").objectStore("memos");
+                    os.clear().onsuccess = () => {
+                        data.forEach(item => os.add(item));
+                        location.reload(); // ページをリロードして反映
+                    };
+                }
+            } else {
+                alert("正しいバックアップファイルではありません。");
+            }
+        };
+        reader.readAsText(file);
+    }
+
     function filter() {
         const q = document.getElementById('search-text').value.toLowerCase();
         const tag = document.getElementById('tag-list').value;
