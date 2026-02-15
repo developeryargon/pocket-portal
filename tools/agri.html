@@ -1,6 +1,127 @@
-{
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AgriHelper Pro</title>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-9V96DZHTH1');</script>
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .task-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); }
+        .weather-stamp { font-size: 0.65rem; color: #059669; font-weight: bold; margin-right: 8px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ccc; display: flex; justify-content: space-around; padding: 10px; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+        .nav-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; flex: 1; color: #64748b; }
+        .nav-btn span { font-size: 0.6rem; margin-top: 2px; font-weight: bold; }
+        .nav-btn.active { color: #059669; }
+        .editable-name:focus { outline: none; background: #f0fdf4; border-bottom: 1px solid #10b981; }
+        .action-menu { position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 200; width: 140px; }
+        .action-menu button { width: 100%; text-align: left; padding: 10px 16px; font-size: 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9; }
+        .action-menu button:last-child { border: none; color: #ef4444; }
+    </style>
+</head>
+<body class="pb-32">
+
+    <nav class="bg-white border-b border-slate-200 py-3 px-4 sticky top-0 z-50 flex justify-between items-center">
+        <a href="./index.html" class="flex items-center gap-1 font-bold text-emerald-700 text-sm">🏠 PocketPortal</a>
+        <div class="text-right">
+            <h1 class="text-sm font-black italic tracking-tighter leading-none text-slate-700">AgriHelper <span class="text-emerald-500">Pro</span></h1>
+            <p id="addrDisplay" class="text-[9px] font-bold opacity-50 uppercase">Waiting GPS...</p>
+        </div>
+        <a href="./index.html" class="text-[10px] text-slate-400 font-bold hover:text-emerald-500">ツール集へ</a>
+    </nav>
+
+    <main id="mainList" class="p-4 max-w-xl mx-auto space-y-4"></main>
+
+    <div class="w-full flex flex-col items-center py-8 bg-slate-50 border-t border-slate-200 mt-10">
+        <p class="text-[8px] text-slate-400 font-bold mb-2 tracking-widest uppercase">Sponsor Link</p>
+        <div class="scale-90 origin-top">
+            <script type="text/javascript">rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x160";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";</script>
+            <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn active" onclick="render()"><i class="bi bi-house-door-fill"></i><span>ホーム</span></button>
+        <button class="nav-btn" onclick="openRegModal()"><i class="bi bi-plus-circle-fill" style="color:#059669; font-size: 1.8rem; margin-top:-5px;"></i><span>新規作成</span></button>
+        <button class="nav-btn" onclick="openHelp()"><i class="bi bi-shield-check"></i><span>データ管理</span></button>
+    </div>
+
+    <div id="regModal" class="fixed inset-0 modal-overlay z-[150] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl">
+            <h2 class="text-lg font-black mb-4 text-emerald-800 italic">栽培計画の登録</h2>
+            <div class="space-y-3">
+                <select id="cropSelect" class="w-full bg-slate-100 p-3 rounded-xl font-bold text-sm"></select>
+                <input type="text" id="varietyInput" placeholder="品種名" class="w-full bg-slate-100 p-3 rounded-xl text-sm outline-none">
+                <input type="text" id="fieldInput" placeholder="場所・圃場" class="w-full bg-slate-100 p-3 rounded-xl text-sm outline-none">
+                <div class="bg-emerald-50 p-4 rounded-xl">
+                    <div class="flex gap-2 mb-2">
+                        <button id="modeStart" onclick="setRegMode('start')" class="flex-1 py-2 rounded-lg text-[10px] font-black bg-emerald-600 text-white">開始日基準</button>
+                        <button id="modeEnd" onclick="setRegMode('end')" class="flex-1 py-2 rounded-lg text-[10px] font-black bg-slate-200 text-slate-500">収穫日から逆算</button>
+                    </div>
+                    <input type="date" id="baseDateInput" class="w-full p-2 rounded-lg font-bold border-none outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="closeRegModal()" class="flex-1 py-3 font-bold text-slate-400">キャンセル</button>
+                    <button onclick="saveNewCrop()" class="flex-1 bg-emerald-600 text-white font-black py-3 rounded-xl">登録する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="fixed inset-0 modal-overlay z-[220] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] w-full max-w-sm max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
+            <h3 class="text-xl font-black mb-6 border-b pb-2 text-slate-800 italic">ヘルプ・バックアップ</h3>
+            
+            <section class="mb-6">
+                <h4 class="font-bold text-emerald-600 mb-2 text-sm"><i class="bi bi-patch-check-fill mr-1"></i> アプリの使いこなし方</h4>
+                <div class="text-[11px] text-slate-500 space-y-2 leading-relaxed font-medium">
+                    <p>・<b>逆算スケジューリング:</b> 「収穫日から逆算」を選んで登録すると、目標の収穫時期から逆算して「いつ種をまくべきか」が自動計算されます。</p>
+                    <p>・<b>現場の「今」を記録:</b> チェックをタップした瞬間の<b>日付・時刻・気温・天気</b>を自動スタンプ。後から「去年のこの作業の時は雨だった」と振り返るのに役立ちます。</p>
+                    <p>・<b>工程の自由カスタマイズ:</b> 右端の「︙」から、独自の追肥や防除の工程を前後に追加したり、不要な工程を削除して、自分だけの栽培暦（マイカレンダー）を作れます。</p>
+                    <p>・<b>便利なメモ機能:</b> 「︙」メニューのメモ機能を使えば、使った農薬の倍率や肥料の量、苗の状態などを細かく記録しておけます。</p>
+                    <p>・<b>年度コピー:</b> 来年も同じ場所・同じ品種を育てるなら「次期へコピー」が便利。日付が1年後にスライドされるので、計画立てが数秒で終わります。</p>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <h4 class="font-bold text-blue-600 mb-2 text-sm"><i class="bi bi-share-fill mr-1"></i> データの保存・共有</h4>
+                <p class="text-[11px] text-slate-500 mb-3 font-medium">現在の全データをファイルとして書き出します。機種変更時や、家族との共有に便利です。LINEや自分宛メールに送っておくと安全です。</p>
+                <button onclick="exportAndShare()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
+                    バックアップを保存・共有
+                </button>
+            </section>
+
+            <section class="mb-6 border-t pt-4">
+                <h4 class="font-bold text-orange-600 mb-2 text-sm"><i class="bi bi-arrow-repeat mr-1"></i> データの復元</h4>
+                <p class="text-[11px] text-slate-500 mb-3 font-medium">保存したファイルを読み込みます。<br><span class="text-red-500 font-bold">※現在のデータは上書きされるのでご注意ください。</span></p>
+                <button onclick="document.getElementById('importFile').click()" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform">
+                    ファイルを読み込んで復元
+                </button>
+                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
+            </section>
+
+            <section class="mb-6 bg-red-50 p-3 rounded-lg border border-red-100">
+                <h4 class="font-bold text-red-700 mb-1 text-[11px]">🛡 免責事項</h4>
+                <p class="text-[10px] text-red-600 leading-tight">本アプリはブラウザの保存領域を使用します。履歴消去や端末の空き容量不足によりデータが消える可能性があるため、重要な記録は必ずバックアップしてください。消失による責任は負いかねます。</p>
+            </section>
+
+            <button onclick="closeHelp()" class="w-full py-3 border border-slate-200 text-slate-400 font-bold rounded-xl text-sm mt-2">閉じる</button>
+        </div>
+    </div>
+
+    <script>
+const MASTER = {
   "crops": {
-    "穀物・工芸 (10種)": {
+    "穀物・工芸": {
       "kome": { "name": "お米(水稲)", "tasks": ["種まき", "田植え", "中干し", "出穂", "稲刈り"], "intervals": [0, 30, 45, 45, 40], "varieties": ["コシヒカリ", "つや姫"], "hint": "【防除】いもち病 【肥料】水稲専用" },
       "mugi": { "name": "麦(小麦・大麦)", "tasks": ["播種", "麦踏み", "追肥", "赤かび病防除", "収穫"], "intervals": [0, 60, 60, 45, 45], "varieties": ["ゆめちから"], "hint": "【防除】赤かび病 【肥料】2〜3月の追肥" },
       "soba": { "name": "そば", "tasks": ["播種", "開花", "収穫"], "intervals": [0, 40, 40], "varieties": ["信濃1号"], "hint": "窒素過多に注意（倒伏防止）" },
@@ -9,10 +130,9 @@
       "daizu": { "name": "大豆", "tasks": ["播種", "中耕・土寄せ", "収穫"], "intervals": [0, 40, 80], "varieties": ["フクユタカ"], "hint": "【防除】カメムシ 【肥料】根粒菌を活かす" },
       "natane": { "name": "菜種", "tasks": ["播種", "間引き", "収穫"], "intervals": [0, 30, 210], "varieties": ["キザキノナタネ"], "hint": "【防除】アブラムシ 【肥料】元肥重視" },
       "ocha": { "name": "茶", "tasks": ["一番茶", "整枝", "二番茶", "秋整枝"], "intervals": [0, 15, 45, 90], "varieties": ["やぶきた"], "hint": "【防除】チャノホソガ 【肥料】窒素多め" },
-      "tobacco": { "name": "葉たばこ", "tasks": ["定植", "芯止め", "わき芽かき", "収穫"], "intervals": [0, 60, 30, 30], "varieties": ["黄色種"], "hint": "【防除】疫病 【肥料】専用肥料" },
-      "konnyaku": { "name": "コンニャク", "tasks": ["植付け", "除草", "収穫", "貯蔵"], "intervals": [0, 60, 120, 30], "varieties": ["あかぎおおだま"], "hint": "【防除】根腐病 【肥料】カリ分重視" }
+      "tobacco": { "name": "葉たばこ", "tasks": ["定植", "芯止め", "わき芽かき", "収穫"], "intervals": [0, 60, 30, 30], "varieties": ["黄色種"], "hint": "【防除】疫病 【肥料】専用肥料" }
     },
-    "実物野菜 (果菜類 20種)": {
+    "実物野菜": {
       "tomato": { "name": "トマト", "tasks": ["定植", "わき芽かき", "誘引", "収穫開始"], "intervals": [0, 15, 10, 45], "varieties": ["桃太郎", "麗夏"], "hint": "うどんこ病注意。段おきの追肥" },
       "nasu": { "name": "ナス", "tasks": ["定植", "仕立て", "収穫開始", "更新剪定", "秋収穫"], "intervals": [0, 20, 30, 40, 30], "varieties": ["千両二号"], "hint": "水切れ肥料切れ注意。ハダニ防除" },
       "kyuri": { "name": "キュウリ", "tasks": ["定植", "ネット張り", "収穫開始", "収穫終了"], "intervals": [0, 10, 25, 60], "varieties": ["夏すずみ"], "hint": "ベト病注意。少量多回数の追肥" },
@@ -34,7 +154,7 @@
       "zucchini": { "name": "ズッキーニ", "tasks": ["定植", "収穫開始", "収穫終了"], "intervals": [0, 35, 60], "varieties": ["ダイナー"], "hint": "人工授粉で確実に着果" },
       "tougarashi": { "name": "唐辛子", "tasks": ["定植", "収穫開始", "収穫終了"], "intervals": [0, 60, 90], "varieties": ["鷹の爪"], "hint": "乾燥気味に育てると辛味増" }
     },
-    "葉物・茎菜類 (20種)": {
+    "葉物・茎菜類": {
       "hakusai": { "name": "ハクサイ", "tasks": ["定植", "追肥", "結球開始", "収穫"], "intervals": [0, 20, 30, 40], "varieties": ["黄ごころ"], "hint": "ヨトウムシ注意。結球初期追肥" },
       "cabbage": { "name": "キャベツ", "tasks": ["定植", "土寄せ", "収穫"], "intervals": [0, 30, 70], "varieties": ["金系201号"], "hint": "コナガ防除。元肥重視" },
       "horenso": { "name": "ほうれん草", "tasks": ["播種", "収穫"], "intervals": [0, 45], "varieties": ["クロノス"], "hint": "酸度調整（pH6.5）必須" },
@@ -44,7 +164,7 @@
       "nira": { "name": "ニラ", "tasks": ["定植/刈取り", "お礼肥"], "intervals": [0, 60], "varieties": ["グリーンベルト"], "hint": "収穫後即追肥で回復" },
       "broccoli": { "name": "ブロッコリー", "tasks": ["定植", "頂花蕾収穫", "側枝収穫"], "intervals": [0, 70, 30], "varieties": ["ハイツSP"], "hint": "ボロン欠乏による茎空洞化注意" },
       "cauliflower": { "name": "カリフラワー", "tasks": ["定植", "葉折(遮光)", "収穫"], "intervals": [0, 80, 30], "varieties": ["スノークラウン"], "hint": "初期成育を止めてはいけない" },
-      "チンゲンサイ": { "name": "チンゲンサイ", "tasks": ["播種", "収穫"], "intervals": [0, 45], "varieties": ["青帝"], "hint": "アブラムシ注意。窒素多め" },
+      "chingensai": { "name": "チンゲンサイ", "tasks": ["播種", "収穫"], "intervals": [0, 45], "varieties": ["青帝"], "hint": "アブラムシ注意。窒素多め" },
       "mizuna": { "name": "水菜", "tasks": ["播種", "収穫"], "intervals": [0, 40], "varieties": ["京みぞれ"], "hint": "コナガ注意。元肥主体" },
       "shunigiku": { "name": "春菊", "tasks": ["播種", "摘み取り収穫"], "intervals": [0, 60], "varieties": ["中葉"], "hint": "アブラムシ注意。液肥追肥" },
       "aspara": { "name": "アスパラガス", "tasks": ["春収穫", "立茎", "お礼肥"], "intervals": [0, 60, 20], "varieties": ["ウェルカム"], "hint": "堆肥たっぷりと。茎枯病注意" },
@@ -54,9 +174,9 @@
       "mitsuba": { "name": "三つ葉", "tasks": ["播種", "遮光", "収穫"], "intervals": [0, 45, 15], "varieties": ["糸三つ葉"], "hint": "半日陰管理。アブラムシ注意" },
       "celery": { "name": "セロリ", "tasks": ["定植", "わき芽かき", "収穫"], "intervals": [0, 60, 60], "varieties": ["コーネル"], "hint": "肥料と水を好む。斑点病注意" },
       "molokheiya": { "name": "モロヘイヤ", "tasks": ["定植", "摘心", "収穫"], "intervals": [0, 30, 30], "varieties": ["在来"], "hint": "盛夏の貴重な青物。ハダニ注意" },
-      "ta-sai": { "name": "タアサイ", "tasks": ["播種", "収穫"], "intervals": [0, 60], "varieties": ["冬緑"], "hint": "寒冷地で甘みが増す" }
+      "tasai": { "name": "タアサイ", "tasks": ["播種", "収穫"], "intervals": [0, 60], "varieties": ["冬緑"], "hint": "寒冷地で甘みが増す" }
     },
-    "根菜・芋類 (15種)": {
+    "根菜・芋類": {
       "daikon": { "name": "ダイコン", "tasks": ["播種", "間引き", "収穫"], "intervals": [0, 15, 75], "varieties": ["青首大根"], "hint": "アブラムシ注意。元肥重視" },
       "ninjin": { "name": "ニンジン", "tasks": ["播種", "間引き", "収穫"], "intervals": [0, 25, 95], "varieties": ["向陽二寸"], "hint": "キアゲハ注意。初期の乾燥厳禁" },
       "kabu": { "name": "カブ", "tasks": ["播種", "間引き", "収穫"], "intervals": [0, 15, 35], "varieties": ["聖護院"], "hint": "コナガ注意。短期収穫でスが入るのを防ぐ" },
@@ -73,7 +193,7 @@
       "wasabi": { "name": "ワサビ", "tasks": ["定植", "管理", "収穫"], "intervals": [0, 250, 250], "varieties": ["真妻"], "hint": "水質管理が重要。夏場の水温上昇注意" },
       "konnyaku": { "name": "コンニャク", "tasks": ["植付け", "除草", "収穫"], "intervals": [0, 60, 120], "varieties": ["あかぎおおだま"], "hint": "根腐病注意。カリ分重視の施肥" }
     },
-    "果樹 (21種)": {
+    "果樹": {
       "mikan": { "name": "温州ミカン", "tasks": ["剪定", "摘果", "収穫"], "intervals": [0, 120, 120], "varieties": ["早生"], "hint": "カイガラムシ注意。3回に分けて施肥" },
       "ringo": { "name": "リンゴ", "tasks": ["剪定", "摘果", "袋掛け", "収穫"], "intervals": [0, 100, 40, 60], "varieties": ["ふじ"], "hint": "黒星病注意。収穫後にお礼肥" },
       "budo": { "name": "ブドウ", "tasks": ["剪定", "ジベ処理", "収穫"], "intervals": [0, 100, 80], "varieties": ["シャインマスカット"], "hint": "晩腐病注意。有機配合肥料を推奨" },
@@ -90,13 +210,13 @@
       "sudachi": { "name": "スダチ", "tasks": ["収穫"], "intervals": [0, 180], "varieties": ["徳島"], "hint": "サビダニ注意。有機肥料を推奨" },
       "kurumi": { "name": "くるみ", "tasks": ["剪定", "収穫"], "intervals": [0, 200], "varieties": ["信濃"], "hint": "黒斑病注意。基肥をしっかり" },
       "kuri": { "name": "栗", "tasks": ["拾い収穫"], "intervals": [0, 150], "varieties": ["筑波"], "hint": "シギゾウムシ注意。剪定後の施肥" },
-      "su-momo": { "name": "すもも", "tasks": ["摘果", "収穫"], "intervals": [0, 40, 60], "varieties": ["大石早生"], "hint": "ふくろ実病注意。元肥を重視" },
+      "sumomo": { "name": "すもも", "tasks": ["摘果", "収穫"], "intervals": [0, 40, 60], "varieties": ["大石早生"], "hint": "ふくろ実病注意。元肥を重視" },
       "anzu": { "name": "あんず", "tasks": ["収穫"], "intervals": [0, 100], "varieties": ["ハーコット"], "hint": "灰星病注意。日当たりを確保" },
       "olive": { "name": "オリーブ", "tasks": ["剪定", "収穫"], "intervals": [0, 200], "varieties": ["ミッション"], "hint": "ゾウムシ注意。アルカリ性土壌を維持" },
       "mango": { "name": "マンゴー", "tasks": ["剪定", "吊り上げ", "収穫"], "intervals": [0, 60, 90], "varieties": ["アーウィン"], "hint": "炭そ病注意。ハウスの温度管理" },
       "passion": { "name": "パッションF", "tasks": ["授粉", "収穫"], "intervals": [0, 120], "varieties": ["在来"], "hint": "水管理と棚仕立てが重要" }
     },
-    "ハーブ・特産・きのこ (15種)": {
+    "ハーブ・特産・きのこ": {
       "shiitake": { "name": "しいたけ(原木)", "tasks": ["接菌", "伏せ込み", "発生"], "intervals": [0, 180, 320], "varieties": ["にく丸"], "hint": "害菌注意。散水管理で発生を促す" },
       "maitake": { "name": "まいたけ", "tasks": ["発生管理", "収穫"], "intervals": [0, 90], "varieties": ["黒舞"], "hint": "湿度管理が極めて重要" },
       "enoki": { "name": "えのき", "tasks": ["温度管理", "収穫"], "intervals": [0, 60], "varieties": ["白えのき"], "hint": "空調管理による周年栽培が主" },
@@ -108,10 +228,272 @@
       "wasabi_leaf": { "name": "葉わさび", "tasks": ["収穫"], "intervals": [0, 120], "varieties": ["実生"], "hint": "流水または冷涼な湿地で管理" },
       "sansho": { "name": "実山椒", "tasks": ["剪定", "収穫"], "intervals": [0, 180], "varieties": ["朝倉"], "hint": "アゲハの幼虫に注意。元肥重視" },
       "myoga": { "name": "ミョウガ", "tasks": ["収穫"], "intervals": [0, 120], "varieties": ["在来"], "hint": "日陰の堆肥と湿気を好む" },
-      "u-do": { "name": "ウド", "tasks": ["軟化", "収穫"], "intervals": [0, 90, 60], "varieties": ["山うど"], "hint": "遮光管理で軟白させる" },
+      "udo": { "name": "ウド", "tasks": ["軟化", "収穫"], "intervals": [0, 90, 60], "varieties": ["山うど"], "hint": "遮光管理で軟白させる" },
       "tara": { "name": "タラノキ", "tasks": ["ふかし", "収穫"], "intervals": [0, 40, 20], "varieties": ["新トゲなし"], "hint": "芽を摘みすぎると木が枯れる" },
       "fuki": { "name": "フキ", "tasks": ["収穫"], "intervals": [0, 180], "varieties": ["愛知早生"], "hint": "フキノメイガ注意。堆肥を好む" },
-      "blue-berry": { "name": "ブルーベリー", "tasks": ["剪定", "収穫"], "intervals": [0, 150], "varieties": ["ハイブッシュ"], "hint": "イラガ注意。酸性土壌（ピートモス等）が必須" }
+      "blueberry": { "name": "ブルーベリー", "tasks": ["剪定", "収穫"], "intervals": [0, 150], "varieties": ["ハイブッシュ"], "hint": "イラガ注意。酸性土壌（ピートモス等）が必須" }
     }
   }
+};
+
+
+// 天気コードを日本語に変換する辞書
+const weatherMap = {
+    0: "晴", 1: "晴", 2: "曇", 3: "曇",
+    45: "霧", 48: "霧", 51: "霧雨", 61: "雨",
+    71: "雪", 80: "雨", 95: "雷雨"
+};
+let currentCondition = "不明"; // グローバルで天気を保持
+
+        let db = JSON.parse(localStorage.getItem('agri_db_v4') || '[]');
+        let regMode = 'start';
+        let config = JSON.parse(localStorage.getItem('agri_config') || '{"lat":34.16,"lon":135.18}');
+        let currentTemp = "--";
+
+        async function init() {
+            document.getElementById('baseDateInput').value = new Date().toISOString().split('T')[0];
+            setupCropSelect();
+            getWeather();
+            render();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    config.lat = pos.coords.latitude; config.lon = pos.coords.longitude;
+                    document.getElementById('addrDisplay').innerText = `${config.lat.toFixed(2)},${config.lon.toFixed(2)}`;
+                    localStorage.setItem('agri_config', JSON.stringify(config));
+                });
+            }
+        }
+
+// 2. 初期化とソート
+function setupCropSelect() {
+    const sel = document.getElementById('cropSelect');
+    sel.innerHTML = '<option value="">-- 作目を選択 --</option>';
+    
+    // カテゴリを五十音順にソート
+    const sortedCats = Object.keys(MASTER.crops).sort((a, b) => a.localeCompare(b, 'ja'));
+
+    sortedCats.forEach(cat => {
+        const group = document.createElement('optgroup');
+        group.label = cat;
+        
+        // 作目名を五十音順にソート
+        const cropsInCat = Object.keys(MASTER.crops[cat]).sort((a, b) => {
+            return MASTER.crops[cat][a].name.localeCompare(MASTER.crops[cat][b].name, 'ja');
+        });
+
+        cropsInCat.forEach(key => {
+            const opt = document.createElement('option');
+            opt.value = `${cat}|${key}`;
+            opt.innerText = MASTER.crops[cat][key].name;
+            group.appendChild(opt);
+        });
+        sel.appendChild(group);
+    });
 }
+        async function getWeather() {
+    try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${config.lat}&longitude=${config.lon}&current_weather=true`);
+        const data = await res.json();
+        currentTemp = Math.round(data.current_weather.temperature);
+        const code = data.current_weather.weathercode;
+        currentCondition = weatherMap[code] || "不明"; // 日本語に変換
+        // 画面の気温表示も更新（もしあれば）
+        if(document.getElementById('weatherTemp')) {
+            document.getElementById('weatherTemp').innerText = `${currentCondition} ${currentTemp}℃`;
+        }
+    } catch(e) { console.error("Weather failed", e); }
+}
+
+        function render() {
+            const list = document.getElementById('mainList');
+            list.innerHTML = db.length ? "" : '<div class="text-center py-20 text-slate-300 font-bold italic text-sm">栽培データがありません</div>';
+            db.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "task-card border-l-4 border-l-emerald-500";
+                card.innerHTML = `
+                    <div class="p-3 bg-slate-50 flex justify-between items-center border-b">
+                        <div>
+                            <span class="font-black text-sm text-slate-800">${item.name}</span>
+                            <span class="text-[9px] font-bold text-emerald-600 ml-2">${item.field} / ${item.variety}</span>
+                        </div>
+                        <button onclick="deleteCard(${item.id})" class="text-slate-300"><i class="bi bi-trash text-sm"></i></button>
+                    </div>
+                    <div class="p-2 space-y-1">
+                        ${item.tasks.map((t, idx) => `
+                            <div class="relative">
+                                <div class="flex items-center gap-2 p-2 rounded-lg ${t.isDone?'bg-emerald-50':'bg-white'}">
+                                    <button onclick="toggleTask(${item.id}, ${idx})" class="text-xl shrink-0">
+                                        <i class="bi ${t.isDone?'bi-check-circle-fill text-emerald-500':'bi-circle text-slate-200'}"></i>
+                                    </button>
+                                    <div class="flex-1 flex items-center justify-between min-w-0">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center">
+                                                <span contenteditable="true" onblur="updateTaskName(${item.id},${idx},this.innerText)" class="editable-name text-xs font-bold truncate ${t.isDone?'text-emerald-900':'text-slate-700'}">${t.name}</span>
+                                                ${t.weatherLog ? `<span class="weather-stamp ml-2">${t.weatherLog}</span>` : ''}
+                                            </div>
+                                            ${t.memo ? `<p class="text-[10px] text-slate-400 mt-1 italic">📝 ${t.memo}</p>` : ''}
+                                        </div>
+                                        <input type="date" value="${t.date}" onchange="updateDate(${item.id},${idx},this.value)" class="text-[10px] font-bold border-none bg-transparent text-slate-400 w-24">
+                                    </div>
+                                    <button onclick="toggleMenu('menu-${item.id}-${idx}')" class="text-slate-300 px-1"><i class="bi bi-three-dots-vertical"></i></button>
+                                </div>
+                                <div id="menu-${item.id}-${idx}" class="action-menu hidden">
+                                    <button onclick="addMemoPrompt(${item.id},${idx})"><i class="bi bi-pencil-square mr-2"></i>メモを追加</button>
+                                    <button onclick="addTask(${item.id},${idx})"><i class="bi bi-arrow-up-circle mr-2"></i>前に工程挿入</button>
+                                    <button onclick="addTask(${item.id},${idx+1})"><i class="bi bi-arrow-down-circle mr-2"></i>後に工程挿入</button>
+                                    <button onclick="deleteTask(${item.id},${idx})"><i class="bi bi-trash mr-2"></i>この工程を削除</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="p-2 bg-slate-50 border-t">
+                        <button onclick="copyToNextSeason(${item.id})" class="w-full py-2 bg-white border border-emerald-100 text-emerald-600 rounded-lg text-[10px] font-black"><i class="bi bi-arrow-repeat mr-1"></i>全工程を次期へコピー</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function toggleMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            const isHidden = menu.classList.contains('hidden');
+            document.querySelectorAll('.action-menu').forEach(m => m.classList.add('hidden'));
+            if (isHidden) menu.classList.remove('hidden');
+        }
+
+        function toggleTask(id, idx) {
+    const item = db.find(x => x.id === id);
+    const task = item.tasks[idx];
+    task.isDone = !task.isDone;
+    if (task.isDone) {
+        const now = new Date();
+        const dStr = `${now.getMonth()+1}/${now.getDate()}`;
+        const tStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+        // 時刻 + 天気 + 気温 を保存
+        task.weatherLog = `${dStr} ${tStr} (${currentCondition} ${currentTemp}℃)`;
+    } else {
+        task.weatherLog = null;
+    }
+    save(); render();
+}
+
+        function addMemoPrompt(id, idx) {
+            const item = db.find(x => x.id === id);
+            const msg = prompt("メモを入力してください", item.tasks[idx].memo || "");
+            if (msg !== null) {
+                item.tasks[idx].memo = msg;
+                save(); render();
+            }
+        }
+
+        // 3. 逆算モード対応の保存ロジック
+function saveNewCrop() {
+    const val = document.getElementById('cropSelect').value; 
+    if(!val) return;
+    
+    const [cat, key] = val.split('|'); 
+    const m = MASTER.crops[cat][key];
+    const baseDate = new Date(document.getElementById('baseDateInput').value);
+    
+    let taskData = [];
+    if (regMode === 'start') {
+        // 開始日からの積み上げ
+        taskData = m.tasks.map((t, i) => {
+            let d = new Date(baseDate);
+            const offset = m.intervals.slice(0, i + 1).reduce((a, b) => a + b, 0);
+            d.setDate(d.getDate() + offset);
+            return { name: t, date: d.toISOString().split('T')[0], isDone: false, weatherLog: null, memo: "" };
+        });
+    } else {
+        // 収穫日（最後の工程）からの逆算
+        const totalDays = m.intervals.reduce((a, b) => a + b, 0);
+        taskData = m.tasks.map((t, i) => {
+            let d = new Date(baseDate);
+            const offsetFromEnd = m.intervals.slice(i + 1).reduce((a, b) => a + b, 0);
+            d.setDate(d.getDate() - offsetFromEnd);
+            return { name: t, date: d.toISOString().split('T')[0], isDone: false, weatherLog: null, memo: "" };
+        });
+    }
+
+    db.unshift({ 
+        id: Date.now(), 
+        name: m.name, 
+        variety: document.getElementById('varietyInput').value || (m.varieties ? m.varieties[0] : "標準"), 
+        field: document.getElementById('fieldInput').value || "未設定", 
+        tasks: taskData 
+    });
+    
+    save(); 
+    render(); 
+    closeRegModal();
+}
+
+        function addTask(id, pos) {
+            const item = db.find(x => x.id === id);
+            const newDate = pos > 0 ? item.tasks[pos-1].date : new Date().toISOString().split('T')[0];
+            item.tasks.splice(pos, 0, { name: "新しい工程", date: newDate, isDone: false, weatherLog: null, memo: "" });
+            save(); render();
+        }
+
+        function deleteTask(id, idx) {
+            if(confirm("工程を削除しますか？")) {
+                db.find(x => x.id === id).tasks.splice(idx, 1);
+                save(); render();
+            }
+        }
+
+        function copyToNextSeason(id) {
+            if(!confirm("全工程を1年後にスライドしてコピーしますか？")) return;
+            const original = db.find(x => x.id === id);
+            const newItem = JSON.parse(JSON.stringify(original));
+            newItem.id = Date.now();
+            newItem.tasks.forEach(t => {
+                let d = new Date(t.date); d.setFullYear(d.getFullYear() + 1);
+                t.date = d.toISOString().split('T')[0]; t.isDone = false; t.weatherLog = null;
+            });
+            db.unshift(newItem); save(); render();
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+
+        function save() { localStorage.setItem('agri_db_v4', JSON.stringify(db)); }
+        function updateTaskName(id, idx, val) { db.find(x => x.id === id).tasks[idx].name = val; save(); }
+        function updateDate(id, idx, val) { db.find(x => x.id === id).tasks[idx].date = val; save(); }
+        function deleteCard(id) { if(confirm("栽培計画全体を削除しますか？")) { db = db.filter(x => x.id !== id); save(); render(); } }
+        function openRegModal() { document.getElementById('regModal').classList.remove('hidden'); }
+        function closeRegModal() { document.getElementById('regModal').classList.add('hidden'); }
+        function openHelp() { document.getElementById('helpModal').classList.remove('hidden'); }
+        function closeHelp() { document.getElementById('helpModal').classList.add('hidden'); }
+        // 登録モード切替時の視覚的フィードバック修正
+function setRegMode(m) {
+    regMode = m;
+    const sBtn = document.getElementById('modeStart');
+    const eBtn = document.getElementById('modeEnd');
+    if (m === 'start') {
+        sBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-black bg-emerald-600 text-white";
+        eBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-black bg-slate-200 text-slate-500";
+    } else {
+        eBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-black bg-emerald-600 text-white";
+        sBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-black bg-slate-200 text-slate-500";
+    }
+}
+        
+        async function exportAndShare() {
+            const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+            const file = new File([blob], `agri_backup.json`, { type: 'application/json' });
+            if (navigator.share) await navigator.share({ files: [file] });
+        }
+        function importData(e) {
+            const r = new FileReader(); r.onload = (f) => {
+                db = JSON.parse(f.target.result); save(); location.reload();
+            };
+            r.readAsText(e.target.files[0]);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.relative')) document.querySelectorAll('.action-menu').forEach(m => m.classList.add('hidden'));
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>
