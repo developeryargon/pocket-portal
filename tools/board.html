@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>電光掲示板（統合）</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-9V96DZHTH1');
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094" crossorigin="anonymous"></script>
+
+  <style>
+    :root{
+      --bg:#05070b;
+      --line: rgba(255,255,255,.14);
+      --panel: rgba(255,255,255,.06);
+
+      --fg:#d7ff6a;
+      --glow: rgba(215,255,106,.55);
+      --glow2: rgba(215,255,106,.22);
+
+      --size: 18vh;
+      --speed: 14s;
+      --blink: 1.2s;
+      --spacing: .06em;
+
+      --appPad: 12px;
+
+      /* フォームのダーク基調（select問題の根本対策） */
+      --fieldBg: rgba(255,255,255,.06);
+      --fieldFg: rgba(233,238,255,.92);
+      --fieldBd: rgba(255,255,255,.18);
+      --fieldBgSolid: #0b1220; /* 端末によって透明bgが白化する対策 */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 700px at 50% -150px, rgba(120,160,255,.08), transparent 60%),
+        var(--bg);
+      color: #E9EEFF;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ====== Header (given) ====== */
+    .bg-white{ background:#fff; }
+    .border-b{ border-bottom:1px solid #e2e8f0; }
+    .border-slate-200{ border-color:#e2e8f0; }
+    .py-4{ padding-top:1rem; padding-bottom:1rem; }
+    .px-6{ padding-left:1.5rem; padding-right:1.5rem; }
+    .sticky{ position:sticky; }
+    .top-0{ top:0; }
+    .z-50{ z-index:50; }
+    .container{ max-width:1100px; }
+    .mx-auto{ margin-left:auto; margin-right:auto; }
+    .flex{ display:flex; }
+    .justify-between{ justify-content:space-between; }
+    .items-center{ align-items:center; }
+    .gap-2{ gap:.5rem; }
+    .font-bold{ font-weight:700; }
+    .text-lg{ font-size:1.125rem; }
+    .text-blue-700{ color:#1d4ed8; }
+    .text-\[10px\]{ font-size:10px; }
+    .text-slate-400{ color:#94a3b8; }
+    .hover\:text-blue-500:hover{ color:#3b82f6; }
+    .transition-colors{ transition: color .15s ease; }
+
+    /* ★ ヘッダーを黒に上書き（構造は変更しない） */
+    nav.bg-white{
+      background:#000 !important;
+      border-bottom: 1px solid rgba(255,255,255,.10) !important;
+    }
+    nav.bg-white a.text-blue-700{
+      color:#7ab7ff !important;
+    }
+    nav.bg-white a.text-slate-400{
+      color: rgba(233,238,255,.55) !important;
+    }
+    nav.bg-white a.text-slate-400:hover{
+      color: rgba(233,238,255,.85) !important;
+    }
+
+    /* ====== App layout ====== */
+    .page{
+      height: calc(100% - 0px);
+      display:flex;
+      flex-direction:column;
+      min-height:100svh;
+    }
+
+    .main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 380px 1fr;
+      gap: 14px;
+      padding: var(--appPad);
+      overflow:hidden; /* PCはOK。スマホは下の@mediaで解除 */
+    }
+
+    /* Settings */
+    .controls{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      border-radius: 18px;
+      padding: 12px;
+      overflow:auto;
+      backdrop-filter: blur(6px);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .controls h1{
+      font-size: 14px;
+      margin: 0 0 10px;
+      color: rgba(233,238,255,.85);
+      font-weight: 700;
+      letter-spacing:.02em;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .pill{
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(233,238,255,.75);
+      white-space:nowrap;
+    }
+
+    .row{ margin: 10px 0; }
+
+    .label{
+      font-size: 12px;
+      color: rgba(233,238,255,.78);
+      margin-bottom: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .label small{ color: rgba(233,238,255,.55); }
+
+    textarea, input[type="text"], input[type="range"], select, input[type="color"]{
+      width:100%;
+      border:1px solid var(--fieldBd);
+      background: var(--fieldBg);
+      color: var(--fieldFg);
+      border-radius: 12px;
+      padding: 10px 10px;
+      outline:none;
+      font-size: 13px;
+    }
+
+    /* ★ selectが白化する端末対策（UIは変えずに配色だけ強制） */
+    select{
+      background: var(--fieldBgSolid) !important;
+      color: var(--fieldFg) !important;
+      border-color: var(--fieldBd) !important;
+      color-scheme: dark; /* 対応ブラウザではネイティブUIもダーク寄りに */
+    }
+    option{
+      background: var(--fieldBgSolid) !important;
+      color: var(--fieldFg) !important;
+    }
+
+    textarea{
+      min-height: 92px;
+      resize: vertical;
+    }
+    input[type="color"]{ padding:6px; height:44px; }
+
+    .toggles{ display:flex; gap: 10px; flex-wrap:wrap; }
+
+    .btn{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: rgba(233,238,255,.92);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 13px;
+      user-select:none;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(215,255,106,.28);
+      box-shadow: 0 0 0 4px rgba(215,255,106,.10);
+    }
+
+    /* Display stage */
+    .stage{
+      border:1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      align-items:stretch;
+      justify-content:stretch;
+      padding: 14px;
+      min-width: 0;
+      min-height: 260px; /* スマホで潰れすぎるのを防ぐ（見た目はほぼ不変） */
+    }
+    .stage::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 1.6px);
+      background-size: 6px 6px;
+      opacity:.22;
+      pointer-events:none;
+      mix-blend-mode: screen;
+    }
+    .stage::after{
+      content:"";
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 10px, rgba(0,0,0,.18) 12px);
+      opacity:.18;
+      pointer-events:none;
+    }
+
+    .board{
+      position:relative;
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-radius: 16px;
+    }
+
+    /* scroll mode */
+    .marquee{ width:100%; overflow:hidden; }
+    .track{
+      display:flex;
+      align-items:center;
+      gap: 3.2vw;
+      will-change: transform;
+      animation: scroll var(--speed) linear infinite;
+      animation-play-state: var(--run, running);
+    }
+    @keyframes scroll{
+      from{ transform: translateX(100%); }
+      to{ transform: translateX(-120%); }
+    }
+
+    /* static mode */
+    .center{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 2vh 2vw;
+    }
+
+    /* message text */
+    .text{
+      white-space: pre-wrap;
+      word-break: keep-all;
+      font-weight: 900;
+      font-size: var(--size);
+      letter-spacing: var(--spacing);
+      line-height: 1.06;
+      color: var(--fg);
+      text-shadow:
+        0 0 16px var(--glow),
+        0 0 36px var(--glow2),
+        0 0 90px rgba(255,255,255,.06);
+      filter: drop-shadow(0 0 10px rgba(0,0,0,.25));
+    }
+
+    /* blink */
+    .blink .text{
+      animation: blink var(--blink) steps(2, end) infinite;
+      animation-play-state: var(--run, running);
+    }
+    @keyframes blink{
+      0%,49%{ opacity:1; }
+      50%,100%{ opacity:.35; }
+    }
+
+    /* Fullscreen: only stage */
+    .stage:fullscreen{
+      border-radius:0;
+      border:none;
+      padding: 0;
+      background: var(--bg);
+    }
+    .stage:fullscreen .board{ border-radius:0; }
+    body.fs-board .controls{ display:none; }
+    body.fs-board .main{
+      grid-template-columns: 1fr;
+      padding: 0;
+      gap:0;
+    }
+
+    /* ★ スマホ対応：UIはそのまま、見切れだけ直す */
+    @media (max-width: 980px){
+      /* 縦積みは既存どおり */
+      .main{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        overflow: visible; /* ← ここが重要：見切れ防止 */
+      }
+      .controls{
+        max-height: none; /* 端末によっては44svhが小さすぎて操作しづらい */
+      }
+      /* 広告まで到達できるようページは自然スクロール */
+      .page{
+        height: auto;
+        min-height: 100svh;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .track{ animation:none; transform: translateX(0); }
+      .blink .text{ animation:none; }
+    }
+
+    /* ===== bottom ads block (given) ===== */
+    .bottom-ads{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      margin-top: 18px;
+      padding-bottom: 18px;
+    }
+    .bottom-ads p{
+      font-size:10px;
+      color:#94a3b8;
+      margin: 0 0 8px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+    }
+    .bottom-ads .box{
+      background:#fff;
+      padding:4px;
+      border-radius:10px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.20);
+      max-width: 100%;
+      overflow:hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header (given) -->
+  <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+    <div class="container mx-auto flex justify-between items-center" style="max-width:1100px;">
+      <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700" style="text-decoration:none;">
+        <span>🏠</span> PocketPortal
+      </a>
+      <a href="./index.html" class="text-[10px] text-slate-400 hover:text-blue-500 transition-colors" style="text-decoration:none;">
+        ツール集へ
+      </a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="main">
+      <!-- Controls -->
+      <aside class="controls" id="controls">
+        <h1>
+          電光掲示板 設定
+          <span class="pill" id="modePill">スクロール</span>
+        </h1>
+
+        <div class="row">
+          <div class="label">文章 <small>改行OK</small></div>
+          <textarea id="textInput">給水停止を確認してください</textarea>
+        </div>
+
+        <div class="row">
+          <div class="label">表示モード</div>
+          <select id="modeSelect">
+            <option value="scroll">スクロール</option>
+            <option value="static">固定（スクロール無し）</option>
+          </select>
+        </div>
+
+        <div class="row toggles">
+          <div class="btn" id="blinkBtn">点滅: <span class="pill" id="blinkPill">ON</span></div>
+          <div class="btn" id="pauseBtn">再生: <span class="pill" id="runPill">RUN</span></div>
+        </div>
+
+        <div class="row">
+          <div class="label">文字サイズ（上限は自動で“縦に収まる”） <small id="sizeVal"></small></div>
+          <input id="sizeRange" type="range" min="60" max="200" step="1" value="120" />
+          <div style="font-size:11px; color: rgba(233,238,255,.55); margin-top:6px; line-height:1.5;">
+            ※ スライダーは「最大フィットサイズに対する倍率」です（100%＝縦にぴったり収まる最大付近）
+          </div>
+        </div>
+
+        <div class="row" id="speedRow">
+          <div class="label">スクロール速度 <small id="speedVal"></small></div>
+          <input id="speedRange" type="range" min="6" max="60" step="1" value="30" />
+        </div>
+
+        <div class="row">
+          <div class="label">点滅周期 <small id="blinkVal"></small></div>
+          <input id="blinkRange" type="range" min="0.3" max="3.0" step="0.1" value="1.2" />
+        </div>
+
+        <div class="row">
+          <div class="label">文字色（自由） <small id="colorVal"></small></div>
+          <input id="colorInput" type="color" value="#d7ff6a" />
+        </div>
+
+        <div class="row toggles">
+          <div class="btn primary" id="fsBoardBtn">表示枠だけ全画面</div>
+          <div class="btn" id="fitBtn">自動フィット</div>
+        </div>
+
+        <div class="row toggles">
+          <div class="btn" id="copyLinkBtn">設定URLコピー</div>
+        </div>
+
+        <div class="row">
+          <div class="label">ショートカット <small>PC向け</small></div>
+          <div style="font-size:12px; color: rgba(233,238,255,.70); line-height:1.7;">
+            <div>Space：一時停止 / 再開</div>
+            <div>B：点滅ON/OFF</div>
+            <div>M：スクロール/固定 切替</div>
+            <div>F：表示枠だけ全画面</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Stage -->
+      <main class="stage" id="stage" aria-label="表示枠">
+        <div class="board" id="board">
+          <div class="marquee" id="marquee">
+            <div class="track" id="track">
+              <div class="text" id="t1"></div>
+              <div class="text" id="t2"></div>
+            </div>
+          </div>
+          <div class="center" id="center" style="display:none;">
+            <div class="text" id="tStatic"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Bottom Ads (given) -->
+    <div class="bottom-ads">
+      <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">Sponsor Link</p>
+      <div class="box bg-white p-1 rounded shadow-sm">
+        <script type="text/javascript">
+          rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770128068587";
+        </script>
+        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+
+        <script type="text/javascript">
+          rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ranking";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770559441426";
+        </script>
+        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const $ = (id)=>document.getElementById(id);
+
+      const els = {
+        controls: $("controls"),
+        stage: $("stage"),
+        board: $("board"),
+        marquee: $("marquee"),
+        track: $("track"),
+        center: $("center"),
+        t1: $("t1"),
+        t2: $("t2"),
+        tStatic: $("tStatic"),
+
+        textInput: $("textInput"),
+        modeSelect: $("modeSelect"),
+        modePill: $("modePill"),
+
+        blinkBtn: $("blinkBtn"),
+        blinkPill: $("blinkPill"),
+        blinkRange: $("blinkRange"),
+        blinkVal: $("blinkVal"),
+
+        pauseBtn: $("pauseBtn"),
+        runPill: $("runPill"),
+
+        sizeRange: $("sizeRange"),
+        sizeVal: $("sizeVal"),
+
+        speedRow: $("speedRow"),
+        speedRange: $("speedRange"),
+        speedVal: $("speedVal"),
+
+        colorInput: $("colorInput"),
+        colorVal: $("colorVal"),
+
+        fsBoardBtn: $("fsBoardBtn"),
+        fitBtn: $("fitBtn"),
+        copyLinkBtn: $("copyLinkBtn"),
+      };
+
+      const state = {
+        text: "給水停止を確認してください",
+        mode: "scroll",
+        blink: true,
+        running: true,
+        speed: Number(els.speedRange?.value || 30),
+        blinkSec: 1.2,
+        color: "#d7ff6a",
+        scalePct: 120,
+        maxFitPx: 80,
+      };
+
+      function setCSSVar(name, value){
+        document.documentElement.style.setProperty(name, value);
+      }
+
+      function renderText(){
+        const text = (state.text || "").replace(/\r\n/g, "\n");
+        els.t1.textContent = text;
+        els.t2.textContent = text;
+        els.tStatic.textContent = text;
+      }
+
+      function setMode(mode){
+        state.mode = mode;
+        els.modeSelect.value = mode;
+        els.modePill.textContent = (mode === "scroll") ? "スクロール" : "固定";
+        const isScroll = mode === "scroll";
+        els.marquee.style.display = isScroll ? "" : "none";
+        els.center.style.display  = isScroll ? "none" : "flex";
+        els.speedRow.style.display = isScroll ? "" : "none";
+        fitNow();
+      }
+
+      function setBlink(on){
+        state.blink = !!on;
+        els.blinkPill.textContent = state.blink ? "ON" : "OFF";
+        els.board.classList.toggle("blink", state.blink);
+      }
+
+      function setRunning(on){
+        state.running = !!on;
+        els.runPill.textContent = state.running ? "RUN" : "PAUSE";
+        setCSSVar("--run", state.running ? "running" : "paused");
+      }
+
+      function setSpeed(sec){
+        state.speed = sec;
+        els.speedVal.textContent = `${sec}s`;
+        setCSSVar("--speed", `${sec}s`);
+      }
+
+      function setBlinkSec(sec){
+        state.blinkSec = sec;
+        els.blinkVal.textContent = `${sec.toFixed(1)}s`;
+        setCSSVar("--blink", `${sec}s`);
+      }
+
+      function hexToRgb(hex){
+        const h = (hex || "").replace("#","").trim();
+        if (h.length === 3){
+          const r = parseInt(h[0]+h[0],16), g=parseInt(h[1]+h[1],16), b=parseInt(h[2]+h[2],16);
+          if([r,g,b].some(Number.isNaN)) return null;
+          return {r,g,b};
+        }
+        if (h.length === 6){
+          const r = parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+          if([r,g,b].some(Number.isNaN)) return null;
+          return {r,g,b};
+        }
+        return null;
+      }
+
+      function setColor(hex){
+        state.color = hex;
+        els.colorVal.textContent = hex;
+        setCSSVar("--fg", hex);
+        const rgb = hexToRgb(hex) || {r:215,g:255,b:106};
+        setCSSVar("--glow",  `rgba(${rgb.r},${rgb.g},${rgb.b},.55)`);
+        setCSSVar("--glow2", `rgba(${rgb.r},${rgb.g},${rgb.b},.22)`);
+      }
+
+      function getActiveTextEl(){
+        return (state.mode === "scroll") ? els.t1 : els.tStatic;
+      }
+      function stageInnerRect(){
+        return els.board.getBoundingClientRect();
+      }
+      function fitMaxFontPx(){
+        const target = getActiveTextEl();
+        const rect = stageInnerRect();
+        const maxW = rect.width * 0.94;
+        const maxH = rect.height * 0.92;
+
+        const prevAnim = target.style.animation;
+        target.style.animation = "none";
+
+        const isScroll = (state.mode === "scroll");
+        let lo = 8, hi = Math.max(20, Math.floor(rect.height));
+        let best = lo;
+
+        for (let i=0;i<18;i++){
+          const mid = Math.floor((lo+hi)/2);
+          target.style.fontSize = mid + "px";
+          const r = target.getBoundingClientRect();
+          const okH = r.height <= maxH;
+          const okW = isScroll ? true : (r.width <= maxW);
+          if (okH && okW){ best = mid; lo = mid + 1; }
+          else { hi = mid - 1; }
+        }
+
+        target.style.animation = prevAnim;
+        return best;
+      }
+      function applyScaledFont(){
+        const px = Math.max(8, Math.floor(state.maxFitPx * (state.scalePct / 100)));
+        setCSSVar("--size", px + "px");
+        els.sizeVal.textContent = `${state.scalePct}%（基準最大: ${state.maxFitPx}px → 現在: ${px}px）`;
+      }
+      function fitNow(){
+        state.maxFitPx = fitMaxFontPx();
+        applyScaledFont();
+      }
+
+      async function toggleBoardFullscreen(){
+        if (!document.fullscreenElement){
+          try{
+            await els.stage.requestFullscreen();
+            document.body.classList.add("fs-board");
+          }catch(e){
+            document.body.classList.toggle("fs-board");
+          }
+        }else{
+          try{ await document.exitFullscreen(); }catch(e){}
+          document.body.classList.remove("fs-board");
+        }
+      }
+      document.addEventListener("fullscreenchange", ()=>{
+        if (!document.fullscreenElement){
+          document.body.classList.remove("fs-board");
+        }
+        setTimeout(fitNow, 50);
+      });
+
+      function buildShareURL(){
+        const u = new URL(location.href);
+        u.searchParams.set("text", state.text);
+        u.searchParams.set("mode", state.mode);
+        u.searchParams.set("blink", state.blink ? "1" : "0");
+        u.searchParams.set("speed", String(state.speed));
+        u.searchParams.set("blinkSec", String(state.blinkSec));
+        u.searchParams.set("color", state.color.replace("#",""));
+        u.searchParams.set("scale", String(state.scalePct));
+        return u.toString();
+      }
+
+      async function copyToClipboard(str){
+        try{
+          await navigator.clipboard.writeText(str);
+          return true;
+        }catch(e){
+          const ta = document.createElement("textarea");
+          ta.value = str;
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand("copy");
+          ta.remove();
+          return ok;
+        }
+      }
+
+      function loadFromQS(){
+        const qs = new URLSearchParams(location.search);
+        const text = qs.get("text");
+        const mode = qs.get("mode");
+        const blink = qs.get("blink");
+        const speed = qs.get("speed");
+        const blinkSec = qs.get("blinkSec");
+        const color = qs.get("color");
+        const scale = qs.get("scale");
+
+        if (text !== null) state.text = text;
+        if (mode === "scroll" || mode === "static") state.mode = mode;
+        if (blink !== null) state.blink = (blink === "1" || blink === "true" || blink === "on");
+        if (speed !== null && !Number.isNaN(Number(speed))) state.speed = Math.max(6, Math.min(90, Number(speed)));
+        if (blinkSec !== null && !Number.isNaN(Number(blinkSec))) state.blinkSec = Math.max(0.3, Math.min(3.0, Number(blinkSec)));
+        if (scale !== null && !Number.isNaN(Number(scale))) state.scalePct = Math.max(60, Math.min(200, Number(scale)));
+        if (color){
+          const c = ("#" + color.replace(/[^0-9a-fA-F]/g,"").slice(0,6));
+          if (c.length === 7) state.color = c;
+        }
+      }
+
+      function syncUI(){
+        els.textInput.value = state.text;
+        els.modeSelect.value = state.mode;
+        els.speedRange.value = state.speed;
+        els.blinkRange.value = state.blinkSec;
+        els.colorInput.value = state.color;
+        els.sizeRange.value = state.scalePct;
+
+        els.speedVal.textContent = `${state.speed}s`;
+        els.blinkVal.textContent = `${state.blinkSec.toFixed(1)}s`;
+        els.colorVal.textContent = state.color;
+      }
+
+      els.textInput.addEventListener("input", ()=>{
+        state.text = els.textInput.value;
+        renderText();
+        fitNow();
+      });
+
+      els.modeSelect.addEventListener("change", ()=>{
+        setMode(els.modeSelect.value);
+      });
+
+      els.blinkBtn.addEventListener("click", ()=> setBlink(!state.blink));
+      els.pauseBtn.addEventListener("click", ()=> setRunning(!state.running));
+
+      els.speedRange.addEventListener("input", ()=>{
+        setSpeed(Number(els.speedRange.value));
+      });
+
+      els.blinkRange.addEventListener("input", ()=>{
+        setBlinkSec(Number(els.blinkRange.value));
+      });
+
+      els.colorInput.addEventListener("input", ()=>{
+        setColor(els.colorInput.value);
+      });
+
+      els.sizeRange.addEventListener("input", ()=>{
+        state.scalePct = Number(els.sizeRange.value);
+        applyScaledFont();
+      });
+
+      els.fitBtn.addEventListener("click", ()=>{
+        fitNow();
+      });
+
+      els.fsBoardBtn.addEventListener("click", toggleBoardFullscreen);
+
+      els.copyLinkBtn.addEventListener("click", async ()=>{
+        const url = buildShareURL();
+        const ok = await copyToClipboard(url);
+        els.copyLinkBtn.textContent = ok ? "コピー済" : "コピー失敗";
+        setTimeout(()=> els.copyLinkBtn.textContent = "設定URLコピー", 900);
+      });
+
+      window.addEventListener("keydown", (e)=>{
+        if (e.code === "Space"){
+          e.preventDefault();
+          setRunning(!state.running);
+        }
+        if (e.key.toLowerCase() === "b"){
+          setBlink(!state.blink);
+        }
+        if (e.key.toLowerCase() === "m"){
+          setMode(state.mode === "scroll" ? "static" : "scroll");
+        }
+        if (e.key.toLowerCase() === "f"){
+          toggleBoardFullscreen();
+        }
+        if (e.key.toLowerCase() === "r"){
+          fitNow();
+        }
+      });
+
+      let resizeTimer = null;
+      window.addEventListener("resize", ()=>{
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(()=> fitNow(), 120);
+      });
+
+      let lastTap = 0;
+      els.stage.addEventListener("touchend", ()=>{
+        const now = Date.now();
+        if (now - lastTap < 300){
+          document.body.classList.toggle("fs-board");
+          setTimeout(()=> fitNow(), 50);
+        }
+        lastTap = now;
+      }, {passive:true});
+
+      loadFromQS();
+      setCSSVar("--run", "running");
+
+      setSpeed(state.speed);
+      setBlinkSec(state.blinkSec);
+      setColor(state.color);
+
+      renderText();
+      setMode(state.mode);
+      setBlink(state.blink);
+      setRunning(state.running);
+
+      syncUI();
+      setTimeout(()=> fitNow(), 60);
+    })();
+  </script>
+</body>
+</html>
