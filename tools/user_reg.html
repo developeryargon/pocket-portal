@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ユーザー登録・管理 - 水監視マネージャー</title>
+    <style>
+        :root { --main: #4A154B; --bg: #f4f7f9; --danger: #d32f2f; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: var(--main); margin-top: 0; text-align: center; font-size: 1.2rem; }
+        label { display: block; font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; color: white; margin-bottom: 10px; }
+        .btn-reg { background: var(--main); }
+        .btn-danger { background: var(--danger); font-size: 13px; margin-top: 10px; opacity: 0.8; }
+        .btn-danger:hover { opacity: 1; }
+        .footer-link { text-align: center; margin-top: 15px; font-size: 13px; }
+        .footer-link a { color: #2196F3; text-decoration: none; }
+        .note { font-size: 11px; color: #888; margin-top: -10px; margin-bottom: 20px; line-height: 1.4; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>👤 ユーザー登録・管理</h2>
+    <p class="note">同期IDとパスワードを入力してください。新規の方は登録、すでにお持ちの方はログインやデータの削除が可能です。</p>
+    
+    <label>同期ID (半角英数字)</label>
+    <input type="text" id="reg-gid" placeholder="例: team-a-pool">
+    
+    <label>パスワード</label>
+    <input type="password" id="reg-gpw" placeholder="4文字以上">
+
+    <button class="btn btn-reg" onclick="registerOrLogin()">登録して開始（ログイン）</button>
+
+    <div class="footer-link">
+        <a href="pool.html">メイン画面へ戻る</a>
+    </div>
+
+    <hr>
+    
+    <div style="text-align: center;">
+        <p style="font-size: 11px; color: var(--danger); font-weight: bold; margin-bottom: 5px;">⚠️ データの全削除</p>
+        <p class="note">アカウント、設定、履歴をすべてサーバーから完全に削除します。</p>
+        <button class="btn btn-danger" onclick="deleteMyAccount()">自身に関する全データを削除</button>
+    </div>
+</div>
+
+<script>
+    // 自身のWorker URLに書き換えてください
+    const WORKER_URL = "https://pool-api.nogray.workers.dev/api";
+
+    // 登録およびログイン処理
+    async function registerOrLogin() {
+        const gid = document.getElementById('reg-gid').value.trim();
+        const gpw = document.getElementById('reg-gpw').value.trim();
+
+        if (!gid || !gpw) {
+            alert("IDとパスワードを入力してください");
+            return;
+        }
+
+        if (gpw.length < 4) {
+            alert("パスワードは4文字以上にしてください");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${WORKER_URL}/save-config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    gid: gid,
+                    gpw: gpw,
+                    configPayload: {
+                        webhook: "",
+                        unit_vol: "㎥",
+                        unit_time: "時",
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                })
+            });
+
+            if (response.ok) {
+                alert("認証・登録に成功しました。");
+                localStorage.setItem('water_gid', gid);
+                localStorage.setItem('water_gpw', gpw);
+                window.location.href = "pool.html";
+            } else {
+                const errorText = await response.text();
+                alert("エラー: " + errorText);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("サーバーとの通信に失敗しました。");
+        }
+    }
+
+    // 全データ削除処理
+    async function deleteMyAccount() {
+        const gid = document.getElementById('reg-gid').value.trim();
+        const gpw = document.getElementById('reg-gpw').value.trim();
+
+        if (!gid || !gpw) {
+            alert("削除するにはIDとパスワードを入力してください");
+            return;
+        }
+
+        if (!confirm("【警告】アカウント、設定、履歴を含む全てのデータが完全に削除されます。復元はできません。よろしいですか？")) return;
+
+        try {
+            const response = await fetch(`${WORKER_URL}/delete-all-user-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gid, gpw })
+            });
+
+            if (response.ok) {
+                alert("全てのデータを削除しました。");
+                localStorage.removeItem('water_gid');
+                localStorage.removeItem('water_gpw');
+                location.reload(); // 入力欄をリセットするためにリロード
+            } else {
+                const errorText = await response.text();
+                alert("認証に失敗しました。IDとパスワードを確認してください。\nエラー: " + errorText);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("通信エラーが発生しました。");
+        }
+    }
+
+    // 保存されている値があれば自動入力
+    window.onload = () => {
+        document.getElementById('reg-gid').value = localStorage.getItem('water_gid') || '';
+        document.getElementById('reg-gpw').value = localStorage.getItem('water_gpw') || '';
+    };
+</script>
+
+</body>
+</html>

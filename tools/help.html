@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ヘルプ - 水監視マネージャー</title>
+    <style>
+        :root { --main: #4A154B; --bg: #f4f7f9; --alert: #d32f2f; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); line-height: 1.6; color: #333; padding: 20px; margin: 0; }
+        .help-container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: var(--main); border-bottom: 2px solid var(--main); padding-bottom: 8px; font-size: 1.3rem; }
+        h3 { color: var(--main); font-size: 1.1rem; margin-top: 25px; }
+        .warning-card { background: #fff5f5; border-left: 5px solid var(--alert); padding: 15px; margin: 20px 0; font-size: 14px; }
+        .step-list { padding-left: 20px; }
+        .step-list li { margin-bottom: 10px; }
+        .btn-back { display: inline-block; margin-top: 20px; padding: 10px 20px; background: var(--main); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        code { background: #eee; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+        .footer-note { font-size: 12px; color: #666; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="help-container">
+    <h2>❓ ヘルプ・使い方</h2>
+
+    <div class="warning-card">
+        <strong>⚠️ セキュリティに関する重要なお願い</strong><br>
+        本サービスは高度なセキュリティを保証するものではありません。
+        <ul>
+            <li><strong>個人情報は入力しないでください。</strong> 名前などは愛称や苗字のみを推奨します。</li>
+            <li><strong>IDとパスワードは他で使い回さないでください。</strong> 漏洩した場合、監視データや設定が第三者に見られる可能性があります。</li>
+        </ul>
+
+        <div style="margin-top: 10px; border-top: 1px dotted var(--alert); padding-top: 10px;">
+            <strong>🚨 フィッシング・乗っ取り被害を避けるために</strong><br>
+            <p style="margin: 5px 0; font-size: 13px;">
+                本サービスからSlackへ送られるURLは、<strong>本アプリの正規URL（今お使いのこのサイト）のみ</strong>です。システムがこれ以外の外部URLを送り付けることはありません。
+            </p>
+            <p style="margin: 5px 0; font-size: 13px; color: var(--alert); font-weight: bold;">
+                もしSlackに心当たりのない不明なURLが送られてきた場合は、絶対にアクセスしないでください。
+            </p>
+            <p style="margin: 5px 0; font-size: 13px;">
+                万が一、不審なリンクが届いた場合は、直ちに「同期ID/パスワード」および「Slack Webhook URL」を新しいものに変更し、必要であれば「ユーザー登録画面」から全データの削除を行ってください。
+            </p>
+        </div>
+    </div>
+
+    <h3>🚀 使い方</h3>
+    <ol class="step-list">
+        <li><strong>初期登録:</strong> ユーザー登録画面で任意の「同期ID」と「パスワード」を設定します。</li>
+        <li><strong>基本設定:</strong> 設定ギアアイコン⚙からSlackのWebhook URLを登録し、「初期値として登録」を押します。</li>
+        <li><strong>給水開始:</strong> 施設名と担当者を入力し、プールのサイズまたは水量を指定して「監視スタート」を押します。</li>
+        <li><strong>監視・停止:</strong> 満水予定時刻になるとSlackに通知が届きます。現場を確認し「停止」ボタンを押してください。</li>
+    </ol>
+
+    <h3>💬 Slack通知の設定方法</h3>
+    <p>以下の手順でWebhook URLを取得し、アプリに設定してください。</p>
+    <ol class="step-list">
+        <li><a href="https://slack.com/" target="_blank">Slack</a>に登録・ログインします（無料プランでOK）。</li>
+        <li>通知を送りたいチャンネル（例：<code>#プールの水監視</code>）を作成します。</li>
+        <li><a href="https://my.slack.com/services/new/incoming-webhook/" target="_blank">Slack App Directory (Incoming Webhooks)</a>にアクセスします。</li>
+        <li>「Slackに追加」をクリックし、通知先のチャンネルを選択して「Incoming Webhook インテグレーションの追加」を押します。</li>
+        <li>表示された <strong>Webhook URL</strong> をコピーし、アプリの「Slack Webhook URL」欄に貼り付けて保存してください。</li>
+    </ol>
+
+    <h3>📊 データについて</h3>
+    <ul>
+        <li><strong>自動削除:</strong> 監視データは、停止（完了）から<strong>1週間経過すると自動的にサーバーから削除</strong>されます。</li>
+        <li><strong>最終操作日時:</strong> DBには最終操作日時が記録され、管理に使用されます。</li>
+    </ul>
+
+    <h3>⚖ 免責事項</h3>
+    <p style="font-size: 13px;">
+        本アプリの利用により生じたトラブル、データの消失、給水事故（溢水・空炊き等）、およびセキュリティ上の問題について、開発者は一切の責任を負いません。必ず実際の水位を並行して確認し、補助ツールとしてご利用ください。
+    </p>
+
+    <a href="pool.html" class="btn-back">← アプリへ戻る</a>
+
+    <div class="footer-note">
+        ※本システムは KV データベースを使用してデータを同期しています。
+    </div>
+</div>
+
+
+
+
+</body>
+</html>

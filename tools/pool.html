@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>水監視マネージャー</title>
+    <style>
+        :root { --main: #4A154B; --active: #ECB22E; --bg: #f4f7f9; --stop: #d32f2f; --alert: #ff5252; }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 8px; margin: 0; font-size: 14px; }
+        #top-alert { background: var(--alert); color: white; text-align: center; padding: 8px; font-weight: bold; position: sticky; top: 0; z-index: 100; border-radius: 0 0 10px 10px; margin: -8px -8px 10px -8px; display: none; }
+        .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--main); border-left: 4px solid var(--main); padding-left: 8px; }
+        .selector-row { display: flex; justify-content: space-around; padding: 8px; background: #eee; border-radius: 8px; align-items: center; margin-top: 10px; }
+        .selector-row label { display: flex; align-items: center; font-size: 14px; font-weight: bold; cursor: pointer; color: #333; margin: 0; }
+        .selector-row input { width: auto; margin-right: 4px; }
+        .tab-group { display: flex; gap: 4px; margin: 10px 0; background: #ddd; padding: 2px; border-radius: 6px; }
+        .tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 11px; border-radius: 4px; cursor: pointer; border: none; background: none; font-weight: bold; color: #555; }
+        .tab.active { background: white; color: var(--main); }
+        .sub-toggle { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .sub-toggle button { font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+        .sub-toggle button.active { background: #666; color: #fff; border-color: #666; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 2px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 8px; background: #fff; }
+        .grid-3 { display: flex; gap: 4px; }
+        .grid-3 div { flex: 1; }
+        .result-panel { background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 12px; margin: 10px 0; text-align: center; color: #2e7d32; min-height: 110px; display: flex; flex-direction: column; justify-content: center; }
+        .finish-time { font-size: 32px; font-weight: bold; display: block; line-height: 1.2; color: #1b5e20; }
+        .monitor-item { border-left: 5px solid var(--active); padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item-btns { display: flex; gap: 5px; margin-top: 8px; }
+        .btn-sm { flex: 1; padding: 8px; font-size: 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; }
+        .btn-red { background: var(--stop); }
+        .btn-blue { background: #2196F3; }
+        .btn-gray { background: #777; }
+        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 17px; cursor: pointer; color: white; margin-top: 10px; background: var(--main); }
+        .hidden { display: none !important; }
+        .edit-input { font-size: 12px; padding: 5px; margin-bottom: 4px; width: 100%; border: 1px solid var(--active); }
+    </style>
+</head>
+<body>
+
+<div id="top-alert">⚠️ 給水監視中</div>
+
+<div class="card">
+    <div class="card">
+    <div style="display: flex; gap: 4px; align-items: flex-end;">
+        <div style="flex:1;"><label>同期ID</label><input type="password" id="gid" placeholder="ID" onfocus="this.type='text'" onblur="this.type='password'"></div>
+        <div style="flex:1;"><label>PASS</label><input type="password" id="gpw" placeholder="PASS" onfocus="this.type='text'" onblur="this.type='password'"></div>
+        <div style="flex:0.5; margin-bottom:8px;"><button onclick="toggleConfig()" style="font-size:10px; padding:5px;">設定⚙</button></div>
+    </div>
+    
+    <div id="config-area" class="hidden" style="border-top: 1px solid #eee; padding-top: 8px; margin-top: 5px;">
+        <label>Slack Webhook URL</label>
+        <input type="password" id="slackUrl" placeholder="https://hooks.slack.com/..." onfocus="this.type='text'" onblur="this.type='password'">
+        
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <a href="user_reg.html" style="font-size: 11px; color: #2196F3;">👤 ユーザーID/PASS登録画面へ</a>
+            <a href="help.html" style="font-size: 11px; color: #2196F3;">❓ ヘルプ</a>
+        </div>
+        <button onclick="saveInitialData()" class="btn-sm btn-blue" style="margin-top:10px; width:100%;">この設定を初期値として登録</button>
+    </div>
+
+    <div class="selector-row">
+        <label><input type="radio" name="unit" value="㎥" checked onchange="convertVolUnit('㎥')"> ㎥</label>
+        <label><input type="radio" name="unit" value="ℓ" onchange="convertVolUnit('ℓ')"> ℓ</label>
+        <label><input type="radio" name="unit" value="t" onchange="convertVolUnit('t')"> t</label>
+        <div style="border-left: 1px solid #ccc; height: 20px; margin: 0 5px;"></div>
+        <label><input type="radio" name="t_unit" value="分" onchange="convertTimeUnit('分')"> /分</label>
+        <label><input type="radio" name="t_unit" value="時" checked onchange="convertTimeUnit('時')"> /時</label>
+    </div>
+</div>
+
+<div class="card">
+    <h3>🌊 給水登録</h3>
+    <div class="tab-group">
+        <button id="tab-size" class="tab active" onclick="setMode('size')">サイズ入力</button>
+        <button id="tab-vol" class="tab" onclick="setMode('vol')">水量直接</button>
+        <button id="tab-time" class="tab" onclick="setMode('time')">日時・時間指定</button>
+    </div>
+
+    <div id="flow-input-area">
+        <label id="flowLabel">給水能力 (㎥/時)</label>
+        <input type="number" id="flowRate" value="18" oninput="uiCalc()">
+    </div>
+
+    <div id="mode-size">
+        <div class="grid-3">
+            <div><label>長さ(m)</label><input type="number" id="L" value="25" oninput="uiCalc()"></div>
+            <div><label>幅(m)</label><input type="number" id="W" value="12" oninput="uiCalc()"></div>
+            <div><label>深さ(m)</label><input type="number" id="D" value="1.2" oninput="uiCalc()"></div>
+        </div>
+        <label>現在量 (%)</label>
+        <input type="number" id="currentPer" value="0" oninput="uiCalc()">
+    </div>
+
+    <div id="mode-vol" class="hidden">
+        <label id="manualVolLabel">必要水量 (㎥)</label>
+        <input type="number" id="manualVol" value="360" oninput="uiCalc()">
+    </div>
+
+    <div id="mode-time" class="hidden">
+        <div class="sub-toggle">
+            <button id="sub-rel" class="active" onclick="setSubTimeMode('rel')">残り時間</button>
+            <button id="sub-abs" onclick="setSubTimeMode('abs')">完了日時で指定</button>
+        </div>
+        <div id="time-rel-area">
+            <div class="grid-3">
+                <div style="flex:1;"><label>時間</label><input type="number" id="manualHrs" value="5" oninput="uiCalc()"></div>
+                <div style="flex:1;"><label>分</label><input type="number" id="manualMin" value="0" oninput="uiCalc()"></div>
+            </div>
+        </div>
+        <div id="time-abs-area" class="hidden">
+            <div class="grid-3">
+                <div style="flex:1.5;"><label>完了日</label><input type="date" id="absDate" onchange="uiCalc()"></div>
+                <div><label>時</label><select id="absHour" onchange="uiCalc()"></select></div>
+                <div><label>分</label><select id="absMin" onchange="uiCalc()"></select></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <span id="finishDate" style="font-weight:bold;">----/--/--</span>
+        <span id="finishClock" class="finish-time">--:--</span>
+        <div id="detailRes" style="font-size:13px; font-weight:bold; margin-top:5px;"></div>
+    </div>
+
+    <div class="grid-3">
+        <div style="flex:2"><label>施設名</label><input type="text" id="facility" placeholder="施設名"></div>
+        <div style="flex:1"><label>担当者</label><input type="text" id="startUser" placeholder="名前"></div>
+    </div>
+    <button class="btn-main" onclick="doStart()">監視スタート</button>
+</div>
+
+<div id="monitor-list-area" class="card">
+    <h3>📡 稼働状況・履歴</h3>
+    <div id="monitor-list"></div>
+</div>
+
+<script>
+    let currentMode = 'size';
+    let subTimeMode = 'rel';
+    let lastVolUnit = '㎥';
+    let lastTimeUnit = '時';
+    let monitorItems = [];
+
+    // 日時指定用セレクトボックス初期化
+    const hSelect = document.getElementById('absHour');
+    for(let i=0; i<24; i++) hSelect.add(new Option(i, i));
+    const mSelect = document.getElementById('absMin');
+    for(let i=0; i<60; i++) mSelect.add(new Option(i, i));
+
+
+    // --- 設定エリアの開閉 ---
+    function toggleConfig() {
+        document.getElementById('config-area').classList.toggle('hidden');
+    }
+
+    // --- 設定値、WebhookをIDとPASSに合わせて初期値として登録 (DB保存用) ---
+    async function saveInitialData() {
+    const configPayload = {
+        webhook: document.getElementById('slackUrl').value, // slack -> webhook
+        unit_vol: document.querySelector('input[name="unit"]:checked').value,
+        unit_time: document.querySelector('input[name="t_unit"]:checked').value,
+        default_flow: document.getElementById('flowRate').value,
+        facility: document.getElementById('facility').value,
+        startUser: document.getElementById('startUser').value, // user -> startUser
+    };
+    
+    const body = {
+        gid: document.getElementById('gid').value,
+        gpw: document.getElementById('gpw').value,
+        configPayload: configPayload
+    };
+
+    // サーバーへの送信（例）
+    const res = await fetch(`${WORKER_URL}/save-config` , { method: 'POST', body: JSON.stringify(body) });
+    if(res.ok) alert("初期設定を登録しました");
+    }
+
+    function convertVolUnit(newUnit) {
+        const inputs = ['flowRate', 'manualVol'];
+        inputs.forEach(id => {
+            let val = parseFloat(document.getElementById(id).value);
+            if (isNaN(val)) return;
+            let m3Val = (lastVolUnit === 'ℓ') ? val / 1000 : val; 
+            document.getElementById(id).value = (newUnit === 'ℓ') ? (m3Val * 1000) : m3Val;
+        });
+        lastVolUnit = newUnit;
+        uiCalc();
+    }
+
+    function convertTimeUnit(newUnit) {
+        if (lastTimeUnit === newUnit) return;
+        let val = parseFloat(document.getElementById('flowRate').value);
+        if (!isNaN(val)) {
+            if (newUnit === '分') document.getElementById('flowRate').value = (val / 60).toFixed(2);
+            else document.getElementById('flowRate').value = (val * 60).toFixed(1);
+        }
+        lastTimeUnit = newUnit;
+        uiCalc();
+    }
+
+    function setMode(m) {
+        currentMode = m;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + m).classList.add('active');
+        ['mode-size', 'mode-vol', 'mode-time'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('mode-' + m).classList.remove('hidden');
+        document.getElementById('flow-input-area').classList.toggle('hidden', m === 'time');
+        uiCalc();
+    }
+
+    function setSubTimeMode(sm) {
+        subTimeMode = sm;
+        document.getElementById('sub-rel').classList.toggle('active', sm === 'rel');
+        document.getElementById('sub-abs').classList.toggle('active', sm === 'abs');
+        document.getElementById('time-rel-area').classList.toggle('hidden', sm === 'abs');
+        document.getElementById('time-abs-area').classList.toggle('hidden', sm === 'rel');
+        if(sm === 'abs') {
+            const now = new Date();
+            document.getElementById('absDate').value = now.toISOString().split('T')[0];
+            document.getElementById('absHour').value = now.getHours();
+            document.getElementById('absMin').value = now.getMinutes();
+        }
+        uiCalc();
+    }
+
+
+
+    const WORKER_URL = "https://pool-api.nogray.workers.dev/api"; // ★要書き換え
+
+    // 共通通信関数 (Worker側の認証に対応)
+    async function apiFetch(endpoint, payload = {}) {
+        const gid = document.getElementById('gid').value.trim();
+        const gpw = document.getElementById('gpw').value.trim();
+        if (!gid || !gpw) throw new Error("設定からIDとパスワードを入力してください");
+
+        const response = await fetch(`${WORKER_URL}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gid, gpw, ...payload })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        return await response.json();
+    }
+
+
+
+
+
+
+
+    function uiCalc() {
+        const vUnit = document.querySelector('input[name="unit"]:checked').value;
+        const tUnit = document.querySelector('input[name="t_unit"]:checked').value;
+        document.getElementById('flowLabel').innerText = `給水能力 (${vUnit}/${tUnit})`;
+        document.getElementById('manualVolLabel').innerText = `必要水量 (${vUnit})`;
+
+        let totalMins = 0; let reqM3 = 0;
+        const sizeM3 = (parseFloat(document.getElementById('L').value)||0) * (parseFloat(document.getElementById('W').value)||0) * (parseFloat(document.getElementById('D').value)||0) * (1 - (parseFloat(document.getElementById('currentPer').value)||0)/100);
+
+        if (currentMode === 'time') {
+            if (subTimeMode === 'rel') {
+                totalMins = (parseInt(document.getElementById('manualHrs').value)||0)*60 + (parseInt(document.getElementById('manualMin').value)||0);
+            } else {
+                const datePart = document.getElementById('absDate').value;
+                const h = document.getElementById('absHour').value;
+                const m = document.getElementById('absMin').value;
+                if(datePart) {
+                    const target = new Date(`${datePart}T${h.padStart(2,'0')}:${m.padStart(2,'0')}:00`);
+                    totalMins = Math.max(0, (target - new Date()) / 60000);
+                }
+            }
+            reqM3 = sizeM3; 
+        } else {
+            const rawFlow = parseFloat(document.getElementById('flowRate').value) || 0.001;
+            let flowMinM3 = (vUnit === 'ℓ') ? rawFlow / 1000 : rawFlow;
+            if (tUnit === '時') flowMinM3 /= 60;
+            if (currentMode === 'size') reqM3 = sizeM3;
+            else {
+                const iv = parseFloat(document.getElementById('manualVol').value)||0;
+                reqM3 = (vUnit === 'ℓ') ? iv / 1000 : iv;
+            }
+            totalMins = reqM3 / flowMinM3;
+        }
+
+        const finish = new Date(Date.now() + totalMins * 60000);
+        document.getElementById('finishDate').innerText = finish.toLocaleDateString('ja-JP', {year:'numeric', month:'2-digit', day:'2-digit', weekday:'short'});
+        document.getElementById('finishClock').innerText = finish.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+        
+        const dh = Math.floor(totalMins / 60);
+        const dm = Math.round(totalMins % 60);
+        const m3Text = reqM3.toFixed(1);
+        const lText = Math.round(reqM3 * 1000).toLocaleString();
+        let volDisp = (vUnit === "ℓ") ? `${lText}ℓ (${m3Text}㎥)` : `${m3Text}㎥ (${lText}ℓ)`;
+
+        document.getElementById('detailRes').innerHTML = `完了まで: 約${dh}時間${dm}分<br>必要量: ${volDisp} / ${m3Text}t`;
+        return { totalMins, reqM3 };
+    }
+
+
+
+
+        // 監視スタート時
+    async function doStart() {
+        const { totalMins, reqM3 } = uiCalc();
+        const limitTime = Date.now() + totalMins * 60000;
+        
+        const payload = {
+            id: Date.now(),
+            facility: document.getElementById('facility').value || "未設定施設",
+            startUser: document.getElementById('startUser').value || "未設定者",
+            status: 'active', // monitoring から active に統一（Worker側の仕様に合わせる）
+            limitTime: limitTime,
+            totalVolM3: reqM3,
+            webhook: document.getElementById('slackUrl').value,
+            settings: { m: 10, at0: true, p: 5, interval: 10 }
+        };
+
+        try {
+            await apiFetch("/save", { payload });
+            alert("監視を開始しました");
+            // ID/PASSを保存
+            localStorage.setItem('water_gid', document.getElementById('gid').value);
+            localStorage.setItem('water_gpw', document.getElementById('gpw').value);
+            location.reload();
+        } catch (e) { alert(e.message); }
+    }
+
+    // ページ読み込み時にDBからデータを取得する
+    window.addEventListener('load', async () => {
+        document.getElementById('gid').value = localStorage.getItem('water_gid') || '';
+        document.getElementById('gpw').value = localStorage.getItem('water_gpw') || '';
+
+        if (document.getElementById('gid').value && document.getElementById('gpw').value) {
+            try {
+                const data = await apiFetch("/load");
+                if (data.config) document.getElementById('slackUrl').value = data.config.webhook || "";
+                monitorItems = data.pools || [];
+                updateMonitorList();
+            } catch (e) { console.error("データ取得失敗"); }
+        }
+        uiCalc();
+    });
+
+
+
+    function updateMonitorList() {
+    const listDiv = document.getElementById('monitor-list');
+    listDiv.innerHTML = '';
+    const now = new Date();
+    let activeCount = 0;
+
+    monitorItems.forEach(item => {
+        const isMon = item.status === 'active';
+        if(isMon) activeCount++;
+        const remainMins = Math.max(0, (item.limitTime - (isMon ? now : item.stopTime)) / 60000);
+        const rh = Math.floor(remainMins / 60);
+        const rm = Math.round(remainMins % 60);
+
+        // 担当者表示の作成
+        let userDisplay = "";
+        if (item.isEditing) {
+            const isMon = item.status === 'active';
+            userDisplay = `
+                <div style="margin-bottom:5px;">施設: <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}"></div>
+                <div style="margin-bottom:5px;">開始者: <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}"></div>
+                ${!isMon ? `<div>終了者: <input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}"></div>` : ''}
+            `;
+        } else {
+            userDisplay = `
+                <span style="font-size:14px;">${item.facility}</span><br>
+                <span style="font-size:12px; color:#666;">開始者: ${item.startUser}</span>
+                ${item.stopUser ? `<br><span style="font-size:12px; color:var(--stop);">終了者: ${item.stopUser}</span>` : ''}
+            `;
+        }
+
+        const div = document.createElement('div');
+        div.className = `monitor-item ${isMon ? '' : 'finished'}`;
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-weight:bold; align-items: flex-start;">
+                <div style="flex:1;">${userDisplay}</div>
+                <span style="color:${isMon?'#2196F3':'#999'}">${isMon?'🔵 監視中':'⚪ 停止済'}</span>
+            </div>
+            <div style="font-size:11px; color:#666; margin-top:5px;">
+                開始: ${new Date(item.created_at).toLocaleString()} | 必要: ${item.totalVolM3.toFixed(1)}t
+            </div>
+            <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
+                <div>${isMon ? '終了予定' : '停止時刻'}: <strong>${isMon ? new Date(item.limitTime).toLocaleString() : new Date(item.stopTime).toLocaleString()}</strong></div>
+                ${isMon ? `<div style="color:var(--stop); font-weight:bold;">残り約 ${rh}時間${rm}分</div>` : '<div style="color:#666;">監視を終了しました</div>'}
+            </div>
+            <div class="item-btns">
+                ${item.isEditing ? `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`}
+                ${isMon ? `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`}
+                <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
+            </div>
+        `;
+        listDiv.appendChild(div);
+    });
+    document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
+    }
+
+    function toggleEdit(id) { monitorItems.find(i => i.id === id).isEditing = true; updateMonitorList(); }
+    // --- 修正保存 ---
+    async function saveEdit(id) {
+        const item = monitorItems.find(i => i.id === id);
+        const facility = document.getElementById(`edit-f-${id}`).value;
+        const startUser = document.getElementById(`edit-u-${id}`).value;
+        const stopUser = item.status === 'completed' ? document.getElementById(`edit-su-${id}`).value : "";
+
+        const body = {
+            gid: document.getElementById('gid').value,
+            gpw: document.getElementById('gpw').value,
+            poolId: id,
+            facility: facility,
+            startUser: startUser,
+            stopUser: stopUser
+        };
+
+        await fetch(`${WORKER_URL}/update-item`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+
+        item.facility = facility;
+        item.startUser = startUser;
+        if (item.status === 'completed') item.stopUser = stopUser;
+        item.isEditing = false;
+        updateMonitorList();
+    }
+    
+    // --- 停止処理 (ここから) ---
+    async function doStop(id) {
+        const stopUser = document.getElementById('startUser').value || "未設定者";
+        if (!confirm("給水を停止して記録しますか？")) return;
+
+        try {
+            // 新しい Worker の仕様 (apiFetch) で通信
+            await apiFetch("/stop", { 
+                poolId: id, 
+                stopUser: stopUser 
+            });
+            
+            // 成功したらリロードして最新状態にする
+            location.reload();
+        } catch (e) {
+            alert("停止エラー: " + e.message);
+        }
+    }
+    // --- 停止処理 (ここまで) ---
+    
+    // 削除処理
+    async function doDelete(id) {
+        if (!confirm("完全に削除しますか？")) return;
+        try {
+            await apiFetch("/delete", { poolId: id });
+            location.reload();
+        } catch (e) { alert(e.message); }
+    }
+
+
+    setInterval(updateMonitorList, 30000);
+
+</script>
+</body>
+</html>
