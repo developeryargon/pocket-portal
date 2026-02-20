@@ -207,6 +207,16 @@
             unit_vol: document.querySelector('input[name="unit"]:checked').value,
             unit_time: document.querySelector('input[name="t_unit"]:checked').value,
             default_flow: document.getElementById('flowRate').value,
+
+
+            // 🔔 通知設定も初期値として保存
+            at0: document.getElementById('at0_on').checked,
+            m_on: document.getElementById('m_on').checked,
+            m_val: document.getElementById('m_val').value,
+            p_on: document.getElementById('p_on').checked,
+            p_val: document.getElementById('p_val').value,
+            interval_on: document.getElementById('interval_on').checked,
+            interval_val: document.getElementById('interval_val').value
             
             // 🟢 ここが重要：サイズと直接水量を保存対象に追加
             L: document.getElementById('L').value,
@@ -408,7 +418,17 @@
                 document.getElementById('facility').value = c.facility || "";
                 document.getElementById('startUser').value = c.startUser || "";
                 document.getElementById('flowRate').value = c.default_flow || "18";
-    
+
+
+                // 🔔 保存された通知設定を復元
+                document.getElementById('at0_on').checked = c.at0 !== false; // デフォルトON
+                document.getElementById('m_on').checked = !!c.m_on;
+                document.getElementById('m_val').value = c.m_val || "10";
+                document.getElementById('p_on').checked = !!c.p_on;
+                document.getElementById('p_val').value = c.p_val || "5";
+                document.getElementById('interval_on').checked = !!c.interval_on;
+                document.getElementById('interval_val').value = c.interval_val || "10";
+                
                 // 🟢 拡張した項目の反映
                 if(c.L) document.getElementById('L').value = c.L;
                 if(c.W) document.getElementById('W').value = c.W;
@@ -589,6 +609,7 @@
 </body>
 
 </html>
+
 
 
 
