@@ -35,6 +35,28 @@
         .btn-main { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 17px; cursor: pointer; color: white; margin-top: 10px; background: var(--main); }
         .hidden { display: none !important; }
         .edit-input { font-size: 12px; padding: 5px; margin-bottom: 4px; width: 100%; border: 1px solid var(--active); }
+        /* 危険な警告用スタイル */
+        .danger-alert {
+            background: #fff0f0 !important;
+            border: 2px solid #ff0000 !important;
+            animation: blink 1s infinite;
+        }
+        .alert-banner {
+            background: #ff0000;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            padding: 4px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .text-danger { color: #ff0000; font-weight: bold; font-size: 1.2rem; }
+        
+        @keyframes blink {
+            0% { box-shadow: 0 0 0px #ff0000; }
+            50% { box-shadow: 0 0 20px #ff0000; }
+            100% { box-shadow: 0 0 0px #ff0000; }
+        }
     </style>
 </head>
 <body>
@@ -55,6 +77,16 @@
     <div id="config-area" class="hidden" style="border-top: 1px solid #eee; padding-top: 8px; margin-top: 5px;">
         <label>Slack Webhook URL</label>
         <input type="password" id="slackUrl" placeholder="https://hooks.slack.com/..." onfocus="this.type='text'" onblur="this.type='password'">
+
+        <div class="setting-item">
+            <label>通知タイミング設定</label>
+            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                <input type="checkbox" id="notifyAt0" checked> 満水予定時刻に通知<br>
+                満水 <input type="number" id="notifyBefore" value="10" style="width: 40px;"> 分前に予告通知<br>
+                満水 <input type="number" id="notifyAfter" value="5" style="width: 40px;"> 分過ぎたら警告開始<br>
+                その後 <input type="number" id="notifyInterval" value="10" style="width: 40px;"> 分おきに繰り返し通知
+            </div>
+        </div>
         
         <div style="display: flex; gap: 10px; margin-top: 5px;">
             <a href="user_reg.html" style="font-size: 11px; color: #2196F3;">👤 ユーザーID/PASS登録画面へ</a>
@@ -460,6 +492,24 @@
                 <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
             </div>
         `;
+
+        // updateMonitorList 関数内のカード生成部分を修正
+        const isOver = (item.status === 'active' && Date.now() > item.limitTime);
+        
+        // カードのHTML
+        card.innerHTML = `
+            <div class="monitor-card ${isOver ? 'danger-alert' : ''}">
+                ${isOver ? '<div class="alert-banner">⚠️ 満水時間を超過しています！</div>' : ''}
+                <div class="facility-name">${item.facility}</div>
+                <div class="time-limit ${isOver ? 'text-danger' : ''}">
+                    満水予定: ${new Date(item.limitTime).toLocaleTimeString()}
+                </div>
+                ...
+            </div>
+        `;
+
+
+        
         listDiv.appendChild(div);
     });
     document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
@@ -531,6 +581,7 @@
 </body>
 
 </html>
+
 
 
 
