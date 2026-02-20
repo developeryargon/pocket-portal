@@ -365,30 +365,33 @@
 
 
         // 監視スタート時
-    async function doStart() {
-        const { totalMins, reqM3 } = uiCalc();
-        const limitTime = Date.now() + totalMins * 60000;
+        async function doStart() {
+            const { totalMins, reqM3 } = uiCalc();
+            const limitTime = Date.now() + totalMins * 60000;
+            
+            const payload = {
+                id: Date.now(),
+                facility: document.getElementById('facility').value || "未設定施設",
+                startUser: document.getElementById('startUser').value || "未設定者",
+                status: 'active',
+                limitTime: limitTime,
+                totalVolM3: reqM3,
+                webhook: document.getElementById('slackUrl').value,
+                // 🔔 ここを画面上の設定値で送るように修正
+                settings: {
+                    at0: document.getElementById('at0_on').checked,
+                    m: document.getElementById('m_on').checked ? parseInt(document.getElementById('m_val').value) : null,
+                    p: document.getElementById('p_on').checked ? parseInt(document.getElementById('p_val').value) : null,
+                    interval: document.getElementById('interval_on').checked ? parseInt(document.getElementById('interval_val').value) : null
+                }
+            };
         
-        const payload = {
-            id: Date.now(),
-            facility: document.getElementById('facility').value || "未設定施設",
-            startUser: document.getElementById('startUser').value || "未設定者",
-            status: 'active', // monitoring から active に統一（Worker側の仕様に合わせる）
-            limitTime: limitTime,
-            totalVolM3: reqM3,
-            webhook: document.getElementById('slackUrl').value,
-            settings: { m: 10, at0: true, p: 5, interval: 10 }
-        };
-
-        try {
-            await apiFetch("/save", { payload });
-            alert("監視を開始しました");
-            // ID/PASSを保存
-            localStorage.setItem('water_gid', document.getElementById('gid').value);
-            localStorage.setItem('water_gpw', document.getElementById('gpw').value);
-            location.reload();
-        } catch (e) { alert(e.message); }
-    }
+            try {
+                await apiFetch("/save", { payload });
+                alert("監視を開始しました");
+                location.reload();
+            } catch (e) { alert(e.message); }
+        }
 
     // ページ読み込み時にDBからデータを取得する
     window.addEventListener('load', async () => {
@@ -428,7 +431,7 @@
 
                 // 通知設定の反映（ここが反映されていなかった部分です）
                 document.getElementById('slackUrl').value = c.webhook || "";
-                document.getElementById('at0_on').checked = c.at0 !== false; 
+                document.getElementById('at0_on').checked = c.at0 !== false; // config内のat0を参照
                 document.getElementById('m_on').checked = !!c.m_on;
                 document.getElementById('m_val').value = c.m_val || "10";
                 document.getElementById('p_on').checked = !!c.p_on;
@@ -478,76 +481,86 @@
 
 
     function updateMonitorList() {
-    const listDiv = document.getElementById('monitor-list');
-    listDiv.innerHTML = '';
-    const now = new Date();
-    let activeCount = 0;
-
-    monitorItems.forEach(item => {
-        const isMon = item.status === 'active';
-        if(isMon) activeCount++;
-        const remainMins = Math.max(0, (item.limitTime - (isMon ? now : item.stopTime)) / 60000);
-        const rh = Math.floor(remainMins / 60);
-        const rm = Math.round(remainMins % 60);
-
-        // 担当者表示の作成
-        let userDisplay = "";
-        if (item.isEditing) {
+        const listDiv = document.getElementById('monitor-list');
+        listDiv.innerHTML = '';
+        const now = Date.now();
+        let activeCount = 0;
+    
+        monitorItems.forEach(item => {
+            // 1. 状態の判定
             const isMon = item.status === 'active';
-            userDisplay = `
-                <div style="margin-bottom:5px;">施設: <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}"></div>
-                <div style="margin-bottom:5px;">開始者: <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}"></div>
-                ${!isMon ? `<div>終了者: <input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}"></div>` : ''}
-            `;
-        } else {
-            userDisplay = `
-                <span style="font-size:14px;">${item.facility}</span><br>
-                <span style="font-size:12px; color:#666;">開始者: ${item.startUser}</span>
-                ${item.stopUser ? `<br><span style="font-size:12px; color:var(--stop);">終了者: ${item.stopUser}</span>` : ''}
-            `;
-        }
-
-        const div = document.createElement('div');
-        div.className = `monitor-item ${isMon ? '' : 'finished'}`;
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; font-weight:bold; align-items: flex-start;">
-                <div style="flex:1;">${userDisplay}</div>
-                <span style="color:${isMon?'#2196F3':'#999'}">${isMon?'🔵 監視中':'⚪ 停止済'}</span>
-            </div>
-            <div style="font-size:11px; color:#666; margin-top:5px;">
-                開始: ${new Date(item.created_at).toLocaleString()} | 必要: ${item.totalVolM3.toFixed(1)}t
-            </div>
-            <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
-                <div>${isMon ? '終了予定' : '停止時刻'}: <strong>${isMon ? new Date(item.limitTime).toLocaleString() : new Date(item.stopTime).toLocaleString()}</strong></div>
-                ${isMon ? `<div style="color:var(--stop); font-weight:bold;">残り約 ${rh}時間${rm}分</div>` : '<div style="color:#666;">監視を終了しました</div>'}
-            </div>
-            <div class="item-btns">
-                ${item.isEditing ? `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`}
-                ${isMon ? `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`}
-                <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
-            </div>
-        `;
-
-        // updateMonitorList 関数内のカード生成部分を修正
-        const isOver = (item.status === 'active' && Date.now() > item.limitTime);
-        
-        // カードのHTML
-        card.innerHTML = `
-            <div class="monitor-card ${isOver ? 'danger-alert' : ''}">
+            if (isMon) activeCount++;
+            
+            // 2. 満水予定時刻の取得 (JSON内の limitTimeMs を優先使用)
+            const targetTime = item.limitTimeMs || item.limitTime;
+            
+            // 3. 超過判定と残り時間の計算
+            const isOver = (isMon && now > targetTime);
+            const diffMs = isMon ? (targetTime - now) : (item.stopTime - now);
+            const absDiff = Math.abs(diffMs);
+            const rh = Math.floor(absDiff / (1000 * 60 * 60));
+            const rm = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+    
+            // 4. 表示用の担当者・施設名情報
+            let userDisplay = "";
+            if (item.isEditing) {
+                userDisplay = `
+                    <div style="margin-bottom:5px;">施設: <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}"></div>
+                    <div style="margin-bottom:5px;">開始者: <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}"></div>
+                    ${!isMon ? `<div>終了者: <input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}"></div>` : ''}
+                `;
+            } else {
+                userDisplay = `
+                    <span style="font-size:14px; font-weight:bold;">${item.facility}</span><br>
+                    <span style="font-size:12px; color:#666;">開始者: ${item.startUser}</span>
+                    ${item.stopUser ? `<br><span style="font-size:12px; color:var(--stop);">終了者: ${item.stopUser}</span>` : ''}
+                `;
+            }
+    
+            // 5. HTML要素の生成
+            const div = document.createElement('div');
+            // 超過している場合は 'danger-alert' クラスを追加
+            div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''}`;
+            
+            div.innerHTML = `
                 ${isOver ? '<div class="alert-banner">⚠️ 満水時間を超過しています！</div>' : ''}
-                <div class="facility-name">${item.facility}</div>
-                <div class="time-limit ${isOver ? 'text-danger' : ''}">
-                    満水予定: ${new Date(item.limitTime).toLocaleTimeString()}
+                <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+                    <div style="flex:1;">${userDisplay}</div>
+                    <span style="color:${isMon ? '#2196F3' : '#999'}">${isMon ? '🔵 監視中' : '⚪ 停止済'}</span>
                 </div>
-                ...
-            </div>
-        `;
-
-
-        
-        listDiv.appendChild(div);
-    });
-    document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
+                
+                <div style="font-size:11px; color:#666; margin-top:5px;">
+                    開始: ${new Date(item.created_at).toLocaleString('ja-JP')} | 必要: ${item.totalVolM3 ? item.totalVolM3.toFixed(1) : '0'}t
+                </div>
+    
+                <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
+                    <div class="${isOver ? 'text-danger' : ''}">
+                        ${isMon ? '満水予定' : '停止時刻'}: <strong>${new Date(isMon ? targetTime : item.stopTime).toLocaleString('ja-JP')}</strong>
+                    </div>
+                    ${isMon ? `
+                        <div style="color:${isOver ? 'var(--stop)' : '#2196F3'}; font-weight:bold;">
+                            ${isOver ? '超過中：' : '残り約：'} ${rh}時間${rm}分
+                        </div>
+                    ` : '<div style="color:#666;">監視を終了しました</div>'}
+                </div>
+    
+                <div class="item-btns">
+                    ${item.isEditing ? 
+                        `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : 
+                        `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`
+                    }
+                    ${isMon ? 
+                        `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : 
+                        `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`
+                    }
+                    <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
+                </div>
+            `;
+            listDiv.appendChild(div);
+        });
+    
+        // 監視中のものがあればトップアラートを表示
+        document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
     }
 
     function toggleEdit(id) { monitorItems.find(i => i.id === id).isEditing = true; updateMonitorList(); }
@@ -616,6 +629,7 @@
 </body>
 
 </html>
+
 
 
 
