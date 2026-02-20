@@ -161,29 +161,26 @@
     // --- 設定値、WebhookをIDとPASSに合わせて初期値として登録 (DB保存用) ---
     async function saveInitialData() {
         const configPayload = {
-            // 基本設定
             webhook: document.getElementById('slackUrl').value,
             facility: document.getElementById('facility').value,
             startUser: document.getElementById('startUser').value,
-            
-            // 単位と能力
             unit_vol: document.querySelector('input[name="unit"]:checked').value,
             unit_time: document.querySelector('input[name="t_unit"]:checked').value,
             default_flow: document.getElementById('flowRate').value,
             
-            // プールサイズ（LMD）
+            // 🟢 ここが重要：サイズと直接水量を保存対象に追加
             L: document.getElementById('L').value,
             W: document.getElementById('W').value,
             D: document.getElementById('D').value,
+            manualVol: document.getElementById('manualVol').value,
             
-            // モード選択状態
-            currentMode: currentMode, // 現在選択中のタブ (size/vol/time)
-            subTimeMode: subTimeMode  // 時間指定の細かな種類 (rel/abs)
+            // 現在のモード（タブ）も保存
+            currentMode: currentMode 
         };
     
         try {
             await apiFetch("/save-config", { configPayload: configPayload });
-            alert("現在の入力状態をすべて初期値として登録しました！");
+            alert("幅、深さ、水量を含むすべての初期値を登録しました！");
         } catch (e) { alert("保存エラー: " + e.message); }
     }
 
@@ -366,31 +363,26 @@
             if (data.config) {
                 const c = data.config;
                 
-                // 値の復元
+                // 既存の反映
                 document.getElementById('slackUrl').value = c.webhook || "";
                 document.getElementById('facility').value = c.facility || "";
                 document.getElementById('startUser').value = c.startUser || "";
                 document.getElementById('flowRate').value = c.default_flow || "18";
-                document.getElementById('L').value = c.L || "25";
-                document.getElementById('W').value = c.W || "12";
-                document.getElementById('D').value = c.D || "1.2";
-                document.getElementById('currentPer').value = "0"; // 現在量は0固定
     
-                // 単位の復元
-                if(c.unit_vol) document.querySelector(`input[name="unit"][value="${c.unit_vol}"]`).checked = true;
-                if(c.unit_time) document.querySelector(`input[name="t_unit"][value="${c.unit_time}"]`).checked = true;
-                lastVolUnit = c.unit_vol || '㎥';
-                lastTimeUnit = c.unit_time || '時';
+                // 🟢 拡張した項目の反映
+                if(c.L) document.getElementById('L').value = c.L;
+                if(c.W) document.getElementById('W').value = c.W;
+                if(c.D) document.getElementById('D').value = c.D;
+                if(c.manualVol) document.getElementById('manualVol').value = c.manualVol;
+                document.getElementById('currentPer').value = "0"; // 現在量は常に0
     
-                // モードの復元（タブの切り替え）
+                // 🟢 モード（タブ）の復元
                 if(c.currentMode) setMode(c.currentMode);
-                if(c.subTimeMode) setSubTimeMode(c.subTimeMode);
     
-                // 🟢 時間指定モードの初期化処理
-                if (c.currentMode === 'time') {
+                // 🟢 時間指定の場合の初期化（現在時刻をセット）
+                if(c.currentMode === 'time') {
                     document.getElementById('manualHrs').value = "0";
                     document.getElementById('manualMin').value = "0";
-                    
                     const now = new Date();
                     document.getElementById('absDate').value = now.toISOString().split('T')[0];
                     document.getElementById('absHour').value = now.getHours();
@@ -400,10 +392,7 @@
             
             monitorItems = data.pools || [];
             updateMonitorList();
-            uiCalc(); // 全てセットした後に再計算
-            
-            localStorage.setItem('water_gid', gid);
-            localStorage.setItem('water_gpw', gpw);
+            uiCalc(); // 全てセットした後に計算を実行
         } catch (e) { console.error("同期失敗:", e.message); }
     }
 
@@ -542,5 +531,6 @@
 </body>
 
 </html>
+
 
 
