@@ -118,6 +118,23 @@
         }
         .expand-icon::after { content: ' ▼'; font-size: 10px; color: #999; }
         .open .expand-icon::after { content: ' ▲'; }
+
+        /* 修正モード用スタイル */
+        .edit-input {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+        
+        /* 修正モード中は詳細を強制表示 */
+        .monitor-item.open .detail-content {
+            display: block !important;
+        }
+                
     </style>
 </head>
 <body>
@@ -794,6 +811,7 @@ function updateMonitorList() {
 </body>
 
 </html>
+
 
 
 
