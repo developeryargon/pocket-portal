@@ -57,6 +57,23 @@
             50% { box-shadow: 0 0 20px #ff0000; }
             100% { box-shadow: 0 0 0px #ff0000; }
         }
+        /* 折りたたみ用のスタイル */
+        .monitor-item.finished {
+            padding: 8px 12px;
+            cursor: pointer;
+            background: #fcfcfc;
+        }
+        .monitor-item.finished .detail-content {
+            display: none; /* 初期状態は非表示 */
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        .monitor-item.finished.open .detail-content {
+            display: block; /* クリックで表示 */
+        }
+        .expand-icon::after { content: ' ▼'; font-size: 10px; color: #999; }
+        .open .expand-icon::after { content: ' ▲'; }
     </style>
 </head>
 <body>
@@ -486,81 +503,78 @@
         const now = Date.now();
         let activeCount = 0;
     
-        // --- 並べ替えロジック ---
-        // 1. 監視中(active)を上に、完了(completed)を下に
-        // 2. 同じ状態なら ID(作成時間)が新しい順に
+        // 1. 監視中を上に、最新順に並べ替え
         monitorItems.sort((a, b) => {
             if (a.status === 'active' && b.status !== 'active') return -1;
             if (a.status !== 'active' && b.status === 'active') return 1;
-            return b.id - a.id; // 新しい順
+            return b.id - a.id;
         });
     
         monitorItems.forEach(item => {
             const isMon = item.status === 'active';
             if (isMon) activeCount++;
             
-            // JSON内の正確なミリ秒（limitTimeMs）を優先
             const targetTime = item.limitTimeMs || item.limitTime;
             const isOver = (isMon && now > targetTime);
     
-            // 残り時間・経過時間の計算
-            const diffMs = isMon ? (targetTime - now) : (item.stopTime - now);
+            // 時間計算
+            const diffMs = isMon ? (targetTime - now) : (item.stopTime - (item.created_at_ms || new Date(item.created_at).getTime()));
             const absDiff = Math.abs(diffMs);
             const rh = Math.floor(absDiff / (1000 * 60 * 60));
             const rm = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
     
-            // 担当者・施設表示
-            let userDisplay = "";
-            if (item.isEditing) {
-                userDisplay = `
-                    <div style="margin-bottom:5px;">施設: <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}"></div>
-                    <div style="margin-bottom:5px;">開始者: <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}"></div>
-                    ${!isMon ? `<div>終了者: <input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}"></div>` : ''}
-                `;
-            } else {
-                userDisplay = `
-                    <span style="font-size:14px; font-weight:bold;">${item.facility}</span><br>
-                    <span style="font-size:12px; color:#666;">開始者: ${item.startUser}</span>
-                    ${item.stopUser ? `<br><span style="font-size:12px; color:var(--stop);">終了者: ${item.stopUser}</span>` : ''}
-                `;
-            }
-    
             const div = document.createElement('div');
-            // 監視中で超過なら赤点滅(danger-alert)、完了済みなら薄い背景
             div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''}`;
             
+            // 停止済みの項目をクリックした時に 'open' クラスを付け外しする
+            if (!isMon) {
+                div.onclick = (e) => {
+                    if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+                        div.classList.toggle('open');
+                    }
+                };
+            }
+    
+            // --- HTMLの中身 ---
             div.innerHTML = `
                 ${isOver ? '<div class="alert-banner">⚠️ 満水時間を超過しています！</div>' : ''}
-                <div style="display:flex; justify-content:space-between; align-items: flex-start;">
-                    <div style="flex:1;">${userDisplay}</div>
-                    <span style="color:${isMon ? '#2196F3' : '#999'}">${isMon ? '🔵 監視中' : '⚪ 停止済'}</span>
-                </div>
                 
-                <div style="font-size:11px; color:#666; margin-top:5px;">
-                    開始: ${new Date(item.created_at).toLocaleString('ja-JP')} | 必要: ${item.totalVolM3 ? item.totalVolM3.toFixed(1) : '0'}t
-                </div>
-    
-                <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
-                    <div class="${isOver ? 'text-danger' : ''}">
-                        ${isMon ? '満水予定' : '停止時刻'}: <strong>${new Date(isMon ? targetTime : item.stopTime).toLocaleString('ja-JP')}</strong>
+                <div style="display:flex; justify-content:space-between; align-items: center;">
+                    <div style="flex:1;">
+                        <span style="font-size:14px; font-weight:bold;">${item.facility}</span>
+                        ${!isMon ? `<span style="font-size:12px; color:#666; margin-left:10px;">停止: ${new Date(item.stopTime).toLocaleTimeString('ja-JP')} <span class="expand-icon"></span></span>` : ''}
                     </div>
-                    ${isMon ? `
-                        <div style="color:${isOver ? 'var(--stop)' : '#2196F3'}; font-weight:bold;">
-                            ${isOver ? '超過中：' : '残り約：'} ${rh}時間${rm}分
-                        </div>
-                    ` : '<div style="color:#666;">監視を終了しました</div>'}
+                    <span style="color:${isMon ? '#2196F3' : '#999'}; font-size:12px;">${isMon ? '🔵 監視中' : '⚪ 停止済'}</span>
                 </div>
     
-                <div class="item-btns">
-                    ${item.isEditing ? 
-                        `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : 
-                        `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`
-                    }
-                    ${isMon ? 
-                        `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : 
-                        `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`
-                    }
-                    <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
+                <div class="${isMon ? '' : 'detail-content'}">
+                    <div style="font-size:11px; color:#666; margin-bottom:5px;">
+                        開始者: ${item.startUser} ${item.stopUser ? ` / 終了者: ${item.stopUser}` : ''}<br>
+                        開始: ${new Date(item.created_at).toLocaleString('ja-JP')} | 必要: ${item.totalVolM3 ? item.totalVolM3.toFixed(1) : '0'}t
+                    </div>
+    
+                    <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
+                        <div class="${isOver ? 'text-danger' : ''}">
+                            ${isMon ? '満水予定' : '停止時刻'}: <strong>${new Date(isMon ? targetTime : item.stopTime).toLocaleString('ja-JP')}</strong>
+                        </div>
+                        ${isMon ? `
+                            <div style="color:${isOver ? 'var(--stop)' : '#2196F3'}; font-weight:bold;">
+                                ${isOver ? '超過中：' : '残り約：'} ${rh}時間${rm}分
+                            </div>
+                        ` : `<div style="color:#666;">給水時間: ${rh}時間${rm}分</div>`}
+                    </div>
+    
+                    <div class="item-btns">
+                        ${item.isEditing ? 
+                            `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : 
+                            `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`
+                        }
+                        ${isMon ? 
+                            `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : 
+                            `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`
+                        }
+                        <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
+                    </div>
                 </div>
             `;
             listDiv.appendChild(div);
@@ -635,6 +649,7 @@
 </body>
 
 </html>
+
 
 
 
