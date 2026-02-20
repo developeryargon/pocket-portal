@@ -43,10 +43,13 @@
 
 <div class="card">
     <div class="card">
-    <div style="display: flex; gap: 4px; align-items: flex-end;">
+        <div style="display: flex; gap: 4px; align-items: flex-end;">
         <div style="flex:1;"><label>同期ID</label><input type="password" id="gid" placeholder="ID" onfocus="this.type='text'" onblur="this.type='password'"></div>
         <div style="flex:1;"><label>PASS</label><input type="password" id="gpw" placeholder="PASS" onfocus="this.type='text'" onblur="this.type='password'"></div>
-        <div style="flex:0.5; margin-bottom:8px;"><button onclick="toggleConfig()" style="font-size:10px; padding:5px;">設定⚙</button></div>
+        <div style="flex:0.7; margin-bottom:8px;">
+            <button onclick="loadDataFromKV()" class="btn-sm btn-blue" style="height:40px; width:100%;">同期</button>
+        </div>
+        <div style="flex:0.5; margin-bottom:8px;"><button onclick="toggleConfig()" style="font-size:10px; height:40px; padding:5px;">設定⚙</button></div>
     </div>
     
     <div id="config-area" class="hidden" style="border-top: 1px solid #eee; padding-top: 8px; margin-top: 5px;">
@@ -345,6 +348,50 @@
 
 
 
+    // KVからデータを同期（認証）する関数
+    async function loadDataFromKV() {
+        const gid = document.getElementById('gid').value.trim();
+        const gpw = document.getElementById('gpw').value.trim();
+
+        if (!gid || !gpw) {
+            alert("同期IDとパスワードを入力してください");
+            return;
+        }
+
+        // ボタンの表示を変えて「通信中」を分かりやすくする（任意）
+        const syncBtn = event?.target;
+        const originalText = syncBtn ? syncBtn.innerText : "同期";
+        if(syncBtn) syncBtn.innerText = "通信中...";
+
+        try {
+            // Workerからデータをロード
+            const data = await apiFetch("/load");
+
+            // 1. Slack Webhook URLを反映
+            if (data.config && data.config.webhook) {
+                document.getElementById('slackUrl').value = data.config.webhook;
+            }
+
+            // 2. 稼働状況・履歴リストを反映
+            monitorItems = data.pools || [];
+            updateMonitorList();
+
+            // 3. ID/PASSをブラウザに記憶させる
+            localStorage.setItem('water_gid', gid);
+            localStorage.setItem('water_gpw', gpw);
+
+            alert("同期に成功しました。最新のデータを反映しました。");
+        } catch (e) {
+            console.error(e);
+            alert("同期失敗: IDまたはパスワードが正しくないか、データがありません。");
+            monitorItems = [];
+            updateMonitorList();
+        } finally {
+            if(syncBtn) syncBtn.innerText = originalText;
+        }
+    }
+
+
     function updateMonitorList() {
     const listDiv = document.getElementById('monitor-list');
     listDiv.innerHTML = '';
@@ -464,4 +511,5 @@
 
 </script>
 </body>
+
 </html>
