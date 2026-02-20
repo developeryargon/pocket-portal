@@ -78,21 +78,27 @@
         <label>Slack Webhook URL</label>
         <input type="password" id="slackUrl" placeholder="https://hooks.slack.com/..." onfocus="this.type='text'" onblur="this.type='password'">
 
-        <div class="setting-item">
-            <label>通知タイミング設定</label>
-            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 13px;">
-                <div style="margin-bottom: 8px;">
-                    <input type="checkbox" id="at0_on" checked> 満水予定時刻ちょうど
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <input type="checkbox" id="m_on"> 満水の <input type="number" id="m_val" value="10" style="width:45px"> 分前に予告
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <input type="checkbox" id="p_on"> 満水から <input type="number" id="p_val" value="5" style="width:45px"> 分過ぎたら警告
-                </div>
-                <div>
-                    <input type="checkbox" id="interval_on"> 超過中 <input type="number" id="interval_val" value="10" style="width:45px"> 分おきに再通知
-                </div>
+        <div class="setting-item" style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
+            <label style="color: var(--main); margin-bottom: 10px; display: block;">🔔 通知設定（初期値として保存可能）</label>
+            
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" id="at0_on" style="width: 20px; height: 20px;">
+                <span style="margin-left: 8px;">満水予定時刻に通知</span>
+            </div>
+        
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" id="m_on" style="width: 20px; height: 20px;">
+                <span style="margin-left: 8px;">満水の <input type="number" id="m_val" value="10" style="width:45px; padding:2px;"> 分前に予告</span>
+            </div>
+        
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" id="p_on" style="width: 20px; height: 20px;">
+                <span style="margin-left: 8px;">満水から <input type="number" id="p_val" value="5" style="width:45px; padding:2px;"> 分過ぎたら警告</span>
+            </div>
+        
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="interval_on" style="width: 20px; height: 20px;">
+                <span style="margin-left: 8px;">超過中 <input type="number" id="interval_val" value="10" style="width:45px; padding:2px;"> 分おきに再通知</span>
             </div>
         </div>
         
@@ -609,6 +615,7 @@
 </body>
 
 </html>
+
 
 
 
