@@ -348,48 +348,51 @@
 
 
 
-    // KVからデータを同期（認証）する関数
+// KVからデータを読み込んで画面を更新する関数
     async function loadDataFromKV() {
         const gid = document.getElementById('gid').value.trim();
         const gpw = document.getElementById('gpw').value.trim();
-
-        if (!gid || !gpw) {
-            alert("同期IDとパスワードを入力してください");
-            return;
-        }
-
-        // ボタンの表示を変えて「通信中」を分かりやすくする（任意）
-        const syncBtn = event?.target;
-        const originalText = syncBtn ? syncBtn.innerText : "同期";
-        if(syncBtn) syncBtn.innerText = "通信中...";
+        
+        if (!gid || !gpw) return;
 
         try {
-            // Workerからデータをロード
             const data = await apiFetch("/load");
-
-            // 1. Slack Webhook URLを反映
+            
+            // --- データの反映処理 ---
+            
+            // 1. Slack設定の反映
             if (data.config && data.config.webhook) {
                 document.getElementById('slackUrl').value = data.config.webhook;
             }
-
-            // 2. 稼働状況・履歴リストを反映
+            
+            // 2. 履歴リストの反映（ここが重要！）
+            // KV内の "pools" を JavaScriptの変数 "monitorItems" にコピーする
             monitorItems = data.pools || [];
+            
+            // 3. 画面のHTMLを生成し直す関数を呼ぶ
             updateMonitorList();
-
-            // 3. ID/PASSをブラウザに記憶させる
+            
+            // 成功したらID/PASSを保存しておく
             localStorage.setItem('water_gid', gid);
             localStorage.setItem('water_gpw', gpw);
 
-            alert("同期に成功しました。最新のデータを反映しました。");
         } catch (e) {
-            console.error(e);
-            alert("同期失敗: IDまたはパスワードが正しくないか、データがありません。");
-            monitorItems = [];
-            updateMonitorList();
-        } finally {
-            if(syncBtn) syncBtn.innerText = originalText;
+            console.error("同期失敗:", e.message);
         }
     }
+
+    // ページ読み込み時の処理
+    window.addEventListener('load', async () => {
+        // 保存されたID/PASSがあれば復元
+        document.getElementById('gid').value = localStorage.getItem('water_gid') || '';
+        document.getElementById('gpw').value = localStorage.getItem('water_gpw') || '';
+        
+        // データがあれば自動で1回読み込みに行く
+        if (document.getElementById('gid').value && document.getElementById('gpw').value) {
+            await loadDataFromKV();
+        }
+        uiCalc();
+    });
 
 
     function updateMonitorList() {
@@ -513,3 +516,4 @@
 </body>
 
 </html>
+
