@@ -654,7 +654,7 @@
         return b.id - a.id;
     });
 
-    monitorItems.forEach(item => {
+monitorItems.forEach(item => {
         const isMon = item.status === 'active';
         if (isMon) activeCount++;
         
@@ -662,68 +662,65 @@
         const targetDate = new Date(isMon ? targetTimeMs : item.stopTime);
         const isOver = (isMon && Date.now() > targetTimeMs);
 
-        // --- 日付表示の作成 ---
-        const fullDateStr = `${targetDate.getFullYear()}/${targetDate.getMonth()+1}/${targetDate.getDate()} ${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}`;
+        const dateStr = `${targetDate.getMonth()+1}/${targetDate.getDate()} ${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}`;
+        const fullDateStr = `${targetDate.getFullYear()}/${dateStr}`;
 
-        // --- 残り時間計算 ---
         const diffMs = Math.abs(targetTimeMs - Date.now());
-        const rh = Math.floor(diffMs / (1000 * 60 * 60));
-        const rm = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        const countdownStr = `${rh}時間${rm}分`;
+        const countdownStr = `${Math.floor(diffMs/3600000)}時間${Math.floor((diffMs%3600000)/60000)}分`;
 
         const div = document.createElement('div');
-        const openClass = (isMon || item.isEditing) ? 'open' : '';
-        div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${openClass}`;
+        const isOpen = isMon || item.isEditing || div.classList.contains('open');
+        div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
         
-        // ★追加：閉じている時は細くする
-        div.style.padding = (isMon || item.isEditing || div.classList.contains('open')) ? "10px" : "6px 12px";
+        // パディングの動的調整
+        div.style.padding = isOpen ? "10px" : "6px 12px";
 
         div.onclick = (e) => {
             if (isMon || item.isEditing || e.target.closest('button') || e.target.closest('input')) return;
-            div.classList.toggle('open');
-            // 開閉時にパディングを調整
-            div.style.padding = div.classList.contains('open') ? "10px" : "6px 12px";
+            const nowOpen = div.classList.toggle('open');
+            div.style.padding = (isMon || item.isEditing || nowOpen) ? "10px" : "6px 12px";
+            updateMonitorList(); // 再描画してボタン等の表示を同期
         };
 
-        // --- メイン表示部分（修正モードかどうかで分岐） ---
-        // --- ★ここから innerHTML の中身を判定で書き換え ---
-        let html = isOver ? '<div class="alert-banner" style="...">⚠️ 超過！</div>' : '';
+        // --- HTML組み立て ---
+        let html = "";
+        if (isOver) html += `<div style="background:#ff5252; color:white; font-size:10px; text-align:center; margin:-6px -12px 6px -12px; border-radius:8px 8px 0 0; padding:2px;">⚠️ 超過中</div>`;
 
         if (item.isEditing) {
-            // 【修正モード】施設名・担当者の入力欄を出す
+            // 修正モード
             html += `
                 <div style="background:#fffbe6; padding:8px; border-radius:5px; border:1px solid #ffe58f;">
-                    <label style="font-size:10px; font-weight:bold;">施設名</label>
-                    <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}" style="width:100%; margin-bottom:5px;">
-                    <label style="font-size:10px; font-weight:bold;">開始担当</label>
-                    <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}" style="width:100%; margin-bottom:5px;">
-                    ${!isMon ? `<label style="font-size:10px; font-weight:bold;">終了担当</label><input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}" style="width:100%;">` : ''}
+                    <div style="font-size:10px; font-weight:bold; color:#8d6e63;">施設名</div>
+                    <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}">
+                    <div style="font-size:10px; font-weight:bold; color:#8d6e63;">開始担当者</div>
+                    <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}">
+                    ${!isMon ? `<div style="font-size:10px; font-weight:bold; color:#8d6e63;">終了担当者</div><input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}">` : ''}
                 </div>`;
         } else if (!isMon && !div.classList.contains('open')) {
-            // 【停止済：閉じている時】1行で施設名と停止日時のみ
+            // 停止済：閉じている時（1行）
             html += `
                 <div style="display:flex; justify-content:space-between; align-items:center; height:24px;">
                     <span style="font-weight:bold; color:#555;">${item.facility}</span>
-                    <span style="font-size:12px; color:#888;">${targetDate.getMonth()+1}/${targetDate.getDate()} ${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')} 停止</span>
+                    <span style="font-size:12px; color:#888;">${dateStr} 停止</span>
                 </div>`;
         } else {
-            // 【監視中、または停止済みの開いた状態】詳細を表示
+            // 監視中、または停止済：開いている時
             html += `
-                <div style="display:flex; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
                     <b style="font-size:16px;">${item.facility}</b>
-                    <span style="font-size:11px; color:${isMon ? '#1976d2' : '#999'};">${isMon ? '🔵 監視中' : '⚪ 停止済'}</span>
+                    <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:${isMon?'#e3f2fd':'#eee'}; color:${isMon?'#1976d2':'#999'};">
+                        ${isMon ? '🔵 監視中' : '⚪ 停止済'}
+                    </span>
                 </div>
-                <div class="detail-content" style="display:block; margin-top:10px;">
-                    <div style="background:#f8f9fa; border:1px solid #dee2e6; padding:10px; border-radius:6px;">
-                        <div style="font-size:11px; color:#666;">${isMon ? '満水予定' : '停止時刻'}: ${fullDateStr}</div>
-                        ${isMon ? `<div style="font-size:1.2rem; font-weight:800; color:${isOver ? '#d32f2f' : '#333'};">あと: ${countdownStr}</div>` : ''}
-                        <div style="font-size:12px; margin-top:4px;">${isMon ? '目標' : '実績'}: <b>${item.totalVolM3 || '--'}</b> ㎥</div>
-                    </div>
-                    <div style="font-size:11px; color:#666; margin-top:8px;">担当: ${item.startUser}${item.stopUser ? ' → '+item.stopUser : ''}</div>
-                </div>`;
+                <div style="margin-top:8px; background:#f8f9fa; border:1px solid #dee2e6; padding:10px; border-radius:6px;">
+                    <div style="font-size:11px; color:#666;">${isMon ? '満水予定' : '停止時刻'}: ${fullDateStr}</div>
+                    ${isMon ? `<div style="font-size:1.2rem; font-weight:800; color:${isOver ? '#d32f2f' : '#333'};">あと: ${countdownStr}</div>` : ''}
+                    <div style="font-size:12px; margin-top:4px;">${isMon ? '目標' : '実績'}: <b>${item.totalVolM3 || '--'}</b> ㎥</div>
+                </div>
+                <div style="font-size:11px; color:#666; margin-top:8px;">担当: ${item.startUser}${item.stopUser ? ' → ' + item.stopUser : ''}</div>`;
         }
 
-        // 【ボタン部分】修正・監視中・開いている時だけ表示
+        // ボタン：開いている時のみ
         if (isMon || item.isEditing || div.classList.contains('open')) {
             html += `
                 <div class="item-btns" style="display:flex; gap:8px; margin-top:12px;">
@@ -828,6 +825,7 @@ async function doResume(id) {
 </body>
 
 </html>
+
 
 
 
