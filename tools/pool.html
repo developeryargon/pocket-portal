@@ -477,56 +477,77 @@
     });
 
 
-    // --- リスト表示（危険な警告つき） ---
     function updateMonitorList() {
-        const listDiv = document.getElementById('monitor-list');
-        listDiv.innerHTML = '';
-        const now = Date.now();
-        let activeCount = 0;
-    
-        monitorItems.forEach(item => {
+    const listDiv = document.getElementById('monitor-list');
+    listDiv.innerHTML = '';
+    const now = new Date();
+    let activeCount = 0;
+
+    monitorItems.forEach(item => {
+        const isMon = item.status === 'active';
+        if(isMon) activeCount++;
+        const remainMins = Math.max(0, (item.limitTime - (isMon ? now : item.stopTime)) / 60000);
+        const rh = Math.floor(remainMins / 60);
+        const rm = Math.round(remainMins % 60);
+
+        // 担当者表示の作成
+        let userDisplay = "";
+        if (item.isEditing) {
             const isMon = item.status === 'active';
-            if(isMon) activeCount++;
-    
-            // 満水超過判定
-            const isOver = (isMon && now > item.limitTime);
-            const remainMins = Math.max(0, (item.limitTime - (isMon ? now : item.stopTime)) / 60000);
-            const rh = Math.floor(remainMins / 60);
-            const rm = Math.round(remainMins % 60);
-    
-            let userDisplay = item.isEditing ? `
-                <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}">
-                <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}">
-            ` : `
-                <span style="font-size:14px; font-weight:bold;">${item.facility}</span><br>
-                <span style="font-size:12px; color:#666;">担当: ${item.startUser}</span>
+            userDisplay = `
+                <div style="margin-bottom:5px;">施設: <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}"></div>
+                <div style="margin-bottom:5px;">開始者: <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}"></div>
+                ${!isMon ? `<div>終了者: <input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}"></div>` : ''}
             `;
-    
-            const div = document.createElement('div');
-            // 超過していたら danger-alert クラスを付与
-            div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''}`;
-            
-            div.innerHTML = `
+        } else {
+            userDisplay = `
+                <span style="font-size:14px;">${item.facility}</span><br>
+                <span style="font-size:12px; color:#666;">開始者: ${item.startUser}</span>
+                ${item.stopUser ? `<br><span style="font-size:12px; color:var(--stop);">終了者: ${item.stopUser}</span>` : ''}
+            `;
+        }
+
+        const div = document.createElement('div');
+        div.className = `monitor-item ${isMon ? '' : 'finished'}`;
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-weight:bold; align-items: flex-start;">
+                <div style="flex:1;">${userDisplay}</div>
+                <span style="color:${isMon?'#2196F3':'#999'}">${isMon?'🔵 監視中':'⚪ 停止済'}</span>
+            </div>
+            <div style="font-size:11px; color:#666; margin-top:5px;">
+                開始: ${new Date(item.created_at).toLocaleString()} | 必要: ${item.totalVolM3.toFixed(1)}t
+            </div>
+            <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
+                <div>${isMon ? '終了予定' : '停止時刻'}: <strong>${isMon ? new Date(item.limitTime).toLocaleString() : new Date(item.stopTime).toLocaleString()}</strong></div>
+                ${isMon ? `<div style="color:var(--stop); font-weight:bold;">残り約 ${rh}時間${rm}分</div>` : '<div style="color:#666;">監視を終了しました</div>'}
+            </div>
+            <div class="item-btns">
+                ${item.isEditing ? `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`}
+                ${isMon ? `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`}
+                <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
+            </div>
+        `;
+
+        // updateMonitorList 関数内のカード生成部分を修正
+        const isOver = (item.status === 'active' && Date.now() > item.limitTime);
+        
+        // カードのHTML
+        card.innerHTML = `
+            <div class="monitor-card ${isOver ? 'danger-alert' : ''}">
                 ${isOver ? '<div class="alert-banner">⚠️ 満水時間を超過しています！</div>' : ''}
-                <div style="display:flex; justify-content:space-between; align-items: flex-start;">
-                    <div style="flex:1;">${userDisplay}</div>
-                    <span style="color:${isMon?'#2196F3':'#999'}">${isMon?'🔵 監視中':'⚪ 停止済'}</span>
+                <div class="facility-name">${item.facility}</div>
+                <div class="time-limit ${isOver ? 'text-danger' : ''}">
+                    満水予定: ${new Date(item.limitTime).toLocaleTimeString()}
                 </div>
-                <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
-                    <div class="${isOver ? 'text-danger' : ''}">
-                        ${isMon ? '満水予定' : '停止時刻'}: <strong>${new Date(isMon ? item.limitTime : item.stopTime).toLocaleTimeString()}</strong>
-                    </div>
-                    ${isMon ? `<div style="color:var(--stop); font-weight:bold;">${isOver ? '経過時間' : '残り約'} ${rh}時間${rm}分</div>` : ''}
-                </div>
-                <div class="item-btns">
-                    ${item.isEditing ? `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`}
-                    ${isMon ? `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : `<button class="btn-sm btn-gray" disabled>完了</button>`}
-                    <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
-                </div>
-            `;
-            listDiv.appendChild(div);
-        });
-        document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
+                ...
+            </div>
+        `;
+
+
+        
+        listDiv.appendChild(div);
+    });
+    document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
     }
 
     function toggleEdit(id) { monitorItems.find(i => i.id === id).isEditing = true; updateMonitorList(); }
@@ -595,6 +616,7 @@
 </body>
 
 </html>
+
 
 
 
