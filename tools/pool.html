@@ -160,24 +160,31 @@
 
     // --- 設定値、WebhookをIDとPASSに合わせて初期値として登録 (DB保存用) ---
     async function saveInitialData() {
-    const configPayload = {
-        webhook: document.getElementById('slackUrl').value, // slack -> webhook
-        unit_vol: document.querySelector('input[name="unit"]:checked').value,
-        unit_time: document.querySelector('input[name="t_unit"]:checked').value,
-        default_flow: document.getElementById('flowRate').value,
-        facility: document.getElementById('facility').value,
-        startUser: document.getElementById('startUser').value, // user -> startUser
-    };
+        const configPayload = {
+            // 基本設定
+            webhook: document.getElementById('slackUrl').value,
+            facility: document.getElementById('facility').value,
+            startUser: document.getElementById('startUser').value,
+            
+            // 単位と能力
+            unit_vol: document.querySelector('input[name="unit"]:checked').value,
+            unit_time: document.querySelector('input[name="t_unit"]:checked').value,
+            default_flow: document.getElementById('flowRate').value,
+            
+            // プールサイズ（LMD）
+            L: document.getElementById('L').value,
+            W: document.getElementById('W').value,
+            D: document.getElementById('D').value,
+            
+            // モード選択状態
+            currentMode: currentMode, // 現在選択中のタブ (size/vol/time)
+            subTimeMode: subTimeMode  // 時間指定の細かな種類 (rel/abs)
+        };
     
-    const body = {
-        gid: document.getElementById('gid').value,
-        gpw: document.getElementById('gpw').value,
-        configPayload: configPayload
-    };
-
-    // サーバーへの送信（例）
-    const res = await fetch(`${WORKER_URL}/save-config` , { method: 'POST', body: JSON.stringify(body) });
-    if(res.ok) alert("初期設定を登録しました");
+        try {
+            await apiFetch("/save-config", { configPayload: configPayload });
+            alert("現在の入力状態をすべて初期値として登録しました！");
+        } catch (e) { alert("保存エラー: " + e.message); }
     }
 
     function convertVolUnit(newUnit) {
@@ -348,37 +355,56 @@
 
 
 
-// KVからデータを読み込んで画面を更新する関数
+    // KVからデータを読み込んで画面を更新する関数
     async function loadDataFromKV() {
         const gid = document.getElementById('gid').value.trim();
         const gpw = document.getElementById('gpw').value.trim();
-        
         if (!gid || !gpw) return;
-
+    
         try {
             const data = await apiFetch("/load");
-            
-            // --- データの反映処理 ---
-            
-            // 1. Slack設定の反映
-            if (data.config && data.config.webhook) {
-                document.getElementById('slackUrl').value = data.config.webhook;
+            if (data.config) {
+                const c = data.config;
+                
+                // 値の復元
+                document.getElementById('slackUrl').value = c.webhook || "";
+                document.getElementById('facility').value = c.facility || "";
+                document.getElementById('startUser').value = c.startUser || "";
+                document.getElementById('flowRate').value = c.default_flow || "18";
+                document.getElementById('L').value = c.L || "25";
+                document.getElementById('W').value = c.W || "12";
+                document.getElementById('D').value = c.D || "1.2";
+                document.getElementById('currentPer').value = "0"; // 現在量は0固定
+    
+                // 単位の復元
+                if(c.unit_vol) document.querySelector(`input[name="unit"][value="${c.unit_vol}"]`).checked = true;
+                if(c.unit_time) document.querySelector(`input[name="t_unit"][value="${c.unit_time}"]`).checked = true;
+                lastVolUnit = c.unit_vol || '㎥';
+                lastTimeUnit = c.unit_time || '時';
+    
+                // モードの復元（タブの切り替え）
+                if(c.currentMode) setMode(c.currentMode);
+                if(c.subTimeMode) setSubTimeMode(c.subTimeMode);
+    
+                // 🟢 時間指定モードの初期化処理
+                if (c.currentMode === 'time') {
+                    document.getElementById('manualHrs').value = "0";
+                    document.getElementById('manualMin').value = "0";
+                    
+                    const now = new Date();
+                    document.getElementById('absDate').value = now.toISOString().split('T')[0];
+                    document.getElementById('absHour').value = now.getHours();
+                    document.getElementById('absMin').value = now.getMinutes();
+                }
             }
             
-            // 2. 履歴リストの反映（ここが重要！）
-            // KV内の "pools" を JavaScriptの変数 "monitorItems" にコピーする
             monitorItems = data.pools || [];
-            
-            // 3. 画面のHTMLを生成し直す関数を呼ぶ
             updateMonitorList();
+            uiCalc(); // 全てセットした後に再計算
             
-            // 成功したらID/PASSを保存しておく
             localStorage.setItem('water_gid', gid);
             localStorage.setItem('water_gpw', gpw);
-
-        } catch (e) {
-            console.error("同期失敗:", e.message);
-        }
+        } catch (e) { console.error("同期失敗:", e.message); }
     }
 
     // ページ読み込み時の処理
@@ -516,4 +542,5 @@
 </body>
 
 </html>
+
 
