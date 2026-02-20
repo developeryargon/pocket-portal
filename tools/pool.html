@@ -51,6 +51,26 @@
             margin-bottom: 8px;
         }
         .text-danger { color: #ff0000; font-weight: bold; font-size: 1.2rem; }
+
+        /* 日付強調スタイル */
+        .day-label {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        .label-today { background: #e3f2fd; color: #1976d2; border: 1px solid #1976d2; } /* 今日は青系 */
+        .label-tomorrow { background: #fff3e0; color: #ef6c00; border: 1px solid #ef6c00; } /* 明日はオレンジ系 */
+        .label-future { background: #f3e5f5; color: #7b1fa2; border: 1px solid #7b1fa2; } /* 明後日以降は紫系 */
+        
+        .time-focus {
+            font-size: 1.5rem; /* 時刻を大きく */
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
         
         @keyframes blink {
             0% { box-shadow: 0 0 0px #ff0000; }
@@ -500,10 +520,10 @@
     function updateMonitorList() {
         const listDiv = document.getElementById('monitor-list');
         listDiv.innerHTML = '';
-        const now = Date.now();
+        const now = new Date();
         let activeCount = 0;
     
-        // 1. 監視中を上に、最新順に並べ替え
+        // ソート順：監視中が上、かつ最新順
         monitorItems.sort((a, b) => {
             if (a.status === 'active' && b.status !== 'active') return -1;
             if (a.status !== 'active' && b.status === 'active') return 1;
@@ -514,65 +534,74 @@
             const isMon = item.status === 'active';
             if (isMon) activeCount++;
             
-            const targetTime = item.limitTimeMs || item.limitTime;
-            const isOver = (isMon && now > targetTime);
+            const targetTimeMs = item.limitTimeMs || item.limitTime;
+            const targetDate = new Date(isMon ? targetTimeMs : item.stopTime);
+            const isOver = (isMon && Date.now() > targetTimeMs);
     
-            // 時間計算
-            const diffMs = isMon ? (targetTime - now) : (item.stopTime - (item.created_at_ms || new Date(item.created_at).getTime()));
-            const absDiff = Math.abs(diffMs);
-            const rh = Math.floor(absDiff / (1000 * 60 * 60));
-            const rm = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+            // --- 日付ラベルの判定ロジック ---
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const targetDay = new Date(targetDate);
+            targetDay.setHours(0,0,0,0);
+            
+            const diffDays = Math.round((targetDay - today) / (1000 * 60 * 60 * 24));
+            let dateHtml = "";
+            if (diffDays === 0) dateHtml = `<span class="day-label label-today">今日</span>`;
+            else if (diffDays === 1) dateHtml = `<span class="day-label label-tomorrow">明日</span>`;
+            else if (diffDays > 1) dateHtml = `<span class="day-label label-future">${diffDays}日後</span>`;
+            else dateHtml = `<span class="day-label">${targetDate.getMonth()+1}/${targetDate.getDate()}</span>`;
+    
+            // 残り時間の計算
+            const diffMs = Math.abs(targetTimeMs - Date.now());
+            const rh = Math.floor(diffMs / (1000 * 60 * 60));
+            const rm = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     
             const div = document.createElement('div');
             div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''}`;
             
-            // 停止済みの項目をクリックした時に 'open' クラスを付け外しする
+            // 折りたたみ制御
             if (!isMon) {
                 div.onclick = (e) => {
-                    if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
-                        div.classList.toggle('open');
-                    }
+                    if(e.target.tagName !== 'BUTTON') div.classList.toggle('open');
                 };
             }
     
-            // --- HTMLの中身 ---
             div.innerHTML = `
                 ${isOver ? '<div class="alert-banner">⚠️ 満水時間を超過しています！</div>' : ''}
                 
-                <div style="display:flex; justify-content:space-between; align-items: center;">
+                <div style="display:flex; justify-content:space-between; align-items: flex-start;">
                     <div style="flex:1;">
-                        <span style="font-size:14px; font-weight:bold;">${item.facility}</span>
-                        ${!isMon ? `<span style="font-size:12px; color:#666; margin-left:10px;">停止: ${new Date(item.stopTime).toLocaleTimeString('ja-JP')} <span class="expand-icon"></span></span>` : ''}
+                        <span style="font-size:16px; font-weight:bold;">${item.facility}</span>
+                        ${!isMon ? `
+                            <div style="font-size:12px; color:#666;">
+                                ${dateHtml} 停止済: <strong style="font-size:14px;">${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}</strong> <span class="expand-icon"></span>
+                            </div>` : ''}
                     </div>
-                    <span style="color:${isMon ? '#2196F3' : '#999'}; font-size:12px;">${isMon ? '🔵 監視中' : '⚪ 停止済'}</span>
+                    <span style="color:${isMon ? '#2196F3' : '#999'}; font-size:11px;">${isMon ? '🔵 監視中' : '⚪ 停止済'}</span>
                 </div>
     
                 <div class="${isMon ? '' : 'detail-content'}">
-                    <div style="font-size:11px; color:#666; margin-bottom:5px;">
-                        開始者: ${item.startUser} ${item.stopUser ? ` / 終了者: ${item.stopUser}` : ''}<br>
-                        開始: ${new Date(item.created_at).toLocaleString('ja-JP')} | 必要: ${item.totalVolM3 ? item.totalVolM3.toFixed(1) : '0'}t
+                    <div style="font-size:11px; color:#666; margin: 5px 0;">
+                        担当: ${item.startUser} ${item.stopUser ? `→ ${item.stopUser}` : ''} | 必要: ${item.totalVolM3 ? item.totalVolM3.toFixed(1) : '0'}t
                     </div>
     
-                    <div style="background:#eee; padding:8px; border-radius:4px; margin:5px 0; font-size:12px;">
-                        <div class="${isOver ? 'text-danger' : ''}">
-                            ${isMon ? '満水予定' : '停止時刻'}: <strong>${new Date(isMon ? targetTime : item.stopTime).toLocaleString('ja-JP')}</strong>
+                    <div style="background:#f8f9fa; border:1px solid #dee2e6; padding:10px; border-radius:6px; margin:5px 0;">
+                        <div style="font-size:12px; color:#444; margin-bottom:4px;">${isMon ? '完了予定日時' : '完了記録時刻'}</div>
+                        <div class="${isOver ? 'text-danger' : ''}" style="display:flex; align-items:center;">
+                            ${dateHtml}
+                            <span class="time-focus">${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}</span>
+                            <span style="margin-left:5px; font-size:12px; color:#666;">(${targetDate.getMonth()+1}/${targetDate.getDate()})</span>
                         </div>
                         ${isMon ? `
-                            <div style="color:${isOver ? 'var(--stop)' : '#2196F3'}; font-weight:bold;">
+                            <div style="color:${isOver ? 'var(--stop)' : '#2196F3'}; font-weight:bold; margin-top:5px; border-top:1px solid #eee; pt:5px;">
                                 ${isOver ? '超過中：' : '残り約：'} ${rh}時間${rm}分
                             </div>
-                        ` : `<div style="color:#666;">給水時間: ${rh}時間${rm}分</div>`}
+                        ` : ''}
                     </div>
     
                     <div class="item-btns">
-                        ${item.isEditing ? 
-                            `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : 
-                            `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`
-                        }
-                        ${isMon ? 
-                            `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : 
-                            `<button class="btn-sm btn-gray" style="background:#ccc" disabled>完了</button>`
-                        }
+                        ${item.isEditing ? `<button class="btn-sm btn-blue" onclick="saveEdit(${item.id})">保存</button>` : `<button class="btn-sm btn-gray" onclick="toggleEdit(${item.id})">修正</button>`}
+                        ${isMon ? `<button class="btn-sm btn-red" onclick="doStop(${item.id})">停止</button>` : ''}
                         <button class="btn-sm btn-gray" onclick="doDelete(${item.id})">削除</button>
                     </div>
                 </div>
@@ -649,6 +678,7 @@
 </body>
 
 </html>
+
 
 
 
