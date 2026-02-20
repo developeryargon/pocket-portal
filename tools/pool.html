@@ -20,7 +20,19 @@
         :root { --main: #4A154B; --active: #ECB22E; --bg: #f4f7f9; --stop: #d32f2f; --alert: #ff5252; }
         * { box-sizing: border-box; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 8px; margin: 0; font-size: 14px; }
-        #top-alert { background: var(--alert); color: white; text-align: center; padding: 8px; font-weight: bold; position: sticky; top: 0; z-index: 100; border-radius: 0 0 10px 10px; margin: -8px -8px 10px -8px; display: none; }
+        #top-alert {
+            background: var(--alert);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            position: sticky; 
+            top: 58px; /* 🔔 ここをヘッダーの高さに合わせて調整 */
+            z-index: 40; /* 🔔 ヘッダー(z-50)より少し背面に設定 */
+            border-radius: 0 0 10px 10px;
+            margin: 0 -8px 10px -8px; /* marginの調整 */
+            display: none;
+        }
         .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px; }
         h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--main); border-left: 4px solid var(--main); padding-left: 8px; }
         .selector-row { display: flex; justify-content: space-around; padding: 8px; background: #eee; border-radius: 8px; align-items: center; margin-top: 10px; }
@@ -112,16 +124,21 @@
 
 <body onload="init()">
 
-  <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
-    <div class="container mx-auto flex justify-between items-center" style="max-width:1100px; display: flex;">
-      <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-blue-700" style="text-decoration:none; display: flex; align-items: center;">
-        <span style="margin-right:8px;">🏠</span> PocketPortal
-      </a>
-      <a href="./index.html" class="text-[10px] text-slate-400 hover:text-blue-500 transition-colors" style="text-decoration:none; font-size: 10px;">
-        ツール集へ
+<nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+  <div class="container mx-auto" style="max-width:1100px; display: flex; justify-content: space-between; align-items: center;">
+    
+    <a href="../index.html" class="flex items-center font-bold text-lg text-blue-700" style="text-decoration:none; display: flex; align-items: center; white-space: nowrap;">
+      <span style="margin-right:8px;">🏠</span> PocketPortal
+    </a>
+    
+    <div style="flex: 1; text-align: right;">
+      <a href="./index.html" class="text-slate-400 hover:text-blue-500 transition-colors" style="text-decoration:none; font-size: 10px; margin-left: auto;">
+        Web便利ツール集へ
       </a>
     </div>
-  </nav>
+    
+  </div>
+</nav>
 
     
 <div id="top-alert">⚠️ 給水監視中</div>
@@ -769,6 +786,7 @@
 </body>
 
 </html>
+
 
 
 
