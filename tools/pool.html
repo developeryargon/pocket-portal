@@ -486,22 +486,30 @@
         const now = Date.now();
         let activeCount = 0;
     
+        // --- 並べ替えロジック ---
+        // 1. 監視中(active)を上に、完了(completed)を下に
+        // 2. 同じ状態なら ID(作成時間)が新しい順に
+        monitorItems.sort((a, b) => {
+            if (a.status === 'active' && b.status !== 'active') return -1;
+            if (a.status !== 'active' && b.status === 'active') return 1;
+            return b.id - a.id; // 新しい順
+        });
+    
         monitorItems.forEach(item => {
-            // 1. 状態の判定
             const isMon = item.status === 'active';
             if (isMon) activeCount++;
             
-            // 2. 満水予定時刻の取得 (JSON内の limitTimeMs を優先使用)
+            // JSON内の正確なミリ秒（limitTimeMs）を優先
             const targetTime = item.limitTimeMs || item.limitTime;
-            
-            // 3. 超過判定と残り時間の計算
             const isOver = (isMon && now > targetTime);
+    
+            // 残り時間・経過時間の計算
             const diffMs = isMon ? (targetTime - now) : (item.stopTime - now);
             const absDiff = Math.abs(diffMs);
             const rh = Math.floor(absDiff / (1000 * 60 * 60));
             const rm = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
     
-            // 4. 表示用の担当者・施設名情報
+            // 担当者・施設表示
             let userDisplay = "";
             if (item.isEditing) {
                 userDisplay = `
@@ -517,9 +525,8 @@
                 `;
             }
     
-            // 5. HTML要素の生成
             const div = document.createElement('div');
-            // 超過している場合は 'danger-alert' クラスを追加
+            // 監視中で超過なら赤点滅(danger-alert)、完了済みなら薄い背景
             div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''}`;
             
             div.innerHTML = `
@@ -559,7 +566,6 @@
             listDiv.appendChild(div);
         });
     
-        // 監視中のものがあればトップアラートを表示
         document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
     }
 
@@ -629,6 +635,7 @@
 </body>
 
 </html>
+
 
 
 
