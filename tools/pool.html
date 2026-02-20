@@ -364,7 +364,7 @@
                 const c = data.config;
                 
                 // 既存の反映
-                document.getElementById('slackUrl').value = c.webhook || "";
+                if (c.webhook) document.getElementById('slackUrl').value = c.webhook;
                 document.getElementById('facility').value = c.facility || "";
                 document.getElementById('startUser').value = c.startUser || "";
                 document.getElementById('flowRate').value = c.default_flow || "18";
@@ -531,6 +531,7 @@
 </body>
 
 </html>
+
 
 
 
