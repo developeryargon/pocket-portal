@@ -180,7 +180,7 @@
     
         try {
             await apiFetch("/save-config", { configPayload: configPayload });
-            alert("幅、深さ、水量を含むすべての初期値を登録しました！");
+            alert("初期値を登録しました！");
         } catch (e) { alert("保存エラー: " + e.message); }
     }
 
@@ -531,6 +531,7 @@
 </body>
 
 </html>
+
 
 
 
