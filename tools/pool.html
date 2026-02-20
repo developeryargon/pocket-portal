@@ -499,6 +499,51 @@
             
             monitorItems = data.pools || [];
             updateMonitorList();
+
+
+            // loadDataFromKV の成功処理内（データの反映が終わった後）に配置
+            const now = new Date();
+            const syncStatusEl = document.getElementById('sync-status');
+            const syncBtn = document.querySelector('button[onclick="loadDataFromKV()"]');
+            
+            // 日付判定用の計算
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const loadDay = new Date(now);
+            loadDay.setHours(0,0,0,0);
+            
+            const diffDays = Math.round((loadDay - today) / (1000 * 60 * 60 * 24));
+            
+            // 1. 同期ボタンの警告表示（今日ではない場合）
+            if (diffDays !== 0) {
+                // 今日以外（昨日以前など）のデータならボタンをオレンジにして警告
+                syncBtn.style.background = "#ef6c00"; 
+                syncBtn.style.color = "white";
+                syncBtn.style.fontWeight = "bold";
+                syncBtn.innerHTML = "⚠️ データを更新してください";
+            } else {
+                // 今日のデータなら通常スタイル（元のCSSに従う）
+                syncBtn.style.background = ""; 
+                syncBtn.style.color = "";
+                syncBtn.style.fontWeight = "";
+                syncBtn.innerHTML = "同期";
+            }
+            
+            // 2. ステータス文字の更新
+            let dateLabel = "";
+            if (diffDays === 0) {
+                dateLabel = `<span class="day-label label-today">今日</span>`;
+            } else if (diffDays === -1) {
+                dateLabel = `<span class="day-label label-future" style="background:#666; color:white;">昨日</span>`;
+            } else {
+                dateLabel = `<span class="day-label label-future">${now.getMonth()+1}/${now.getDate()}</span>`;
+            }
+            
+            syncStatusEl.innerHTML = `表示中: ${dateLabel} <b>${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</b> 時点`;
+            
+
+
+            
             uiCalc(); // 全てセットした後に計算を実行
         } catch (e) { console.error("同期失敗:", e.message); }
     }
@@ -678,6 +723,7 @@
 </body>
 
 </html>
+
 
 
 
