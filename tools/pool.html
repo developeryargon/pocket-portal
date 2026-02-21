@@ -658,9 +658,9 @@
               const remainingVol = Math.max(0, item.totalVolM3 - currentVol);
               volHtml = `
                 <div style="background:#000; color:#fff; padding:12px; border-radius:8px; border:2px solid #ECB22E; margin-top:10px;">
-                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">現在 / 残り / MAX</div>
+                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">注水済 / 満水まで / 満水</div>
                   <div style="font-size:1.8rem; font-weight:900;">
-                    ${currentVol.toFixed(1)} / <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> / ${item.totalVolM3.toFixed(1)} <span style="font-size:16px;">m³</span>
+                    ${currentVol.toFixed(1)} m³ / <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> m³ / ${item.totalVolM3.toFixed(1)} <span style="font-size:16px;">m³</span>
                   </div>
                 </div>`;
             }
@@ -675,8 +675,6 @@
                 </div>
                 <div style="background:#f0f0f0; padding:15px; border:2px solid #000; border-radius:10px;">
                   <div style="font-size:15px; font-weight:900;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
-                  <div style="font-size:2.6rem; font-weight:900; line-height:1; color:#000;">${timeStr}</div>
-                  <div style="font-size:1.25rem; font-weight:900; color:#000; margin-top:6px;">${dateTimeStr}</div>
                   <div style="font-size:2.0rem; font-weight:900; line-height:1; color:#000;">${dateTimeStr}</div>
                   ${volHtml}
                 </div>
@@ -794,6 +792,7 @@
   </script>
 </body>
 </html>
+
 
 
 
