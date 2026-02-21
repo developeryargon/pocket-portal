@@ -607,10 +607,10 @@
         // 指示：履歴のみクリックで確実に開閉
         if (!isMon && !isEditing) {
           div.onclick = (e) => {
-            // ボタンや入力欄のクリック時は開閉させない
             if (e.target.closest('button') || e.target.closest('input')) return;
+            
+            // updateMonitorList() を呼ばずに、直接表示を切り替える
             div.classList.toggle('open');
-            updateMonitorList(); // 表示を更新
           };
         }
     
@@ -793,5 +793,6 @@
   </script>
 </body>
 </html>
+
 
 
