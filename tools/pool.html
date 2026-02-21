@@ -574,170 +574,282 @@
     }
 
     function updateMonitorList() {
-      const listDiv = document.getElementById('monitor-list');
-      listDiv.innerHTML = '';
-      let activeCount = 0;
+  const listDiv = document.getElementById('monitor-list');
+  listDiv.innerHTML = '';
+  const nowMs = Date.now();
+  let activeCount = 0;
 
-      monitorItems.sort((a, b) => (a.status === 'active' ? -1 : 1) || (b.id - a.id));
+  // ソート：監視中(active)を上、各グループ内は新しい順
+  monitorItems.sort((a, b) => {
+    const aActive = a.status === 'active';
+    const bActive = b.status === 'active';
+    if (aActive !== bActive) return aActive ? -1 : 1;
 
-      monitorItems.forEach(item => {
-        const isMon = item.status === 'active';
-        if (isMon) activeCount++;
+    // active は開始時刻(created_at)の新しい順、無ければ id
+    if (aActive) {
+      const at = Date.parse(a.created_at || '') || 0;
+      const bt = Date.parse(b.created_at || '') || 0;
+      if (bt !== at) return bt - at;
+      return (b.id || 0) - (a.id || 0);
+    }
 
-        const targetMs = item.limitTimeMs;
-        const isOver = isMon && targetMs && Date.now() > targetMs;
+    // completed は停止時刻(stopTime)の新しい順、無ければ updated_at/id
+    const as = (typeof a.stopTime === 'number' ? a.stopTime : 0) || (Date.parse(a.updated_at || '') || 0) || (a.id || 0);
+    const bs = (typeof b.stopTime === 'number' ? b.stopTime : 0) || (Date.parse(b.updated_at || '') || 0) || (b.id || 0);
+    return bs - as;
+  });
 
-        const displayMs = isMon ? targetMs : (item.stopTimeMs || targetMs);
-        const timeStr = displayMs ? fmtTime(displayMs) : '--:--';
-        const dateTimeStr = displayMs ? fmtDateTime(displayMs) : '—';
+  monitorItems.forEach(item => {
+    const isMon = item.status === 'active';
+    if (isMon) activeCount++;
 
-        let volHtml = '';
-        if (isMon && item.totalVolM3 > 0 && item.createdAtMs && targetMs && targetMs > item.createdAtMs) {
-          const totalMs = targetMs - item.createdAtMs;
-          const elapsedMs = Math.max(0, Math.min(totalMs, Date.now() - item.createdAtMs));
-          const progress = totalMs > 0 ? (elapsedMs / totalMs) : 0;
-          const currentVol = (item.totalVolM3 * progress);
-          const remainingVol = Math.max(0, item.totalVolM3 - currentVol);
-          volHtml = `
-            <div class="vol-panel">
-              <div class="vol-label">現在 / 残り / MAX</div>
-              <div class="vol-big">
-                ${currentVol.toFixed(1)} m³ / <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> m³ / ${item.totalVolM3.toFixed(1)} m³
-              </div>
-            </div>`;
-        }
+    const targetTimeMs = (typeof item.limitTimeMs === 'number' && isFinite(item.limitTimeMs))
+      ? item.limitTimeMs
+      : (typeof item.limitTime === 'number' && isFinite(item.limitTime))
+        ? item.limitTime
+        : (Date.parse(item.limitTime || '') || NaN);
 
-        const div = document.createElement('div');
-        div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''}`;
+    // 表示用：不正値なら「未設定」
+    const hasTarget = typeof targetTimeMs === 'number' && isFinite(targetTimeMs) && targetTimeMs > 0;
+    const targetDate = hasTarget ? new Date(targetTimeMs) : null;
 
-        if (!isMon) {
-          div.onclick = (e) => {
-            if (e.target.closest('button') || e.target.closest('input')) return;
-            div.classList.toggle('open');
-          };
-        }
+    const isOver = isMon && hasTarget && (nowMs > targetTimeMs);
 
-        const dangerBanner = isOver ? `<div style="background:#d32f2f; color:#fff; font-size:14px; text-align:center; margin:-12px -12px 10px -12px; padding:7px; font-weight:900;">🚨 満水予定時刻を超過しています（至急確認）</div>` : '';
+    // open 状態はJS側で保持（30秒ごとの再描画でも保持）
+    const isOpen = isMon || !!item.uiOpen || !!item.isEditing;
 
-        const simpleHtml = (!isMon) ? `
-          <div class="simple-area" style="justify-content:space-between; align-items:center;">
-            <b style="font-size:18px; color:#000;">${escapeHtml(item.facility)}</b>
-            <span style="font-size:13px; color:#666; font-weight:900;">${escapeHtml(dateTimeStr)} 停止 ▼</span>
-          </div>` : '';
+    // ---- 日時表示（年付きで確実に分かる） ----
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const dateStr = targetDate ? `${targetDate.getMonth()+1}/${targetDate.getDate()}` : '--/--';
+    const timeStr = targetDate ? `${pad2(targetDate.getHours())}:${pad2(targetDate.getMinutes())}` : '--:--';
+    const fullDateTime = targetDate ? `${targetDate.getFullYear()}/${dateStr} ${timeStr}` : '未設定';
 
-        const statusBadge = isMon
-          ? `<span style="font-size:12px; padding:4px 8px; background:#000; color:#ECB22E; font-weight:900; border-radius:4px;">給水中</span>`
-          : `<span style="font-size:12px; padding:4px 8px; background:#eee; color:#666; font-weight:900; border-radius:4px;">停止済 ▲</span>`;
+    // 監視中の「現在/残り/MAX」水量
+    let volHtml = '';
+    if (isMon && typeof item.totalVolM3 === 'number' && isFinite(item.totalVolM3) && item.totalVolM3 > 0 && hasTarget) {
+      const startMs = Date.parse(item.created_at || '') || (item.id || 0) || nowMs;
+      const totalMs = Math.max(1, targetTimeMs - startMs);
+      const elapsedMs = Math.max(0, nowMs - startMs);
+      const progress = Math.max(0, Math.min(1, elapsedMs / totalMs));
+      const currentVol = (item.totalVolM3 * progress);
+      const remainingVol = Math.max(0, item.totalVolM3 - currentVol);
 
-        const detailHtml = `
-          <div class="detail-area">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-              <b style="font-size:22px; color:#000;">${escapeHtml(item.facility)}</b>
-              ${statusBadge}
-            </div>
+      volHtml = `
+        <div style="margin-top:10px; padding:10px; background:#000; color:#fff; border-radius:8px; border:2px solid #ECB22E;">
+          <div style="font-size:12px; color:#ccc; font-weight:bold;">現在 / 残り / MAX</div>
+          <div style="font-size:1.5rem; font-weight:900; line-height:1.2;">
+            ${currentVol.toFixed(1)} <span style="font-size:14px;">㎥</span>
+            <span style="color:#bbb;"> / </span>
+            <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> <span style="font-size:14px;">㎥</span>
+            <span style="color:#bbb;"> / </span>
+            ${item.totalVolM3.toFixed(1)} <span style="font-size:14px;">㎥</span>
+          </div>
+        </div>`;
+    } else if (isMon && typeof item.totalVolM3 === 'number' && isFinite(item.totalVolM3) && item.totalVolM3 > 0) {
+      // 時刻が壊れているケースでもMAXだけは出す
+      volHtml = `
+        <div style="margin-top:10px; padding:10px; background:#000; color:#fff; border-radius:8px; border:2px solid #ECB22E;">
+          <div style="font-size:12px; color:#ccc; font-weight:bold;">MAX</div>
+          <div style="font-size:1.5rem; font-weight:900;">${item.totalVolM3.toFixed(1)} <span style="font-size:14px;">㎥</span></div>
+        </div>`;
+    }
 
-            <div class="time-panel">
-              <div class="time-title">${isMon ? '満水予定時刻' : '停止時刻'}</div>
-              <div class="time-big">${escapeHtml(timeStr)}</div>
-              <div class="time-sub">${escapeHtml(dateTimeStr)}</div>
-              ${volHtml}
-            </div>
+    const div = document.createElement('div');
+    div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
+    div.style.border = isMon ? "3px solid #000" : "1px solid #ccc";
+    div.style.marginBottom = "12px";
+    div.style.padding = isOpen ? "12px" : "10px 12px";
 
-            <div style="font-size:14px; color:#000; margin-top:10px; font-weight:900;">
-              担当: ${escapeHtml(item.startUser)}${item.stopUser ? ' → ' + escapeHtml(item.stopUser) : ''}
-            </div>
+    // finished の開閉
+    div.onclick = (e) => {
+      if (isMon) return;
+      if (item.isEditing) return;
+      if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select') || e.target.closest('a')) return;
+      item.uiOpen = !item.uiOpen;
+      updateMonitorList();
+    };
 
-            <div style="font-size:11px; color:#666; margin-top:6px;">
-              開始: ${item.createdAtMs ? escapeHtml(fmtDateTime(item.createdAtMs)) : '—'}
-              ${isMon && targetMs ? ' / 予定: ' + escapeHtml(fmtDateTime(targetMs)) : ''}
-            </div>
+    let html = '';
+    if (isOver) {
+      html += `<div class="alert-banner">🚨 満水予定時刻を過ぎています。至急確認してください</div>`;
+    }
+
+    // --- 閉じている時（履歴） ---
+    if (!isOpen && !isMon) {
+      html += `
+        <div class="simple-area" style="display:flex; justify-content:space-between; align-items:center;">
+          <b style="font-size:18px; color:#000;">${item.facility || '未設定施設'}</b>
+          <span style="font-size:13px; color:#666; font-weight:bold;">${fullDateTime} 停止 ▼</span>
+        </div>`;
+    }
+
+    // --- 開いている時（監視中 or 展開した履歴） ---
+    if (isOpen) {
+      // ヘッダー部
+      html += `
+        <div class="detail-area" style="display:block;">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <b style="font-size:22px; color:#000;">${item.facility || '未設定施設'}</b>
+            <span style="font-size:12px; padding:4px 8px; background:${isMon?'#000':'#eee'}; color:${isMon?'#ECB22E':'#666'}; font-weight:bold; border-radius:4px;">
+              ${isMon ? '給水中' : '停止済'}
+            </span>
           </div>`;
 
-        const buttons = `
-          <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
-            <button style="flex:1; padding:12px; font-weight:900; background:#eee; color:#000; border:2px solid #000; border-radius:6px;" onclick="toggleEdit(${item.id}); event.stopPropagation();">内容修正</button>
-            ${isMon
-              ? `<button style="flex:1; padding:12px; font-weight:900; background:#d32f2f; color:#fff; border:none; border-radius:6px;" onclick="doStop(${item.id}); event.stopPropagation();">給水停止</button>`
-              : `<button style="flex:1; padding:12px; font-weight:900; background:#2e7d32; color:#fff; border:none; border-radius:6px;" onclick="doResume(${item.id}); event.stopPropagation();">監視再開</button>`
-            }
-            <button style="width:54px; background:#fff; border:2px solid #ccc; border-radius:6px;" onclick="doDelete(${item.id}); event.stopPropagation();">🗑️</button>
+      // 日時パネル（日付も十分大きく、年も表示）
+      html += `
+          <div style="margin-top:10px; background:#f0f0f0; padding:12px; border-radius:10px; border:2px solid #000;">
+            <div style="font-size:14px; font-weight:900; color:#444;">${isMon ? '満水予定日時' : '停止日時'}</div>
+            <div style="font-size:2.2rem; font-weight:900; color:#000; line-height:1.05;">${timeStr}</div>
+            <div style="font-size:16px; color:#000; font-weight:900; margin-top:2px;">${targetDate ? `${targetDate.getFullYear()}/${pad2(targetDate.getMonth()+1)}/${pad2(targetDate.getDate())}` : '未設定'}</div>
+            ${volHtml}
           </div>`;
 
-        div.innerHTML = `${dangerBanner}${simpleHtml}${detailHtml}${buttons}`;
-        listDiv.appendChild(div);
-      });
+      // 担当表示
+      html += `
+          <div style="font-size:14px; color:#000; margin-top:10px; font-weight:bold;">
+            担当: ${(item.startUser || '未設定者')}${item.stopUser ? ' → ' + item.stopUser : ''}
+          </div>`;
 
-      document.getElementById('top-alert').style.display = activeCount > 0 ? 'block' : 'none';
-    }
+      // 編集モード
+      if (item.isEditing) {
+        html += `
+          <div style="margin-top:12px; background:#fffbe6; padding:10px; border:2px solid #ECB22E; border-radius:10px;">
+            <div style="font-weight:900; margin-bottom:8px;">✏️ 内容修正（ここでまとめて編集）</div>
 
-    function toggleEdit(id) {
-      const item = monitorItems.find(i => i.id === id);
-      if (!item) return;
-      const facility = prompt('施設名', item.facility) ?? item.facility;
-      const startUser = prompt('開始担当者', item.startUser) ?? item.startUser;
-      let stopUser = item.stopUser;
-      if (item.status !== 'active') stopUser = prompt('終了担当者', item.stopUser || '未設定者') ?? item.stopUser;
-      saveEdit(id, facility, startUser, stopUser);
-    }
+            <label style="font-weight:bold; font-size:12px;">施設名</label>
+            <input id="edit-f-${item.id}" class="edit-input" value="${item.facility || ''}">
 
-    async function saveEdit(id, facility, startUser, stopUser) {
-      try {
-        saveCreds();
-        await apiFetch('/update-item', { poolId: id, facility, startUser, stopUser });
-        await syncData();
-      } catch (e) {
-        alert('保存エラー: ' + (e?.message || e));
-      }
-    }
+            <label style="font-weight:bold; font-size:12px;">開始担当者</label>
+            <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser || ''}">
 
-    async function doStop(id) {
-      saveCreds();
-      const stopUser = document.getElementById('startUser').value || '未設定者';
-      if (!confirm('給水を停止して記録しますか？')) return;
-      try {
-        await apiFetch('/stop', { poolId: id, stopUser });
-        saveCreds();
-        await syncData();
-      } catch (e) {
-        alert('停止エラー: ' + (e?.message || e));
-      }
-    }
+            ${!isMon ? `
+              <label style="font-weight:bold; font-size:12px;">終了担当者</label>
+              <input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}">
+            ` : ''}
 
-    async function doResume(id) {
-      saveCreds();
-      if (!confirm('このデータの監視を再開しますか？（通知設定も継続されます）')) return;
-      try {
-        await apiFetch('/resume', { poolId: id });
-        saveCreds();
-        await syncData();
-      } catch (e) {
-        alert('再開エラー: ' + (e?.message || e));
-      }
-    }
-
-    async function doDelete(id) {
-      saveCreds();
-      if (!confirm('完全に削除しますか？')) return;
-      try {
-        await apiFetch('/delete', { poolId: id });
-        saveCreds();
-        await syncData();
-      } catch (e) {
-        alert(e?.message || e);
-      }
-    }
-
-    async function init() {
-      restoreCreds();
-      uiCalc();
-
-      const gid = document.getElementById('gid').value.trim();
-      const gpw = document.getElementById('gpw').value.trim();
-      if (gid && gpw) {
-        try { await syncData(); } catch (_) {}
+            <div style="display:flex; gap:10px; margin-top:10px;">
+              <button style="flex:1; padding:12px; font-weight:bold; background:#2196F3; color:white; border:none; border-radius:8px;"
+                onclick="saveEdit(${item.id})">保存</button>
+              <button style="flex:1; padding:12px; font-weight:bold; background:#eee; color:#000; border:2px solid #000; border-radius:8px;"
+                onclick="cancelEdit(${item.id})">キャンセル</button>
+            </div>
+          </div>`;
       }
 
-      setInterval(updateMonitorList, 30000);
+      html += `</div>`; // detail-area
+    }
+
+    // --- ボタン行（履歴は「展開してから」見せる） ---
+    // 監視中: 常に表示 / 履歴: open のときのみ表示
+    const showActions = isMon || isOpen;
+
+    if (showActions && !item.isEditing) {
+      html += `
+        <div class="action-area">
+          <button style="flex:1; padding:12px; font-weight:bold; background:#eee; color:#000; border:2px solid #000; border-radius:8px;"
+            onclick="toggleEdit(${item.id})">内容修正</button>
+
+          ${isMon
+            ? `<button style="flex:1; padding:12px; font-weight:bold; background:#d32f2f; color:white; border:none; border-radius:8px;"
+                onclick="doStop(${item.id})">給水停止</button>`
+            : `<button style="flex:1; padding:12px; font-weight:bold; background:#2e7d32; color:white; border:none; border-radius:8px;"
+                onclick="doResume(${item.id})">監視再開</button>`
+          }
+
+          <button style="width:54px; background:#fff; border:2px solid #ccc; border-radius:8px;"
+            onclick="doDelete(${item.id})">🗑️</button>
+        </div>`;
+    }
+
+    div.innerHTML = html;
+    listDiv.appendChild(div);
+  });
+
+  const alertEl = document.getElementById('top-alert');
+  if (alertEl) alertEl.style.display = activeCount > 0 ? 'block' : 'none';
+}
+
+// --- 編集モード切替（履歴は展開してから） ---
+function toggleEdit(id) {
+  const item = monitorItems.find(i => i.id === id);
+  if (!item) return;
+  item.uiOpen = true;
+  item.isEditing = true;
+  updateMonitorList();
+}
+
+function cancelEdit(id) {
+  const item = monitorItems.find(i => i.id === id);
+  if (!item) return;
+  item.isEditing = false;
+  updateMonitorList();
+}
+
+// --- 修正保存（1回でまとめて3項目） ---
+async function saveEdit(id) {
+  const item = monitorItems.find(i => i.id === id);
+  if (!item) return;
+
+  const facility = document.getElementById(`edit-f-${id}`)?.value ?? item.facility;
+  const startUser = document.getElementById(`edit-u-${id}`)?.value ?? item.startUser;
+  const stopUser = (item.status === 'completed')
+    ? (document.getElementById(`edit-su-${id}`)?.value ?? item.stopUser)
+    : undefined;
+
+  try {
+    await apiFetch("/update-item", { poolId: id, facility, startUser, ...(stopUser !== undefined ? { stopUser } : {}) });
+
+    // 画面反映
+    item.facility = facility;
+    item.startUser = startUser;
+    if (stopUser !== undefined) item.stopUser = stopUser;
+
+    item.isEditing = false;
+    updateMonitorList();
+  } catch (e) {
+    alert("保存エラー: " + e.message);
+  }
+}
+
+
+// --- 停止処理 ---
+async function doStop(id) {
+  const stopUser = document.getElementById('startUser')?.value || "未設定者";
+  if (!confirm("給水を停止して記録しますか？")) return;
+
+  try {
+    await apiFetch("/stop", { poolId: id, stopUser });
+    alert("停止しました。");
+    await loadDataFromKV(); // 可能なら再読み込み
+  } catch (e) {
+    alert("停止エラー: " + e.message);
+  }
+}
+
+// --- 削除処理 ---
+async function doDelete(id) {
+  if (!confirm("完全に削除しますか？")) return;
+  try {
+    await apiFetch("/delete", { poolId: id });
+    await loadDataFromKV();
+  } catch (e) {
+    alert("削除エラー: " + e.message);
+  }
+}
+
+// --- 再開処理（間違って停止した場合） ---
+async function doResume(id) {
+  if (!confirm("このデータの監視を再開しますか？")) return;
+  try {
+    await apiFetch("/resume", { poolId: id });
+    alert("監視を再開しました。");
+    await loadDataFromKV();
+  } catch (e) {
+    alert("再開エラー: " + e.message);
+  }
+}
+
+setInterval(updateMonitorList, 30000);
     }
   </script>
 </body>
