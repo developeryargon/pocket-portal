@@ -701,11 +701,10 @@
     function toggleEdit(id) {
       const item = monitorItems.find(i => i.id === id);
       if (!item) return;
-      const facility = prompt('施設名', item.facility) ?? item.facility;
-      const startUser = prompt('開始担当者', item.startUser) ?? item.startUser;
-      let stopUser = item.stopUser;
-      if (item.status !== 'active') stopUser = prompt('終了担当者', item.stopUser || '未設定者') ?? item.stopUser;
-      saveEdit(id, facility, startUser, stopUser);
+    
+      // promptは一切出さず、フラグだけ切り替えて再描画
+      item.isEditing = !item.isEditing;
+      updateMonitorList();
     }
 
     async function saveEdit(id) {
@@ -793,6 +792,7 @@
   </script>
 </body>
 </html>
+
 
 
 
