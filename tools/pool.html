@@ -424,7 +424,55 @@
     }
 
 
-
+    // 同期ボタンの処理
+    async function syncData() {
+        const btn = document.querySelector('button[onclick="syncData()"]');
+        const gid = document.getElementById('gid').value;
+        const gpw = document.getElementById('gpw').value;
+    
+        if (!gid || !gpw) { alert("IDとパスワードを入力してください"); return; }
+    
+        try {
+            btn.innerText = "同期中...";
+            btn.disabled = true;
+    
+            // localStorageに保存（これがスマホでの再入力防止に必須）
+            localStorage.setItem('pool_gid', gid);
+            localStorage.setItem('pool_gpw', gpw);
+    
+            await loadData();
+            
+            // 完了表示
+            btn.innerText = "✅ 同期完了";
+            btn.style.background = "#2e7d32";
+            btn.style.color = "#fff";
+            
+            setTimeout(() => {
+                btn.innerText = "同期";
+                btn.style.background = "";
+                btn.style.color = "";
+                btn.disabled = false;
+            }, 2000);
+        } catch (e) {
+            alert("同期失敗: " + e.message);
+            btn.innerText = "同期";
+            btn.disabled = false;
+        }
+    }
+    
+    // 画面読み込み時に実行
+    window.onload = () => {
+        const savedId = localStorage.getItem('pool_gid');
+        const savedPw = localStorage.getItem('pool_gpw');
+        
+        if (savedId) document.getElementById('gid').value = savedId;
+        if (savedPw) document.getElementById('gpw').value = savedPw;
+        
+        // 保存された情報があれば自動でデータを読み込む
+        if (savedId && savedPw) {
+            loadData();
+        }
+    };
 
 
 
@@ -525,46 +573,6 @@
         uiCalc();
     });
 
-    // 同期ボタンの処理
-    async function syncData() {
-        const btn = document.querySelector('button[onclick="syncData()"]');
-        const originalText = btn.innerText;
-        
-        try {
-            btn.innerText = "同期中...";
-            btn.disabled = true;
-    
-            // localStorageに保存（再入力の手間を省く）
-            localStorage.setItem('pool_gid', document.getElementById('gid').value);
-            localStorage.setItem('pool_gpw', document.getElementById('gpw').value);
-    
-            await loadData();
-            
-            // 同期完了のフィードバック
-            btn.innerText = "✅ 同期完了";
-            btn.style.background = "#4CAF50";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "";
-                btn.disabled = false;
-            }, 2000);
-            
-        } catch (e) {
-            alert("同期失敗: " + e.message);
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    }
-    
-    // 画面を開いたときにlocalStorageから復元
-    window.onload = () => {
-        const savedId = localStorage.getItem('pool_gid');
-        const savedPw = localStorage.getItem('pool_gpw');
-        if (savedId) document.getElementById('gid').value = savedId;
-        if (savedPw) document.getElementById('gpw').value = savedPw;
-        
-        if (savedId && savedPw) loadData(); // 自動ログイン
-    };
 
     // KVからデータを読み込んで画面を更新する関数
     async function loadDataFromKV() {
@@ -680,108 +688,140 @@
     });
 
 
-function updateMonitorList() {
-    const listDiv = document.getElementById('monitor-list');
-    listDiv.innerHTML = '';
-    const now = new Date();
-    let activeCount = 0;
-
-    monitorItems.sort((a, b) => {
-        if (a.status === 'active' && b.status !== 'active') return -1;
-        if (a.status !== 'active' && b.status === 'active') return 1;
-        return b.id - a.id;
-    });
-
-    monitorItems.forEach(item => {
-        const isMon = item.status === 'active';
-        if (isMon) activeCount++;
-        
-        const targetTimeMs = item.limitTimeMs || item.limitTime;
-        const targetDate = new Date(isMon ? targetTimeMs : item.stopTime);
-        const isOver = (isMon && Date.now() > targetTimeMs);
-
-        // 時間計算
-        const dateShort = `${targetDate.getMonth()+1}/${targetDate.getDate()} ${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}`;
-        const diffMs = Math.abs(targetTimeMs - Date.now());
-        const countdownStr = `${Math.floor(diffMs/3600000)}h ${Math.floor((diffMs%3600000)/60000)}m`;
-
-        // 水量計算 (監視中のみ)
-        let volInfo = "";
-        if (isMon && item.totalVolM3) {
-            const startMs = new Date(item.created_at).getTime();
-            const totalMs = targetTimeMs - startMs;
-            const elapsedMs = Date.now() - startMs;
-            const progress = Math.min(1, elapsedMs / totalMs);
-            const currentVol = (item.totalVolM3 * progress).toFixed(1);
-            const remainingVol = (item.totalVolM3 - currentVol).toFixed(1);
-            volInfo = `<div style="font-size:12px; margin-top:5px; color:#444; background:#fff; padding:5px; border-radius:4px; border:1px solid #eee;">
-                        現在: <b>${currentVol}</b> ㎥ / 残り: <b style="color:#d32f2f;">${remainingVol}</b> ㎥
-                      </div>`;
-        }
-
-        const div = document.createElement('div');
-        const isOpen = isMon || item.isEditing || div.classList.contains('open');
-        div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
-        div.style.padding = isOpen ? "12px" : "8px 12px";
-
-        div.onclick = (e) => {
-            if (isMon || item.isEditing || e.target.closest('button') || e.target.closest('input')) return;
-            div.classList.toggle('open');
-            updateMonitorList(); // 再描画してマークを切り替え
-        };
-
-        let html = isOver ? `<div style="background:#ff5252; color:white; font-size:11px; text-align:center; margin:-8px -12px 8px -12px; padding:3px;">⚠️ 満水時間を超過！</div>` : '';
-
-        if (item.isEditing) {
-            // 【修正モード】
-            html += `
-                <div style="background:#fffbe6; padding:10px; border-radius:5px; border:1px solid #ffe58f;">
-                    <div style="font-size:10px; font-weight:bold; margin-bottom:2px;">施設名</div>
-                    <input id="edit-f-${item.id}" class="edit-input" value="${item.facility}">
-                    <div style="font-size:10px; font-weight:bold; margin-bottom:2px;">開始担当者</div>
-                    <input id="edit-u-${item.id}" class="edit-input" value="${item.startUser}">
-                    ${!isMon ? `<div style="font-size:10px; font-weight:bold; margin-bottom:2px;">終了担当者</div><input id="edit-su-${item.id}" class="edit-input" value="${item.stopUser || ''}">` : ''}
-                </div>`;
-        } else if (!isMon && !div.classList.contains('open')) {
-            // 【停止済：閉じている時】▲▼マークを追加
-            html += `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold; color:#555;">${item.facility}</span>
-                    <span style="font-size:12px; color:#888;">${dateShort} 停止 <small>▼詳細</small></span>
-                </div>`;
-        } else {
-            // 【詳細表示】
-            html += `
-                <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <b style="font-size:16px;">${item.facility}</b>
-                    <span style="font-size:11px; color:${isMon ? '#1976d2' : '#999'};">
-                        ${isMon ? '🔵 監視中' : '⚪ 停止済 ▲'}
-                    </span>
-                </div>
-                <div style="margin-top:8px; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #dee2e6;">
-                    <div style="font-size:11px; color:#666;">${isMon ? '満水予定' : '停止時刻'}: ${targetDate.getFullYear()}/${dateShort}</div>
-                    ${isMon ? `<div style="font-size:1.4rem; font-weight:800; color:${isOver ? '#d32f2f' : '#333'};">あと ${countdownStr}</div>` : ''}
-                    ${volInfo}
-                    <div style="font-size:11px; color:#888; margin-top:6px;">担当: ${item.startUser}${item.stopUser ? ' → ' + item.stopUser : ''}</div>
-                </div>`;
-        }
-
-        if (isMon || item.isEditing || div.classList.contains('open')) {
-            html += `
-                <div class="item-btns" style="display:flex; gap:8px; margin-top:12px;">
-                    ${item.isEditing ? `<button class="btn-sm btn-blue" style="flex:1" onclick="saveEdit(${item.id})">保存</button>` : `<button class="btn-sm btn-gray" style="flex:1" onclick="toggleEdit(${item.id})">修正</button>`}
-                    ${isMon ? `<button class="btn-sm btn-red" style="flex:1" onclick="doStop(${item.id})">停止</button>` : `<button class="btn-sm btn-blue" style="flex:1; background:#4CAF50;" onclick="doResume(${item.id})">再開</button>`}
-                    <button class="btn-sm btn-gray" style="width:40px" onclick="doDelete(${item.id})">🗑️</button>
-                </div>`;
-        }
-
-        div.innerHTML = html;
-        listDiv.appendChild(div);
-    });
-
-    const alertEl = document.getElementById('top-alert');
-    if (alertEl) alertEl.style.display = activeCount > 0 ? 'block' : 'none';
-}
+    function updateMonitorList() {
+        const listDiv = document.getElementById('monitor-list');
+        listDiv.innerHTML = '';
+        const now = new Date();
+        let activeCount = 0;
+    
+        // ソート：監視中を上、次に新しい順
+        monitorItems.sort((a, b) => (a.status === 'active' ? -1 : 1) || b.id - a.id);
+    
+        monitorItems.forEach(item => {
+            const isMon = item.status === 'active';
+            if (isMon) activeCount++;
+            
+            const targetTimeMs = item.limitTimeMs || item.limitTime;
+            const targetDate = new Date(isMon ? targetTimeMs : item.stopTime);
+            const isOver = (isMon && Date.now() > targetTimeMs);
+    
+            // 時刻表示 (例: 14:30)
+            const timeStr = `${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}`;
+            // 日付表示 (例: 2/21)
+            const dateStr = `${targetDate.getMonth()+1}/${targetDate.getDate()}`;
+    
+            // --- 水量計算（予測） ---
+            let volHtml = "";
+            if (isMon && item.totalVolM3) {
+                const startMs = new Date(item.created_at).getTime();
+                const totalMs = targetTimeMs - startMs;
+                const elapsedMs = Date.now() - startMs;
+                const progress = Math.min(1, elapsedMs / totalMs);
+                const currentVol = (item.totalVolM3 * progress).toFixed(1);
+                const remainingVol = (item.totalVolM3 - currentVol).toFixed(1);
+                
+                volHtml = `
+                    <div style="margin-top:10px; padding:10px; background:#000; color:#fff; border-radius:6px; border:2px solid #ECB22E;">
+                        <div style="font-size:12px; color:#ccc;">現在水量 / 残り</div>
+                        <div style="font-size:1.6rem; font-weight:900;">
+                            ${currentVol} <span style="font-size:14px;">m³</span> / 
+                            <span style="color:#ff5252;">${remainingVol}</span> <span style="font-size:14px;">m³</span>
+                        </div>
+                    </div>`;
+            }
+    
+            const div = document.createElement('div');
+            const isOpen = isMon || item.isEditing || div.classList.contains('open');
+            div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
+            
+            // 直射日光対策：太い枠線とコントラスト
+            div.style.border = isMon ? "3px solid #000" : "1px solid #ccc";
+            div.style.marginBottom = "12px";
+            div.style.padding = isOpen ? "12px" : "10px 12px";
+    
+            div.onclick = (e) => {
+                if (isMon || item.isEditing || e.target.closest('button') || e.target.closest('input')) return;
+                div.classList.toggle('open');
+                // 再描画せずに表示だけ切り替える
+                const detail = div.querySelector('.detail-area');
+                const simple = div.querySelector('.simple-area');
+                if (div.classList.contains('open')) {
+                    if(detail) detail.style.display = 'block';
+                    if(simple) simple.style.display = 'none';
+                } else {
+                    if(detail) detail.style.display = 'none';
+                    if(simple) simple.style.display = 'flex';
+                }
+            };
+    
+            let html = isOver ? `<div style="background:#d32f2f; color:white; font-size:14px; text-align:center; margin:-12px -12px 10px -12px; padding:5px; font-weight:bold;">⚠️ 超過しています</div>` : '';
+    
+            if (item.isEditing) {
+                // 【修正モード】
+                html += `
+                    <div style="background:#fffbe6; padding:10px; border:2px solid #ECB22E; border-radius:8px;">
+                        <label style="font-weight:bold; font-size:12px;">施設名</label>
+                        <input id="edit-f-${item.id}" style="width:100%; font-size:18px; padding:8px; margin-bottom:10px;" value="${item.facility}">
+                        <label style="font-weight:bold; font-size:12px;">開始担当者</label>
+                        <input id="edit-u-${item.id}" style="width:100%; font-size:18px; padding:8px; margin-bottom:10px;" value="${item.startUser}">
+                        ${!isMon ? `<label style="font-weight:bold; font-size:12px;">終了担当者</label><input id="edit-su-${item.id}" style="width:100%; font-size:18px; padding:8px;" value="${item.stopUser || ''}">` : ''}
+                    </div>`;
+            } else {
+                // 【通常・履歴表示】
+                // 閉じている時の簡易表示
+                html += `
+                    <div class="simple-area" style="display:${isOpen ? 'none' : 'flex'}; justify-content:space-between; align-items:center;">
+                        <b style="font-size:18px; color:#000;">${item.facility}</b>
+                        <span style="font-size:14px; color:#666; font-weight:bold;">${dateStr} ${timeStr} 停止 ▼</span>
+                    </div>`;
+    
+                // 開いている時の詳細表示
+                html += `
+                    <div class="detail-area" style="display:${isOpen ? 'block' : 'none'};">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <b style="font-size:22px; color:#000;">${item.facility}</b>
+                            <span style="font-size:12px; padding:4px 8px; background:${isMon?'#000':'#eee'}; color:${isMon?'#ECB22E':'#666'}; font-weight:bold; border-radius:4px;">
+                                ${isMon ? '給水中' : '停止済 ▲'}
+                            </span>
+                        </div>
+                        
+                        <div style="margin-top:10px; background:#f0f0f0; padding:12px; border-radius:8px; border:1px solid #000;">
+                            <div style="font-size:14px; font-weight:bold; color:#444;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
+                            <div style="font-size:2.4rem; font-weight:900; color:#000; line-height:1.1;">${timeStr}</div>
+                            <div style="font-size:14px; color:#666; font-weight:bold;">${targetDate.getFullYear()}/${dateStr}</div>
+                            
+                            ${volHtml}
+                        </div>
+    
+                        <div style="font-size:14px; color:#000; margin-top:10px; font-weight:bold;">
+                            担当: ${item.startUser}${item.stopUser ? ' → ' + item.stopUser : ''}
+                        </div>
+                    </div>`;
+            }
+    
+            // ボタンエリア
+            if (isMon || item.isEditing || isOpen) {
+                html += `
+                    <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
+                        ${item.isEditing ? 
+                            `<button style="flex:1; padding:12px; font-weight:bold; background:#2196F3; color:white; border:none; border-radius:6px;" onclick="saveEdit(${item.id})">保存</button>` : 
+                            `<button style="flex:1; padding:12px; font-weight:bold; background:#eee; color:#000; border:2px solid #000; border-radius:6px;" onclick="toggleEdit(${item.id})">内容修正</button>`
+                        }
+                        ${isMon ? 
+                            `<button style="flex:1; padding:12px; font-weight:bold; background:#d32f2f; color:white; border:none; border-radius:6px;" onclick="doStop(${item.id})">給水停止</button>` : 
+                            `<button style="flex:1; padding:12px; font-weight:bold; background:#2e7d32; color:white; border:none; border-radius:6px;" onclick="doResume(${item.id})">監視再開</button>`
+                        }
+                        <button style="width:50px; background:#fff; border:2px solid #ccc; border-radius:6px;" onclick="doDelete(${item.id})">🗑️</button>
+                    </div>`;
+            }
+    
+            div.innerHTML = html;
+            listDiv.appendChild(div);
+        });
+    
+        const alertEl = document.getElementById('top-alert');
+        if (alertEl) alertEl.style.display = activeCount > 0 ? 'block' : 'none';
+    }
     
 
     function toggleEdit(id) { monitorItems.find(i => i.id === id).isEditing = true; updateMonitorList(); }
@@ -863,6 +903,7 @@ async function doResume(id) {
 </body>
 
 </html>
+
 
 
 
