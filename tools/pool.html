@@ -94,8 +94,8 @@
         <div style="flex:1;"><label>同期ID</label><input type="password" id="gid" placeholder="ID" autocomplete="off" onfocus="this.type='text'" onblur="this.type='password'"></div>
         <div style="flex:1;"><label>PASS</label><input type="password" id="gpw" placeholder="PASS" autocomplete="off" onfocus="this.type='text'" onblur="this.type='password'"></div>
         <div style="flex:0.9; margin-bottom:8px;">
-          <button id="syncBtn" onclick="syncData()" class="btn-sm btn-blue" style="height:40px; width:100%;">同期</button>
           <div id="syncStatus" class="sync-status"></div>
+          <button id="syncBtn" onclick="syncData()" class="btn-sm btn-blue" style="height:40px; width:100%;">同期</button>
         </div>
         <div style="flex:0.5; margin-bottom:8px;"><button onclick="toggleConfig()" style="font-size:10px; height:40px; padding:5px;">設定⚙</button></div>
       </div>
@@ -578,7 +578,7 @@
       listDiv.innerHTML = '';
       let activeCount = 0;
     
-      // 指示：監視中を上、それ以外は最新順(ID降順)
+      // 最新順（監視中を上、あとはID降順）
       monitorItems.sort((a, b) => {
         if (a.status === 'active' && b.status !== 'active') return -1;
         if (a.status !== 'active' && b.status === 'active') return 1;
@@ -592,76 +592,90 @@
         const targetMs = item.limitTimeMs;
         const isOver = isMon && targetMs && Date.now() > targetMs;
         const displayMs = isMon ? targetMs : (item.stopTimeMs || targetMs);
+        
+        // 指示：年月日と時間をしっかり表示
         const timeStr = displayMs ? fmtTime(displayMs) : '--:--';
         const dateTimeStr = displayMs ? fmtDateTime(displayMs) : '—';
     
-        let volHtml = '';
-        if (isMon && item.totalVolM3 > 0 && item.createdAtMs && targetMs) {
-          const totalMs = targetMs - item.createdAtMs;
-          const elapsedMs = Math.max(0, Math.min(totalMs, Date.now() - item.createdAtMs));
-          const progress = totalMs > 0 ? (elapsedMs / totalMs) : 0;
-          const currentVol = (item.totalVolM3 * progress);
-          const remainingVol = Math.max(0, item.totalVolM3 - currentVol);
-          volHtml = `
-            <div class="vol-panel" style="background:#000; color:#fff; padding:10px; border-radius:8px; border:2px solid #ECB22E; margin-top:10px;">
-              <div style="font-size:13px; color:#ccc; font-weight:900;">現在 / 残り / MAX</div>
-              <div style="font-size:1.6rem; font-weight:900;">
-                ${currentVol.toFixed(1)} / <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> / ${item.totalVolM3.toFixed(1)} <span style="font-size:14px;">m³</span>
-              </div>
-            </div>`;
-        }
-    
         const div = document.createElement('div');
         const isEditing = !!item.isEditing;
-        // 指示：監視中か修正中は最初から展開。履歴はclassListで判定
+        
+        // 監視中・修正中は常に展開。履歴はクリックで open クラスを切り替え
         const isOpen = isMon || isEditing || div.classList.contains('open');
         div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
     
-        // 指示：履歴のみクリックで展開
+        // 指示：履歴のみクリックで確実に開閉
         if (!isMon && !isEditing) {
           div.onclick = (e) => {
+            // ボタンや入力欄のクリック時は開閉させない
             if (e.target.closest('button') || e.target.closest('input')) return;
             div.classList.toggle('open');
-            updateMonitorList(); 
+            updateMonitorList(); // 表示を更新
           };
         }
     
         let html = isOver ? `<div style="background:#d32f2f; color:#fff; font-size:16px; text-align:center; padding:8px; font-weight:900; margin-bottom:10px;">🚨 満水時刻超過 🚨</div>` : '';
     
         if (isEditing) {
-          // 指示：内容修正を押した際、3箇所を一度に修正できる入力欄
+          // 指示：1回で3箇所直せる修正パネル
           html += `
-            <div style="background:#fffbe6; padding:12px; border:3px solid #ECB22E; border-radius:8px;">
-              <label style="font-weight:900; font-size:14px;">施設名</label>
-              <input id="edit-f-${item.id}" class="edit-input" value="${escapeHtml(item.facility)}" style="width:100%; padding:10px; border:2px solid #000; margin-bottom:10px;">
-              <label style="font-weight:900; font-size:14px;">開始担当者</label>
-              <input id="edit-u-${item.id}" class="edit-input" value="${escapeHtml(item.startUser)}" style="width:100%; padding:10px; border:2px solid #000; margin-bottom:10px;">
-              ${!isMon ? `<label style="font-weight:900; font-size:14px;">終了担当者</label><input id="edit-su-${item.id}" class="edit-input" value="${escapeHtml(item.stopUser || '')}" style="width:100%; padding:10px; border:2px solid #000; margin-bottom:10px;">` : ''}
-              <div style="display:flex; gap:10px; margin-top:5px;">
+            <div style="background:#fffbe6; padding:15px; border:3px solid #ECB22E; border-radius:10px;">
+              <div style="margin-bottom:10px;">
+                <label style="font-weight:900; font-size:14px;">施設名</label>
+                <input id="edit-f-${item.id}" class="edit-input" value="${escapeHtml(item.facility)}" style="width:100%; padding:12px; border:2px solid #000;">
+              </div>
+              <div style="margin-bottom:10px;">
+                <label style="font-weight:900; font-size:14px;">開始担当者</label>
+                <input id="edit-u-${item.id}" class="edit-input" value="${escapeHtml(item.startUser)}" style="width:100%; padding:12px; border:2px solid #000;">
+              </div>
+              ${!isMon ? `
+              <div style="margin-bottom:10px;">
+                <label style="font-weight:900; font-size:14px;">終了担当者</label>
+                <input id="edit-su-${item.id}" class="edit-input" value="${escapeHtml(item.stopUser || '')}" style="width:100%; padding:12px; border:2px solid #000;">
+              </div>` : ''}
+              <div style="display:flex; gap:10px; margin-top:15px;">
                 <button style="flex:1; padding:15px; font-weight:900; background:#2e7d32; color:#fff; border:none; border-radius:8px;" onclick="saveEdit(${item.id})">✅ 保存</button>
                 <button style="flex:1; padding:15px; font-weight:900; background:#eee; color:#000; border:2px solid #000; border-radius:8px;" onclick="toggleEdit(${item.id})">中止</button>
               </div>
             </div>`;
         } else {
           if (!isMon && !isOpen) {
-            // 閉じている時
+            // 履歴（閉じている時）
             html += `
-              <div class="simple-area" style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="font-size:20px; color:#000;">${escapeHtml(item.facility)}</b>
-                <span style="font-size:15px; color:#444; font-weight:900;">${timeStr} 停止 ▼</span>
+              <div class="simple-area" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                <b style="font-size:20px;">${escapeHtml(item.facility)}</b>
+                <span style="font-size:15px; font-weight:900; color:#444;">${dateTimeStr} 停止 ▼</span>
               </div>`;
           } else {
-            // 展開時
+            // 監視中 または 履歴（展開時）
+            let volHtml = '';
+            if (isMon && item.totalVolM3 > 0 && item.createdAtMs && targetMs) {
+              const totalMs = targetMs - item.createdAtMs;
+              const elapsedMs = Math.max(0, Math.min(totalMs, Date.now() - item.createdAtMs));
+              const progress = totalMs > 0 ? (elapsedMs / totalMs) : 0;
+              const currentVol = (item.totalVolM3 * progress);
+              const remainingVol = Math.max(0, item.totalVolM3 - currentVol);
+              volHtml = `
+                <div style="background:#000; color:#fff; padding:12px; border-radius:8px; border:2px solid #ECB22E; margin-top:10px;">
+                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">現在 / 残り / MAX</div>
+                  <div style="font-size:1.8rem; font-weight:900;">
+                    ${currentVol.toFixed(1)} / <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> / ${item.totalVolM3.toFixed(1)} <span style="font-size:16px;">m³</span>
+                  </div>
+                </div>`;
+            }
+    
             html += `
               <div class="detail-area">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;">
-                  <b style="font-size:24px; color:#000;">${escapeHtml(item.facility)}</b>
-                  <span style="font-size:13px; padding:5px 10px; background:${isMon?'#000':'#eee'}; color:${isMon?'#ECB22E':'#666'}; font-weight:900; border-radius:6px;">${isMon ? '給水中' : '履歴 ▲'}</span>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                  <b style="font-size:24px;">${escapeHtml(item.facility)}</b>
+                  <span style="font-size:12px; padding:4px 10px; background:${isMon?'#000':'#eee'}; color:${isMon?'#ECB22E':'#666'}; font-weight:900; border-radius:6px;">
+                    ${isMon ? '給水中' : '履歴 ▲'}
+                  </span>
                 </div>
-                <div class="time-panel" style="background:#f0f0f0; padding:15px; border:2px solid #000; border-radius:10px;">
-                  <div style="font-size:15px; font-weight:900;">${isMon ? '満水予定' : '停止時刻'}</div>
-                  <div style="font-size:3.2rem; font-weight:900; line-height:1;">${timeStr}</div>
-                  <div style="font-size:16px; font-weight:900;">${dateTimeStr}</div>
+                <div style="background:#f0f0f0; padding:15px; border:2px solid #000; border-radius:10px;">
+                  <div style="font-size:15px; font-weight:900;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
+                  <div style="font-size:3.5rem; font-weight:900; line-height:1; color:#000;">${timeStr}</div>
+                  <div style="font-size:18px; font-weight:900; color:#444;">${dateTimeStr}</div>
                   ${volHtml}
                 </div>
                 <div style="font-size:16px; color:#000; margin-top:12px; font-weight:900;">
@@ -669,10 +683,10 @@
                 </div>
               </div>
               <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
-                <button style="flex:1; padding:14px; font-weight:900; background:#eee; color:#000; border:2px solid #000; border-radius:8px;" onclick="toggleEdit(${item.id}); event.stopPropagation();">内容修正</button>
+                <button style="flex:1; padding:15px; font-weight:900; background:#eee; color:#000; border:2px solid #000; border-radius:8px;" onclick="toggleEdit(${item.id}); event.stopPropagation();">内容修正</button>
                 ${isMon
-                  ? `<button style="flex:1; padding:14px; font-weight:900; background:#d32f2f; color:#fff; border:none; border-radius:8px;" onclick="doStop(${item.id}); event.stopPropagation();">給水停止</button>`
-                  : `<button style="flex:1; padding:14px; font-weight:900; background:#2e7d32; color:#fff; border:none; border-radius:8px;" onclick="doResume(${item.id}); event.stopPropagation();">再開</button>`
+                  ? `<button style="flex:1; padding:15px; font-weight:900; background:#d32f2f; color:#fff; border:none; border-radius:8px;" onclick="doStop(${item.id}); event.stopPropagation();">給水停止</button>`
+                  : `<button style="flex:1; padding:15px; font-weight:900; background:#2e7d32; color:#fff; border:none; border-radius:8px;" onclick="doResume(${item.id}); event.stopPropagation();">監視再開</button>`
                 }
                 <button style="width:60px; background:#fff; border:2px solid #ccc; border-radius:8px;" onclick="doDelete(${item.id}); event.stopPropagation();">🗑️</button>
               </div>`;
@@ -695,28 +709,36 @@
     }
 
     async function saveEdit(id) {
-        const item = monitorItems.find(i => i.id === id);
-        const facility = document.getElementById(`edit-f-${id}`).value;
-        const startUser = document.getElementById(`edit-u-${id}`).value;
-        const stopUser = document.getElementById(`edit-su-${id}`)?.value || "";
+      const item = monitorItems.find(i => i.id === id);
+      const facility = document.getElementById(`edit-f-${id}`).value;
+      const startUser = document.getElementById(`edit-u-${id}`).value;
+      const stopUserEl = document.getElementById(`edit-su-${id}`);
+      const stopUser = stopUserEl ? stopUserEl.value : "";
     
-        if (!facility || !startUser) return alert("必須項目が空です");
+      if (!facility || !startUser) {
+        alert("必須項目が空です");
+        return;
+      }
     
-        try {
-            await apiFetch("/update-item", {
-                poolId: id,
-                facility: facility,
-                startUser: startUser,
-                stopUser: stopUser
-            });
-            item.facility = facility;
-            item.startUser = startUser;
-            item.stopUser = stopUser;
-            item.isEditing = false;
-            updateMonitorList();
-        } catch (e) {
-            alert("保存失敗: " + e.message);
-        }
+      try {
+        // サーバー更新
+        await apiFetch("/update-item", {
+          poolId: id,
+          facility: facility,
+          startUser: startUser,
+          stopUser: stopUser
+        });
+    
+        // データの更新
+        item.facility = facility;
+        item.startUser = startUser;
+        item.stopUser = stopUser;
+        item.isEditing = false;
+        
+        updateMonitorList();
+      } catch (e) {
+        alert("保存に失敗しました: " + e.message);
+      }
     }
 
     async function doStop(id) {
@@ -771,4 +793,5 @@
   </script>
 </body>
 </html>
+
 
