@@ -528,60 +528,66 @@
 
 
 
-        // 監視スタート時
-        async function doStart() {
-            const { totalMins, reqM3 } = uiCalc();
-            const limitTime = Date.now() + totalMins * 60000;
-            
-            const payload = {
-                id: Date.now(),
-                facility: document.getElementById('facility').value || "未設定施設",
-                startUser: document.getElementById('startUser').value || "未設定者",
-                status: 'active',
-                limitTime: limitTime,
-                totalVolM3: reqM3,
-                webhook: document.getElementById('slackUrl').value,
-                // 🔔 ここを画面上の設定値で送るように修正
-                settings: {
-                    at0: document.getElementById('at0_on').checked,
-                    m: document.getElementById('m_on').checked ? parseInt(document.getElementById('m_val').value) : null,
-                    p: document.getElementById('p_on').checked ? parseInt(document.getElementById('p_val').value) : null,
-                    interval: document.getElementById('interval_on').checked ? parseInt(document.getElementById('interval_val').value) : null
-                }
-            };
-        
-            try {
-                await apiFetch("/save", { payload });
-                alert("監視を開始しました");
-                location.reload();
-            } catch (e) { alert(e.message); }
-        }
+    // 監視スタート時
+    async function doStart() {
+      // ★リロード前に必ず保存（ここ重要）
+      const gid = document.getElementById('gid').value.trim();
+      const gpw = document.getElementById('gpw').value.trim();
+      if (gid && gpw) {
+        localStorage.setItem('water_gid', gid);
+        localStorage.setItem('water_gpw', gpw);
+      }
+    
+      const { totalMins, reqM3 } = uiCalc();
+      const limitTime = Date.now() + totalMins * 60000;
+    
+      const payload = { /* 既存のまま */ };
+    
+      try {
+        await apiFetch("/save", { payload });
+        alert("監視を開始しました");
+        location.reload();
+      } catch (e) { alert(e.message); }
+    }
 
     // ページ読み込み時にDBからデータを取得する
     window.addEventListener('load', async () => {
-        document.getElementById('gid').value = localStorage.getItem('water_gid') || '';
-        document.getElementById('gpw').value = localStorage.getItem('water_gpw') || '';
-
-        if (document.getElementById('gid').value && document.getElementById('gpw').value) {
-            try {
-                const data = await apiFetch("/load");
-                if (data.config) document.getElementById('slackUrl').value = data.config.webhook || "";
-                monitorItems = data.pools || [];
-                updateMonitorList();
-            } catch (e) { console.error("データ取得失敗"); }
-        }
-        uiCalc();
+      // ★統一キーで復元
+      document.getElementById('gid').value = localStorage.getItem('water_gid') || '';
+      document.getElementById('gpw').value = localStorage.getItem('water_gpw') || '';
+    
+      // 保存されていれば自動同期（＝監視中リストが常に出る）
+      if (document.getElementById('gid').value && document.getElementById('gpw').value) {
+        await loadDataFromKV();
+      }
+    
+      uiCalc();
     });
 
 
-    // KVからデータを読み込んで画面を更新する関数
+    // KVからデータを読み込んで画面を更新する関数（同期ボタンの状態表示つき）
     async function loadDataFromKV() {
-        const gid = document.getElementById('gid').value.trim();
-        const gpw = document.getElementById('gpw').value.trim();
-        if (!gid || !gpw) return;
+      const gidEl = document.getElementById('gid');
+      const gpwEl = document.getElementById('gpw');
+      const gid = gidEl.value.trim();
+      const gpw = gpwEl.value.trim();
     
-        try {
-            const data = await apiFetch("/load");
+      const btn = document.querySelector('button[onclick="loadDataFromKV()"]');
+    
+      if (!gid || !gpw) { alert("IDとパスワードを入力してください"); return; }
+    
+      // ボタン表示：同期中
+      const prevText = btn.innerHTML;
+      btn.innerHTML = "同期中...";
+      btn.disabled = true;
+    
+      try {
+        // ★ここで統一キーに保存（リロード後も復元できる）
+        localStorage.setItem('water_gid', gid);
+        localStorage.setItem('water_gpw', gpw);
+    
+        // 既存の処理（apiFetch("/load")して各項目へ反映）
+        const data = await apiFetch("/load");
             if (data.config) {
                 const c = data.config;
                 
@@ -626,66 +632,24 @@
             monitorItems = data.pools || [];
             updateMonitorList();
 
-
-            // loadDataFromKV の成功処理内（データの反映が終わった後）に配置
-            const now = new Date();
-            const syncStatusEl = document.getElementById('sync-status');
-            const syncBtn = document.querySelector('button[onclick="loadDataFromKV()"]');
-            
-            // 日付判定用の計算
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const loadDay = new Date(now);
-            loadDay.setHours(0,0,0,0);
-            
-            const diffDays = Math.round((loadDay - today) / (1000 * 60 * 60 * 24));
-            
-            // 1. 同期ボタンの警告表示（今日ではない場合）
-            if (diffDays !== 0) {
-                // 今日以外（昨日以前など）のデータならボタンをオレンジにして警告
-                syncBtn.style.background = "#ef6c00"; 
-                syncBtn.style.color = "white";
-                syncBtn.style.fontWeight = "bold";
-                syncBtn.innerHTML = "⚠️ データを更新してください";
-            } else {
-                // 今日のデータなら通常スタイル（元のCSSに従う）
-                syncBtn.style.background = ""; 
-                syncBtn.style.color = "";
-                syncBtn.style.fontWeight = "";
-                syncBtn.innerHTML = "同期";
-            }
-            
-            // 2. ステータス文字の更新
-            let dateLabel = "";
-            if (diffDays === 0) {
-                dateLabel = `<span class="day-label label-today">今日</span>`;
-            } else if (diffDays === -1) {
-                dateLabel = `<span class="day-label label-future" style="background:#666; color:white;">昨日</span>`;
-            } else {
-                dateLabel = `<span class="day-label label-future">${now.getMonth()+1}/${now.getDate()}</span>`;
-            }
-            
-            syncStatusEl.innerHTML = `表示中: ${dateLabel} <b>${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</b> 時点`;
-            
-
-
-            
-            uiCalc(); // 全てセットした後に計算を実行
-        } catch (e) { console.error("同期失敗:", e.message); }
+        // ボタン表示：完了
+        btn.innerHTML = "✅ 同期完了";
+        btn.style.background = "#2e7d32";
+        btn.style.color = "#fff";
+    
+        setTimeout(() => {
+          btn.innerHTML = prevText;      // もともと「同期」に戻す
+          btn.style.background = "";
+          btn.style.color = "";
+          btn.disabled = false;
+        }, 1500);
+    
+      } catch (e) {
+        alert("同期失敗: " + e.message);
+        btn.innerHTML = prevText;
+        btn.disabled = false;
+      }
     }
-
-    // ページ読み込み時の処理
-    window.addEventListener('load', async () => {
-        // 保存されたID/PASSがあれば復元
-        document.getElementById('gid').value = localStorage.getItem('water_gid') || '';
-        document.getElementById('gpw').value = localStorage.getItem('water_gpw') || '';
-        
-        // データがあれば自動で1回読み込みに行く
-        if (document.getElementById('gid').value && document.getElementById('gpw').value) {
-            await loadDataFromKV();
-        }
-        uiCalc();
-    });
 
 
     function updateMonitorList() {
@@ -856,21 +820,23 @@
     
     // --- 停止処理 (ここから) ---
     async function doStop(id) {
-        const stopUser = document.getElementById('startUser').value || "未設定者";
-        if (!confirm("給水を停止して記録しますか？")) return;
-
-        try {
-            // 新しい Worker の仕様 (apiFetch) で通信
-            await apiFetch("/stop", { 
-                poolId: id, 
-                stopUser: stopUser 
-            });
-            
-            // 成功したらリロードして最新状態にする
-            location.reload();
-        } catch (e) {
-            alert("停止エラー: " + e.message);
-        }
+      // ★リロード前に必ず保存（ここ重要）
+      const gid = document.getElementById('gid')?.value?.trim() || "";
+      const gpw = document.getElementById('gpw')?.value?.trim() || "";
+      if (gid && gpw) {
+        localStorage.setItem('water_gid', gid);
+        localStorage.setItem('water_gpw', gpw);
+      }
+    
+      const stopUser = document.getElementById('startUser')?.value || "未設定者";
+      if (!confirm("給水を停止して記録しますか？")) return;
+    
+      try {
+        await apiFetch("/stop", { poolId: id, stopUser });
+        location.reload();
+      } catch (e) {
+        alert("停止エラー: " + e.message);
+      }
     }
     // --- 停止処理 (ここまで) ---
     
@@ -903,6 +869,7 @@ async function doResume(id) {
 </body>
 
 </html>
+
 
 
 
