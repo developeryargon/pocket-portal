@@ -19,10 +19,7 @@
     <style>
         :root { --main: #4A154B; --active: #ECB22E; --bg: #f4f7f9; --stop: #d32f2f; --alert: #ff5252; }
         * { box-sizing: border-box; }
-        body {
-            background: #fff; /* 真っ白にして反射を抑える */
-            color: #000;
-        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 8px; margin: 0; font-size: 14px; }
         #top-alert {
             background: var(--alert);
             color: white;
@@ -48,19 +45,12 @@
         .sub-toggle button { font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
         .sub-toggle button.active { background: #666; color: #fff; border-color: #666; }
         label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 2px; }
-        input, select {
-            border: 2px solid #000 !important;
-            font-size: 16px !important; /* スマホでズームされないサイズ */
-            color: #000 !important;
-        }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 8px; background: #fff; }
         .grid-3 { display: flex; gap: 4px; }
         .grid-3 div { flex: 1; }
         .result-panel { background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 12px; margin: 10px 0; text-align: center; color: #2e7d32; min-height: 110px; display: flex; flex-direction: column; justify-content: center; }
         .finish-time { font-size: 32px; font-weight: bold; display: block; line-height: 1.2; color: #1b5e20; }
-        .monitor-item {
-            background: #fff;
-            border: 1px solid #ccc;
-        }
+        .monitor-item { border-left: 5px solid var(--active); padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .item-btns { display: flex; gap: 5px; margin-top: 8px; }
         .btn-sm { flex: 1; padding: 8px; font-size: 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; }
         .btn-red { background: var(--stop); }
@@ -138,13 +128,7 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        .monitor-item.open {
-            background: #fafafa;
-        }
-        /* ボタンも大きく押しやすく */
-        button {
-            min-height: 44px;
-        }
+        
         /* 修正モード中は詳細を強制表示 */
         .monitor-item.open .detail-content {
             display: block !important;
@@ -919,6 +903,7 @@ async function doResume(id) {
 </body>
 
 </html>
+
 
 
 
