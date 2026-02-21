@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>水監視マネージャー</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>水監視マネージャー</title>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V96DZHTH1"></script>
@@ -15,889 +15,837 @@
   </script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6758339830570094" crossorigin="anonymous"></script>
 
-    
-    <style>
-        :root { --main: #4A154B; --active: #ECB22E; --bg: #f4f7f9; --stop: #d32f2f; --alert: #ff5252; }
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 8px; margin: 0; font-size: 14px; }
-        #top-alert {
-            background: var(--alert);
-            color: white;
-            text-align: center;
-            padding: 8px;
-            font-weight: bold;
-            position: sticky; 
-            top: 58px; /* 🔔 ここをヘッダーの高さに合わせて調整 */
-            z-index: 40; /* 🔔 ヘッダー(z-50)より少し背面に設定 */
-            border-radius: 0 0 10px 10px;
-            margin: 0 -8px 10px -8px; /* marginの調整 */
-            display: none;
-        }
-        .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px; }
-        h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--main); border-left: 4px solid var(--main); padding-left: 8px; }
-        .selector-row { display: flex; justify-content: space-around; padding: 8px; background: #eee; border-radius: 8px; align-items: center; margin-top: 10px; }
-        .selector-row label { display: flex; align-items: center; font-size: 14px; font-weight: bold; cursor: pointer; color: #333; margin: 0; }
-        .selector-row input { width: auto; margin-right: 4px; }
-        .tab-group { display: flex; gap: 4px; margin: 10px 0; background: #ddd; padding: 2px; border-radius: 6px; }
-        .tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 11px; border-radius: 4px; cursor: pointer; border: none; background: none; font-weight: bold; color: #555; }
-        .tab.active { background: white; color: var(--main); }
-        .sub-toggle { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
-        .sub-toggle button { font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
-        .sub-toggle button.active { background: #666; color: #fff; border-color: #666; }
-        label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 2px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 8px; background: #fff; }
-        .grid-3 { display: flex; gap: 4px; }
-        .grid-3 div { flex: 1; }
-        .result-panel { background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 12px; margin: 10px 0; text-align: center; color: #2e7d32; min-height: 110px; display: flex; flex-direction: column; justify-content: center; }
-        .finish-time { font-size: 32px; font-weight: bold; display: block; line-height: 1.2; color: #1b5e20; }
-        .monitor-item { border-left: 5px solid var(--active); padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .item-btns { display: flex; gap: 5px; margin-top: 8px; }
-        .btn-sm { flex: 1; padding: 8px; font-size: 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; }
-        .btn-red { background: var(--stop); }
-        .btn-blue { background: #2196F3; }
-        .btn-gray { background: #777; }
-        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 17px; cursor: pointer; color: white; margin-top: 10px; background: var(--main); }
-        .hidden { display: none !important; }
-        .edit-input { font-size: 12px; padding: 5px; margin-bottom: 4px; width: 100%; border: 1px solid var(--active); }
-        /* 危険な警告用スタイル */
-        .danger-alert {
-            background: #fff0f0 !important;
-            border: 2px solid #ff0000 !important;
-            animation: blink 1s infinite;
-        }
-        .alert-banner {
-            background: #ff0000;
-            color: white;
-            text-align: center;
-            font-weight: bold;
-            padding: 4px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-        }
-        .text-danger { color: #ff0000; font-weight: bold; font-size: 1.2rem; }
+  <style>
+    :root { --main: #4A154B; --active: #ECB22E; --bg: #f4f7f9; --stop: #d32f2f; --alert: #ff5252; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 8px; margin: 0; font-size: 14px; }
 
-        /* 日付強調スタイル */
-        .day-label {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
-        .label-today { background: #e3f2fd; color: #1976d2; border: 1px solid #1976d2; } /* 今日は青系 */
-        .label-tomorrow { background: #fff3e0; color: #ef6c00; border: 1px solid #ef6c00; } /* 明日はオレンジ系 */
-        .label-future { background: #f3e5f5; color: #7b1fa2; border: 1px solid #7b1fa2; } /* 明後日以降は紫系 */
-        
-        .time-focus {
-            font-size: 1.5rem; /* 時刻を大きく */
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-        
-        @keyframes blink {
-            0% { box-shadow: 0 0 0px #ff0000; }
-            50% { box-shadow: 0 0 20px #ff0000; }
-            100% { box-shadow: 0 0 0px #ff0000; }
-        }
-        /* 折りたたみ用のスタイル */
-        .monitor-item.finished {
-            padding: 8px 12px;
-            cursor: pointer;
-            background: #fcfcfc;
-        }
-        .monitor-item.finished .detail-content {
-            display: none; /* 初期状態は非表示 */
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #ccc;
-        }
-        .monitor-item.finished.open .detail-content {
-            display: block; /* クリックで表示 */
-        }
-        .expand-icon::after { content: ' ▼'; font-size: 10px; color: #999; }
-        .open .expand-icon::after { content: ' ▲'; }
+    #top-alert{
+      background: var(--alert);
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      position: sticky;
+      top: 58px;
+      z-index: 40;
+      border-radius: 0 0 10px 10px;
+      margin: 0 -8px 10px -8px;
+      display: none;
+    }
 
-        /* 修正モード用スタイル */
-        .edit-input {
-            display: block;
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        /* 修正モード中は詳細を強制表示 */
-        .monitor-item.open .detail-content {
-            display: block !important;
-        }
-                
-    </style>
+    .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px; }
+    h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--main); border-left: 4px solid var(--main); padding-left: 8px; }
+    .selector-row { display: flex; justify-content: space-around; padding: 8px; background: #eee; border-radius: 8px; align-items: center; margin-top: 10px; }
+    .selector-row label { display: flex; align-items: center; font-size: 14px; font-weight: bold; cursor: pointer; color: #333; margin: 0; }
+    .selector-row input { width: auto; margin-right: 4px; }
+    .tab-group { display: flex; gap: 4px; margin: 10px 0; background: #ddd; padding: 2px; border-radius: 6px; }
+    .tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 11px; border-radius: 4px; cursor: pointer; border: none; background: none; font-weight: bold; color: #555; }
+    .tab.active { background: white; color: var(--main); }
+    .sub-toggle { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+    .sub-toggle button { font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .sub-toggle button.active { background: #666; color: #fff; border-color: #666; }
+
+    label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 2px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 8px; background: #fff; }
+    .grid-3 { display: flex; gap: 4px; }
+    .grid-3 div { flex: 1; }
+
+    .result-panel { background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 12px; margin: 10px 0; text-align: center; color: #2e7d32; min-height: 110px; display: flex; flex-direction: column; justify-content: center; }
+    .finish-time { font-size: 32px; font-weight: bold; display: block; line-height: 1.2; color: #1b5e20; }
+
+    .monitor-item { border-left: 5px solid var(--active); padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .item-btns { display: flex; gap: 5px; margin-top: 8px; }
+    .btn-sm { flex: 1; padding: 8px; font-size: 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; }
+    .btn-red { background: var(--stop); }
+    .btn-blue { background: #2196F3; }
+    .btn-gray { background: #777; }
+    .btn-main { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 17px; cursor: pointer; color: white; margin-top: 10px; background: var(--main); }
+    .hidden { display: none !important; }
+
+    .danger-alert {
+      background: #fff0f0 !important;
+      border: 2px solid #ff0000 !important;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0% { box-shadow: 0 0 0px #ff0000; }
+      50% { box-shadow: 0 0 20px #ff0000; }
+      100% { box-shadow: 0 0 0px #ff0000; }
+    }
+
+    .day-label { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-right: 5px; vertical-align: middle; }
+    .label-today { background: #e3f2fd; color: #1976d2; border: 1px solid #1976d2; }
+    .label-future { background: #f3e5f5; color: #7b1fa2; border: 1px solid #7b1fa2; }
+
+    .monitor-item.finished { padding: 8px 12px; cursor: pointer; background: #fcfcfc; }
+  </style>
 </head>
+
 <body>
-
-<body onload="init()">
-
 <nav class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
-  <div class="container mx-auto" style="max-width:1100px; display: flex; justify-content: space-between; align-items: center;">
-    
-    <a href="../index.html" class="flex items-center font-bold text-lg text-blue-700" style="text-decoration:none; display: flex; align-items: center; white-space: nowrap;">
+  <div class="container mx-auto" style="max-width:1100px; display:flex; justify-content:space-between; align-items:center;">
+    <a href="../index.html" class="flex items-center font-bold text-lg text-blue-700" style="text-decoration:none; display:flex; align-items:center; white-space:nowrap;">
       <span style="margin-right:8px;">🏠</span> PocketPortal
     </a>
-    
-    <div style="flex: 1; text-align: right;">
-      <a href="./index.html" class="text-slate-400 hover:text-blue-500 transition-colors" style="text-decoration:none; font-size: 10px; margin-left: auto;">
+    <div style="flex:1; text-align:right;">
+      <a href="./index.html" class="text-slate-400 hover:text-blue-500 transition-colors" style="text-decoration:none; font-size:10px; margin-left:auto;">
         Web便利ツール集へ
       </a>
     </div>
-    
   </div>
 </nav>
 
-    
 <div id="top-alert">⚠️ 給水監視中</div>
 
 <div class="container" style="max-width: 600px; margin: 0 auto;">
-    
-<div class="card">
+  <div class="card">
     <div class="card">
-        <div style="display: flex; gap: 4px; align-items: flex-end;">
-        <div style="flex:1;"><label>同期ID</label><input type="password" id="gid" placeholder="ID" onfocus="this.type='text'" onblur="this.type='password'"></div>
-        <div style="flex:1;"><label>PASS</label><input type="password" id="gpw" placeholder="PASS" onfocus="this.type='text'" onblur="this.type='password'"></div>
-        <div style="flex:0.7; margin-bottom:8px;">
-            <button onclick="loadDataFromKV()" class="btn-sm btn-blue" style="height:40px; width:100%;">同期</button>
+      <div style="display:flex; gap:4px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label>同期ID</label>
+          <input type="password" id="gid" placeholder="ID" onfocus="this.type='text'" onblur="this.type='password'">
         </div>
-        <div style="flex:0.5; margin-bottom:8px;"><button onclick="toggleConfig()" style="font-size:10px; height:40px; padding:5px;">設定⚙</button></div>
-    </div>
-    
-    <div id="config-area" class="hidden" style="border-top: 1px solid #eee; padding-top: 8px; margin-top: 5px;">
+        <div style="flex:1;">
+          <label>PASS</label>
+          <input type="password" id="gpw" placeholder="PASS" onfocus="this.type='text'" onblur="this.type='password'">
+        </div>
+        <div style="flex:0.7; margin-bottom:8px;">
+          <button id="syncBtn" onclick="loadDataFromKV()" class="btn-sm btn-blue" style="height:40px; width:100%;">同期</button>
+        </div>
+        <div style="flex:0.5; margin-bottom:8px;">
+          <button onclick="toggleConfig()" style="font-size:10px; height:40px; padding:5px;">設定⚙</button>
+        </div>
+      </div>
+
+      <div id="sync-status" style="font-size:11px; color:#666; margin-top:6px;"></div>
+
+      <div id="config-area" class="hidden" style="border-top: 1px solid #eee; padding-top: 8px; margin-top: 5px;">
         <label>Slack Webhook URL</label>
         <input type="password" id="slackUrl" placeholder="https://hooks.slack.com/..." onfocus="this.type='text'" onblur="this.type='password'">
 
         <div class="setting-item" style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
-            <label style="color: var(--main); margin-bottom: 10px; display: block;">🔔 通知設定（初期値として保存可能）</label>
-            
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="checkbox" id="at0_on" style="width: 20px; height: 20px;">
-                <span style="margin-left: 8px;">満水予定時刻に通知</span>
-            </div>
-        
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="checkbox" id="m_on" style="width: 20px; height: 20px;">
-                <span style="margin-left: 8px;">満水の <input type="number" id="m_val" value="10" style="width:45px; padding:2px;"> 分前に予告</span>
-            </div>
-        
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="checkbox" id="p_on" style="width: 20px; height: 20px;">
-                <span style="margin-left: 8px;">満水から <input type="number" id="p_val" value="5" style="width:45px; padding:2px;"> 分過ぎたら警告</span>
-            </div>
-        
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="interval_on" style="width: 20px; height: 20px;">
-                <span style="margin-left: 8px;">超過中 <input type="number" id="interval_val" value="10" style="width:45px; padding:2px;"> 分おきに再通知</span>
-            </div>
+          <label style="color: var(--main); margin-bottom: 10px; display: block;">🔔 通知設定（初期値として保存可能）</label>
+
+          <div style="display:flex; align-items:center; margin-bottom:10px;">
+            <input type="checkbox" id="at0_on" style="width:20px; height:20px;">
+            <span style="margin-left:8px;">満水予定時刻に通知</span>
+          </div>
+
+          <div style="display:flex; align-items:center; margin-bottom:10px;">
+            <input type="checkbox" id="m_on" style="width:20px; height:20px;">
+            <span style="margin-left:8px;">満水の <input type="number" id="m_val" value="10" style="width:45px; padding:2px;"> 分前に予告</span>
+          </div>
+
+          <div style="display:flex; align-items:center; margin-bottom:10px;">
+            <input type="checkbox" id="p_on" style="width:20px; height:20px;">
+            <span style="margin-left:8px;">満水から <input type="number" id="p_val" value="5" style="width:45px; padding:2px;"> 分過ぎたら警告</span>
+          </div>
+
+          <div style="display:flex; align-items:center;">
+            <input type="checkbox" id="interval_on" style="width:20px; height:20px;">
+            <span style="margin-left:8px;">超過中 <input type="number" id="interval_val" value="10" style="width:45px; padding:2px;"> 分おきに再通知</span>
+          </div>
         </div>
-        
-        <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <a href="user_reg.html" style="font-size: 11px; color: #2196F3;">👤 ユーザーID/PASS登録画面へ</a>
-            <a href="help.html" style="font-size: 11px; color: #2196F3;">❓ ヘルプ</a>
+
+        <div style="display:flex; gap:10px; margin-top:5px;">
+          <a href="user_reg.html" style="font-size:11px; color:#2196F3;">👤 ユーザーID/PASS登録画面へ</a>
+          <a href="help.html" style="font-size:11px; color:#2196F3;">❓ ヘルプ</a>
         </div>
         <button onclick="saveInitialData()" class="btn-sm btn-blue" style="margin-top:10px; width:100%;">この設定を初期値として登録</button>
-    </div>
+      </div>
 
-    <div class="selector-row">
+      <div class="selector-row">
         <label><input type="radio" name="unit" value="㎥" checked onchange="convertVolUnit('㎥')"> ㎥</label>
         <label><input type="radio" name="unit" value="ℓ" onchange="convertVolUnit('ℓ')"> ℓ</label>
         <label><input type="radio" name="unit" value="t" onchange="convertVolUnit('t')"> t</label>
         <div style="border-left: 1px solid #ccc; height: 20px; margin: 0 5px;"></div>
         <label><input type="radio" name="t_unit" value="分" onchange="convertTimeUnit('分')"> /分</label>
         <label><input type="radio" name="t_unit" value="時" checked onchange="convertTimeUnit('時')"> /時</label>
-    </div>
-</div>
-
-<div class="card">
-    <h3>🌊 給水登録</h3>
-    <div class="tab-group">
-        <button id="tab-size" class="tab active" onclick="setMode('size')">サイズ入力</button>
-        <button id="tab-vol" class="tab" onclick="setMode('vol')">水量直接</button>
-        <button id="tab-time" class="tab" onclick="setMode('time')">日時・時間指定</button>
-    </div>
-
-    <div id="flow-input-area">
-        <label id="flowLabel">給水能力 (㎥/時)</label>
-        <input type="number" id="flowRate" value="18" oninput="uiCalc()">
-    </div>
-
-    <div id="mode-size">
-        <div class="grid-3">
-            <div><label>長さ(m)</label><input type="number" id="L" value="25" oninput="uiCalc()"></div>
-            <div><label>幅(m)</label><input type="number" id="W" value="12" oninput="uiCalc()"></div>
-            <div><label>深さ(m)</label><input type="number" id="D" value="1.2" oninput="uiCalc()"></div>
-        </div>
-        <label>現在量 (%)</label>
-        <input type="number" id="currentPer" value="0" oninput="uiCalc()">
-    </div>
-
-    <div id="mode-vol" class="hidden">
-        <label id="manualVolLabel">必要水量 (㎥)</label>
-        <input type="number" id="manualVol" value="360" oninput="uiCalc()">
-    </div>
-
-    <div id="mode-time" class="hidden">
-        <div class="sub-toggle">
-            <button id="sub-rel" class="active" onclick="setSubTimeMode('rel')">残り時間</button>
-            <button id="sub-abs" onclick="setSubTimeMode('abs')">完了日時で指定</button>
-        </div>
-        <div id="time-rel-area">
-            <div class="grid-3">
-                <div style="flex:1;"><label>時間</label><input type="number" id="manualHrs" value="5" oninput="uiCalc()"></div>
-                <div style="flex:1;"><label>分</label><input type="number" id="manualMin" value="0" oninput="uiCalc()"></div>
-            </div>
-        </div>
-        <div id="time-abs-area" class="hidden">
-            <div class="grid-3">
-                <div style="flex:1.5;"><label>完了日</label><input type="date" id="absDate" onchange="uiCalc()"></div>
-                <div><label>時</label><select id="absHour" onchange="uiCalc()"></select></div>
-                <div><label>分</label><select id="absMin" onchange="uiCalc()"></select></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="result-panel">
-        <span id="finishDate" style="font-weight:bold;">----/--/--</span>
-        <span id="finishClock" class="finish-time">--:--</span>
-        <div id="detailRes" style="font-size:13px; font-weight:bold; margin-top:5px;"></div>
-    </div>
-
-    <div class="grid-3">
-        <div style="flex:2"><label>施設名</label><input type="text" id="facility" placeholder="施設名"></div>
-        <div style="flex:1"><label>担当者</label><input type="text" id="startUser" placeholder="名前"></div>
-    </div>
-    <button class="btn-main" onclick="doStart()">監視スタート</button>
-</div>
-
-<div id="monitor-list-area" class="card">
-    <h3>📡 監視状況(slackもご確認ください)</h3>
-    <div id="monitor-list"></div>
-</div>
-
-    <!-- Bottom Ads (given) -->
-    <div class="bottom-ads">
-      <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">Sponsor Link</p>
-      <div class="box bg-white p-1 rounded shadow-sm">
-        <script type="text/javascript">
-          rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770128068587";
-        </script>
-        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-
-        <script type="text/javascript">
-          rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ranking";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770559441426";
-        </script>
-        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
       </div>
     </div>
   </div>
 
-    
+  <div class="card">
+    <h3>🌊 給水登録</h3>
+
+    <div class="tab-group">
+      <button id="tab-size" class="tab active" onclick="setMode('size')">サイズ入力</button>
+      <button id="tab-vol" class="tab" onclick="setMode('vol')">水量直接</button>
+      <button id="tab-time" class="tab" onclick="setMode('time')">日時・時間指定</button>
+    </div>
+
+    <div id="flow-input-area">
+      <label id="flowLabel">給水能力 (㎥/時)</label>
+      <input type="number" id="flowRate" value="18" oninput="uiCalc()">
+    </div>
+
+    <div id="mode-size">
+      <div class="grid-3">
+        <div><label>長さ(m)</label><input type="number" id="L" value="25" oninput="uiCalc()"></div>
+        <div><label>幅(m)</label><input type="number" id="W" value="12" oninput="uiCalc()"></div>
+        <div><label>深さ(m)</label><input type="number" id="D" value="1.2" oninput="uiCalc()"></div>
+      </div>
+      <label>現在量 (%)</label>
+      <input type="number" id="currentPer" value="0" oninput="uiCalc()">
+    </div>
+
+    <div id="mode-vol" class="hidden">
+      <label id="manualVolLabel">必要水量 (㎥)</label>
+      <input type="number" id="manualVol" value="360" oninput="uiCalc()">
+    </div>
+
+    <div id="mode-time" class="hidden">
+      <div class="sub-toggle">
+        <button id="sub-rel" class="active" onclick="setSubTimeMode('rel')">残り時間</button>
+        <button id="sub-abs" onclick="setSubTimeMode('abs')">完了日時で指定</button>
+      </div>
+
+      <div id="time-rel-area">
+        <div class="grid-3">
+          <div style="flex:1;"><label>時間</label><input type="number" id="manualHrs" value="5" oninput="uiCalc()"></div>
+          <div style="flex:1;"><label>分</label><input type="number" id="manualMin" value="0" oninput="uiCalc()"></div>
+        </div>
+      </div>
+
+      <div id="time-abs-area" class="hidden">
+        <div class="grid-3">
+          <div style="flex:1.5;"><label>完了日</label><input type="date" id="absDate" onchange="uiCalc()"></div>
+          <div><label>時</label><select id="absHour" onchange="uiCalc()"></select></div>
+          <div><label>分</label><select id="absMin" onchange="uiCalc()"></select></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-panel">
+      <span id="finishDate" style="font-weight:bold;">----/--/--</span>
+      <span id="finishClock" class="finish-time">--:--</span>
+      <div id="detailRes" style="font-size:13px; font-weight:bold; margin-top:5px;"></div>
+    </div>
+
+    <div class="grid-3">
+      <div style="flex:2"><label>施設名</label><input type="text" id="facility" placeholder="施設名"></div>
+      <div style="flex:1"><label>担当者</label><input type="text" id="startUser" placeholder="名前"></div>
+    </div>
+    <button class="btn-main" onclick="doStart()">監視スタート</button>
+  </div>
+
+  <div id="monitor-list-area" class="card">
+    <h3>📡 監視状況(slackもご確認ください)</h3>
+    <div id="monitor-list"></div>
+  </div>
+
+  <!-- Bottom Ads (given) -->
+  <div class="bottom-ads">
+    <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">Sponsor Link</p>
+    <div class="box bg-white p-1 rounded shadow-sm">
+      <script type="text/javascript">
+        rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ctsmatch";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770128068587";
+      </script>
+      <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+
+      <script type="text/javascript">
+        rakuten_design="slide";rakuten_affiliateId="022cbf82.9ae811c1.06d2eb59.bd2a4ff3";rakuten_items="ranking";rakuten_genreId="0";rakuten_size="300x250";rakuten_target="_blank";rakuten_theme="gray";rakuten_border="off";rakuten_auto_mode="on";rakuten_genre_title="off";rakuten_recommend="on";rakuten_ts="1770559441426";
+      </script>
+      <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+    </div>
+  </div>
+</div>
+
 <script>
-    let currentMode = 'size';
-    let subTimeMode = 'rel';
-    let lastVolUnit = '㎥';
-    let lastTimeUnit = '時';
-    let monitorItems = [];
+  // ========= 安定化：localStorageキー統一 =========
+  const STORAGE_GID = "water_gid";
+  const STORAGE_GPW = "water_gpw";
+  const STORAGE_LAST_SYNC = "water_last_sync";
 
-    // 日時指定用セレクトボックス初期化
-    const hSelect = document.getElementById('absHour');
-    for(let i=0; i<24; i++) hSelect.add(new Option(i, i));
-    const mSelect = document.getElementById('absMin');
-    for(let i=0; i<60; i++) mSelect.add(new Option(i, i));
+  const WORKER_URL = "https://pool-api.nogray.workers.dev/api"; // ★要書き換え
 
+  let currentMode = 'size';
+  let subTimeMode = 'rel';
+  let lastVolUnit = '㎥';
+  let lastTimeUnit = '時';
+  let monitorItems = [];
 
-    // --- 設定エリアの開閉 ---
-    function toggleConfig() {
-        document.getElementById('config-area').classList.toggle('hidden');
+  // 日時指定用セレクトボックス初期化
+  const hSelect = document.getElementById('absHour');
+  for (let i = 0; i < 24; i++) hSelect.add(new Option(i, i));
+  const mSelect = document.getElementById('absMin');
+  for (let i = 0; i < 60; i++) mSelect.add(new Option(i, i));
+
+  function toggleConfig() {
+    document.getElementById('config-area').classList.toggle('hidden');
+  }
+
+  function persistCreds() {
+    const gid = document.getElementById('gid')?.value?.trim() || "";
+    const gpw = document.getElementById('gpw')?.value?.trim() || "";
+    if (gid && gpw) {
+      localStorage.setItem(STORAGE_GID, gid);
+      localStorage.setItem(STORAGE_GPW, gpw);
     }
+  }
 
-    // --- 設定値、WebhookをIDとPASSに合わせて初期値として登録 (DB保存用) ---
-    async function saveInitialData() {
-        const configPayload = {
-            webhook: document.getElementById('slackUrl').value,
-            facility: document.getElementById('facility').value,
-            startUser: document.getElementById('startUser').value,
-            unit_vol: document.querySelector('input[name="unit"]:checked').value,
-            unit_time: document.querySelector('input[name="t_unit"]:checked').value,
-            default_flow: document.getElementById('flowRate').value,
+  function restoreCredsToInputs() {
+    const gid = localStorage.getItem(STORAGE_GID) || "";
+    const gpw = localStorage.getItem(STORAGE_GPW) || "";
+    if (gid) document.getElementById('gid').value = gid;
+    if (gpw) document.getElementById('gpw').value = gpw;
+  }
 
+  function safeDate(v) {
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
-            // 🔔 通知設定も初期値として保存
-            at0: document.getElementById('at0_on').checked,
-            m_on: document.getElementById('m_on').checked,
-            m_val: document.getElementById('m_val').value,
-            p_on: document.getElementById('p_on').checked,
-            p_val: document.getElementById('p_val').value,
-            interval_on: document.getElementById('interval_on').checked,
-            interval_val: document.getElementById('interval_val').value,
-            
-            // 🟢 ここが重要：サイズと直接水量を保存対象に追加
-            L: document.getElementById('L').value,
-            W: document.getElementById('W').value,
-            D: document.getElementById('D').value,
-            manualVol: document.getElementById('manualVol').value,
-            
-            // 現在のモード（タブ）も保存
-            currentMode: currentMode 
-        };
-    
-        try {
-            await apiFetch("/save-config", { configPayload: configPayload });
-            alert("初期値を登録しました！");
-        } catch (e) { alert("保存エラー: " + e.message); }
-    }
+  function pad2(n){ return String(n).padStart(2, "0"); }
 
-    function convertVolUnit(newUnit) {
-        const inputs = ['flowRate', 'manualVol'];
-        inputs.forEach(id => {
-            let val = parseFloat(document.getElementById(id).value);
-            if (isNaN(val)) return;
-            let m3Val = (lastVolUnit === 'ℓ') ? val / 1000 : val; 
-            document.getElementById(id).value = (newUnit === 'ℓ') ? (m3Val * 1000) : m3Val;
-        });
-        lastVolUnit = newUnit;
-        uiCalc();
-    }
+  function fmtYMDHM(dateObj) {
+    if (!dateObj) return "--:--";
+    return `${dateObj.getFullYear()}/${dateObj.getMonth()+1}/${dateObj.getDate()} ${pad2(dateObj.getHours())}:${pad2(dateObj.getMinutes())}`;
+  }
 
-    function convertTimeUnit(newUnit) {
-        if (lastTimeUnit === newUnit) return;
-        let val = parseFloat(document.getElementById('flowRate').value);
-        if (!isNaN(val)) {
-            if (newUnit === '分') document.getElementById('flowRate').value = (val / 60).toFixed(2);
-            else document.getElementById('flowRate').value = (val * 60).toFixed(1);
-        }
-        lastTimeUnit = newUnit;
-        uiCalc();
-    }
+  function fmtMDHM(dateObj) {
+    if (!dateObj) return "--:--";
+    return `${dateObj.getMonth()+1}/${dateObj.getDate()} ${pad2(dateObj.getHours())}:${pad2(dateObj.getMinutes())}`;
+  }
 
-    function setMode(m) {
-        currentMode = m;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + m).classList.add('active');
-        ['mode-size', 'mode-vol', 'mode-time'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById('mode-' + m).classList.remove('hidden');
-        document.getElementById('flow-input-area').classList.toggle('hidden', m === 'time');
-        uiCalc();
-    }
+  function updateSyncStatus(ts) {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
 
-    function setSubTimeMode(sm) {
-        subTimeMode = sm;
-        document.getElementById('sub-rel').classList.toggle('active', sm === 'rel');
-        document.getElementById('sub-abs').classList.toggle('active', sm === 'abs');
-        document.getElementById('time-rel-area').classList.toggle('hidden', sm === 'abs');
-        document.getElementById('time-abs-area').classList.toggle('hidden', sm === 'rel');
-        if(sm === 'abs') {
-            const now = new Date();
-            document.getElementById('absDate').value = now.toISOString().split('T')[0];
-            document.getElementById('absHour').value = now.getHours();
-            document.getElementById('absMin').value = now.getMinutes();
-        }
-        uiCalc();
-    }
+    const d = safeDate(ts);
+    if (!d) { el.textContent = ""; return; }
 
+    const now = new Date();
+    const today = new Date(now); today.setHours(0,0,0,0);
+    const day = new Date(d); day.setHours(0,0,0,0);
+    const diffDays = Math.round((day - today) / (1000*60*60*24));
 
+    let label = `<span class="day-label label-future">${d.getMonth()+1}/${d.getDate()}</span>`;
+    if (diffDays === 0) label = `<span class="day-label label-today">今日</span>`;
+    el.innerHTML = `最終同期: ${label} <b>${pad2(d.getHours())}:${pad2(d.getMinutes())}</b>`;
+  }
 
-    const WORKER_URL = "https://pool-api.nogray.workers.dev/api"; // ★要書き換え
+  // ========= 通信 =========
+  async function apiFetch(endpoint, payload = {}) {
+    // 入力が空でも、保存値から復元して実行できるようにする
+    const gidEl = document.getElementById('gid');
+    const gpwEl = document.getElementById('gpw');
 
-    // 共通通信関数 (Worker側の認証に対応)
-    async function apiFetch(endpoint, payload = {}) {
-        const gid = document.getElementById('gid').value.trim();
-        const gpw = document.getElementById('gpw').value.trim();
-        if (!gid || !gpw) throw new Error("設定からIDとパスワードを入力してください");
+    let gid = gidEl.value.trim();
+    let gpw = gpwEl.value.trim();
 
-        const response = await fetch(`${WORKER_URL}${endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ gid, gpw, ...payload })
-        });
-        if (!response.ok) throw new Error(await response.text());
-        return await response.json();
-    }
-
-
-    // 同期ボタンの処理
-    async function syncData() {
-        const btn = document.querySelector('button[onclick="syncData()"]');
-        const gid = document.getElementById('gid').value;
-        const gpw = document.getElementById('gpw').value;
-    
-        if (!gid || !gpw) { alert("IDとパスワードを入力してください"); return; }
-    
-        try {
-            btn.innerText = "同期中...";
-            btn.disabled = true;
-    
-            // localStorageに保存（これがスマホでの再入力防止に必須）
-            localStorage.setItem('pool_gid', gid);
-            localStorage.setItem('pool_gpw', gpw);
-    
-            await loadData();
-            
-            // 完了表示
-            btn.innerText = "✅ 同期完了";
-            btn.style.background = "#2e7d32";
-            btn.style.color = "#fff";
-            
-            setTimeout(() => {
-                btn.innerText = "同期";
-                btn.style.background = "";
-                btn.style.color = "";
-                btn.disabled = false;
-            }, 2000);
-        } catch (e) {
-            alert("同期失敗: " + e.message);
-            btn.innerText = "同期";
-            btn.disabled = false;
-        }
-    }
-    
-    // 画面読み込み時に実行
-    window.onload = () => {
-        const savedId = localStorage.getItem('pool_gid');
-        const savedPw = localStorage.getItem('pool_gpw');
-        
-        if (savedId) document.getElementById('gid').value = savedId;
-        if (savedPw) document.getElementById('gpw').value = savedPw;
-        
-        // 保存された情報があれば自動でデータを読み込む
-        if (savedId && savedPw) {
-            loadData();
-        }
-    };
-
-
-
-
-    function uiCalc() {
-        const vUnit = document.querySelector('input[name="unit"]:checked').value;
-        const tUnit = document.querySelector('input[name="t_unit"]:checked').value;
-        document.getElementById('flowLabel').innerText = `給水能力 (${vUnit}/${tUnit})`;
-        document.getElementById('manualVolLabel').innerText = `必要水量 (${vUnit})`;
-
-        let totalMins = 0; let reqM3 = 0;
-        const sizeM3 = (parseFloat(document.getElementById('L').value)||0) * (parseFloat(document.getElementById('W').value)||0) * (parseFloat(document.getElementById('D').value)||0) * (1 - (parseFloat(document.getElementById('currentPer').value)||0)/100);
-
-        if (currentMode === 'time') {
-            if (subTimeMode === 'rel') {
-                totalMins = (parseInt(document.getElementById('manualHrs').value)||0)*60 + (parseInt(document.getElementById('manualMin').value)||0);
-            } else {
-                const datePart = document.getElementById('absDate').value;
-                const h = document.getElementById('absHour').value;
-                const m = document.getElementById('absMin').value;
-                if(datePart) {
-                    const target = new Date(`${datePart}T${h.padStart(2,'0')}:${m.padStart(2,'0')}:00`);
-                    totalMins = Math.max(0, (target - new Date()) / 60000);
-                }
-            }
-            reqM3 = sizeM3; 
-        } else {
-            const rawFlow = parseFloat(document.getElementById('flowRate').value) || 0.001;
-            let flowMinM3 = (vUnit === 'ℓ') ? rawFlow / 1000 : rawFlow;
-            if (tUnit === '時') flowMinM3 /= 60;
-            if (currentMode === 'size') reqM3 = sizeM3;
-            else {
-                const iv = parseFloat(document.getElementById('manualVol').value)||0;
-                reqM3 = (vUnit === 'ℓ') ? iv / 1000 : iv;
-            }
-            totalMins = reqM3 / flowMinM3;
-        }
-
-        const finish = new Date(Date.now() + totalMins * 60000);
-        document.getElementById('finishDate').innerText = finish.toLocaleDateString('ja-JP', {year:'numeric', month:'2-digit', day:'2-digit', weekday:'short'});
-        document.getElementById('finishClock').innerText = finish.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-        
-        const dh = Math.floor(totalMins / 60);
-        const dm = Math.round(totalMins % 60);
-        const m3Text = reqM3.toFixed(1);
-        const lText = Math.round(reqM3 * 1000).toLocaleString();
-        let volDisp = (vUnit === "ℓ") ? `${lText}ℓ (${m3Text}㎥)` : `${m3Text}㎥ (${lText}ℓ)`;
-
-        document.getElementById('detailRes').innerHTML = `完了まで: 約${dh}時間${dm}分<br>必要量: ${volDisp} / ${m3Text}t`;
-        return { totalMins, reqM3 };
-    }
-
-
-
-
-    // 監視スタート時
-    async function doStart() {
-      // ★リロード前に必ず保存（ここ重要）
-      const gid = document.getElementById('gid').value.trim();
-      const gpw = document.getElementById('gpw').value.trim();
-      if (gid && gpw) {
-        localStorage.setItem('water_gid', gid);
-        localStorage.setItem('water_gpw', gpw);
+    if (!gid || !gpw) {
+      const sgid = localStorage.getItem(STORAGE_GID) || "";
+      const sgpw = localStorage.getItem(STORAGE_GPW) || "";
+      if (sgid && sgpw) {
+        gid = sgid; gpw = sgpw;
+        gidEl.value = gid;
+        gpwEl.value = gpw;
       }
-    
-      const { totalMins, reqM3 } = uiCalc();
-      const limitTime = Date.now() + totalMins * 60000;
-    
-      const payload = { /* 既存のまま */ };
-    
-      try {
-        await apiFetch("/save", { payload });
-        alert("監視を開始しました");
-        location.reload();
-      } catch (e) { alert(e.message); }
     }
 
-    // ページ読み込み時にDBからデータを取得する
-    window.addEventListener('load', async () => {
-      // ★統一キーで復元
-      document.getElementById('gid').value = localStorage.getItem('water_gid') || '';
-      document.getElementById('gpw').value = localStorage.getItem('water_gpw') || '';
-    
-      // 保存されていれば自動同期（＝監視中リストが常に出る）
-      if (document.getElementById('gid').value && document.getElementById('gpw').value) {
-        await loadDataFromKV();
-      }
-    
-      uiCalc();
+    if (!gid || !gpw) throw new Error("設定からIDとパスワードを入力してください");
+
+    const response = await fetch(`${WORKER_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gid, gpw, ...payload })
     });
 
+    if (!response.ok) throw new Error(await response.text());
+    return await response.json();
+  }
 
-    // KVからデータを読み込んで画面を更新する関数（同期ボタンの状態表示つき）
-    async function loadDataFromKV() {
-      const gidEl = document.getElementById('gid');
-      const gpwEl = document.getElementById('gpw');
-      const gid = gidEl.value.trim();
-      const gpw = gpwEl.value.trim();
-    
-      const btn = document.querySelector('button[onclick="loadDataFromKV()"]');
-    
-      if (!gid || !gpw) { alert("IDとパスワードを入力してください"); return; }
-    
-      // ボタン表示：同期中
-      const prevText = btn.innerHTML;
-      btn.innerHTML = "同期中...";
-      btn.disabled = true;
-    
-      try {
-        // ★ここで統一キーに保存（リロード後も復元できる）
-        localStorage.setItem('water_gid', gid);
-        localStorage.setItem('water_gpw', gpw);
-    
-        // 既存の処理（apiFetch("/load")して各項目へ反映）
-        const data = await apiFetch("/load");
-            if (data.config) {
-                const c = data.config;
-                
-                // 既存の反映
-                if (c.webhook) document.getElementById('slackUrl').value = c.webhook;
-                document.getElementById('facility').value = c.facility || "";
-                document.getElementById('startUser').value = c.startUser || "";
-                document.getElementById('flowRate').value = c.default_flow || "18";
+  // ========= 設定保存 =========
+  async function saveInitialData() {
+    persistCreds();
+    const configPayload = {
+      webhook: document.getElementById('slackUrl').value,
+      facility: document.getElementById('facility').value,
+      startUser: document.getElementById('startUser').value,
+      unit_vol: document.querySelector('input[name="unit"]:checked').value,
+      unit_time: document.querySelector('input[name="t_unit"]:checked').value,
+      default_flow: document.getElementById('flowRate').value,
 
+      at0: document.getElementById('at0_on').checked,
+      m_on: document.getElementById('m_on').checked,
+      m_val: document.getElementById('m_val').value,
+      p_on: document.getElementById('p_on').checked,
+      p_val: document.getElementById('p_val').value,
+      interval_on: document.getElementById('interval_on').checked,
+      interval_val: document.getElementById('interval_val').value,
 
-                // 通知設定の反映（ここが反映されていなかった部分です）
-                document.getElementById('slackUrl').value = c.webhook || "";
-                document.getElementById('at0_on').checked = c.at0 !== false; // config内のat0を参照
-                document.getElementById('m_on').checked = !!c.m_on;
-                document.getElementById('m_val').value = c.m_val || "10";
-                document.getElementById('p_on').checked = !!c.p_on;
-                document.getElementById('p_val').value = c.p_val || "5";
-                document.getElementById('interval_on').checked = !!c.interval_on;
-                document.getElementById('interval_val').value = c.interval_val || "10";
-                
-                // 🟢 拡張した項目の反映
-                if(c.L) document.getElementById('L').value = c.L;
-                if(c.W) document.getElementById('W').value = c.W;
-                if(c.D) document.getElementById('D').value = c.D;
-                if(c.manualVol) document.getElementById('manualVol').value = c.manualVol;
-                document.getElementById('currentPer').value = "0"; // 現在量は常に0
-    
-                // 🟢 モード（タブ）の復元
-                if(c.currentMode) setMode(c.currentMode);
-    
-                // 🟢 時間指定の場合の初期化（現在時刻をセット）
-                if(c.currentMode === 'time') {
-                    document.getElementById('manualHrs').value = "0";
-                    document.getElementById('manualMin').value = "0";
-                    const now = new Date();
-                    document.getElementById('absDate').value = now.toISOString().split('T')[0];
-                    document.getElementById('absHour').value = now.getHours();
-                    document.getElementById('absMin').value = now.getMinutes();
-                }
-            }
-            
-            monitorItems = data.pools || [];
-            updateMonitorList();
+      L: document.getElementById('L').value,
+      W: document.getElementById('W').value,
+      D: document.getElementById('D').value,
+      manualVol: document.getElementById('manualVol').value,
+      currentMode: currentMode
+    };
 
-        // ボタン表示：完了
-        btn.innerHTML = "✅ 同期完了";
-        btn.style.background = "#2e7d32";
-        btn.style.color = "#fff";
-    
-        setTimeout(() => {
-          btn.innerHTML = prevText;      // もともと「同期」に戻す
-          btn.style.background = "";
-          btn.style.color = "";
-          btn.disabled = false;
-        }, 1500);
-    
-      } catch (e) {
-        alert("同期失敗: " + e.message);
+    try {
+      await apiFetch("/save-config", { configPayload });
+      alert("初期値を登録しました！");
+    } catch (e) {
+      alert("保存エラー: " + e.message);
+    }
+  }
+
+  // ========= 単位変換 =========
+  function convertVolUnit(newUnit) {
+    const inputs = ['flowRate', 'manualVol'];
+    inputs.forEach(id => {
+      let val = parseFloat(document.getElementById(id).value);
+      if (isNaN(val)) return;
+      let m3Val = (lastVolUnit === 'ℓ') ? val / 1000 : val;
+      document.getElementById(id).value = (newUnit === 'ℓ') ? (m3Val * 1000) : m3Val;
+    });
+    lastVolUnit = newUnit;
+    uiCalc();
+  }
+
+  function convertTimeUnit(newUnit) {
+    if (lastTimeUnit === newUnit) return;
+    let val = parseFloat(document.getElementById('flowRate').value);
+    if (!isNaN(val)) {
+      if (newUnit === '分') document.getElementById('flowRate').value = (val / 60).toFixed(2);
+      else document.getElementById('flowRate').value = (val * 60).toFixed(1);
+    }
+    lastTimeUnit = newUnit;
+    uiCalc();
+  }
+
+  function setMode(m) {
+    currentMode = m;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + m).classList.add('active');
+    ['mode-size', 'mode-vol', 'mode-time'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('mode-' + m).classList.remove('hidden');
+    document.getElementById('flow-input-area').classList.toggle('hidden', m === 'time');
+    uiCalc();
+  }
+
+  function setSubTimeMode(sm) {
+    subTimeMode = sm;
+    document.getElementById('sub-rel').classList.toggle('active', sm === 'rel');
+    document.getElementById('sub-abs').classList.toggle('active', sm === 'abs');
+    document.getElementById('time-rel-area').classList.toggle('hidden', sm === 'abs');
+    document.getElementById('time-abs-area').classList.toggle('hidden', sm === 'rel');
+    if (sm === 'abs') {
+      const now = new Date();
+      document.getElementById('absDate').value = now.toISOString().split('T')[0];
+      document.getElementById('absHour').value = now.getHours();
+      document.getElementById('absMin').value = now.getMinutes();
+    }
+    uiCalc();
+  }
+
+  // ========= 計算 =========
+  function uiCalc() {
+    const vUnit = document.querySelector('input[name="unit"]:checked').value;
+    const tUnit = document.querySelector('input[name="t_unit"]:checked').value;
+    document.getElementById('flowLabel').innerText = `給水能力 (${vUnit}/${tUnit})`;
+    document.getElementById('manualVolLabel').innerText = `必要水量 (${vUnit})`;
+
+    let totalMins = 0;
+    let reqM3 = 0;
+
+    const L = parseFloat(document.getElementById('L').value) || 0;
+    const W = parseFloat(document.getElementById('W').value) || 0;
+    const D = parseFloat(document.getElementById('D').value) || 0;
+    const cur = (parseFloat(document.getElementById('currentPer').value) || 0) / 100;
+    const sizeM3 = L * W * D * (1 - cur);
+
+    if (currentMode === 'time') {
+      if (subTimeMode === 'rel') {
+        totalMins = (parseInt(document.getElementById('manualHrs').value) || 0) * 60 + (parseInt(document.getElementById('manualMin').value) || 0);
+      } else {
+        const datePart = document.getElementById('absDate').value;
+        const h = document.getElementById('absHour').value;
+        const m = document.getElementById('absMin').value;
+        if (datePart) {
+          const target = new Date(`${datePart}T${pad2(h)}:${pad2(m)}:00`);
+          const diff = (target - new Date()) / 60000;
+          totalMins = Math.max(0, diff);
+        }
+      }
+      reqM3 = sizeM3;
+    } else {
+      const rawFlow = parseFloat(document.getElementById('flowRate').value) || 0.001;
+      let flowMinM3 = (vUnit === 'ℓ') ? rawFlow / 1000 : rawFlow;
+      if (tUnit === '時') flowMinM3 /= 60;
+
+      if (currentMode === 'size') {
+        reqM3 = sizeM3;
+      } else {
+        const iv = parseFloat(document.getElementById('manualVol').value) || 0;
+        reqM3 = (vUnit === 'ℓ') ? iv / 1000 : iv;
+      }
+
+      totalMins = reqM3 / flowMinM3;
+    }
+
+    const finish = new Date(Date.now() + totalMins * 60000);
+    document.getElementById('finishDate').innerText =
+      finish.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+    document.getElementById('finishClock').innerText =
+      finish.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+
+    const dh = Math.floor(totalMins / 60);
+    const dm = Math.round(totalMins % 60);
+    const m3Text = (isFinite(reqM3) ? reqM3 : 0).toFixed(1);
+    const lText = Math.round((isFinite(reqM3) ? reqM3 : 0) * 1000).toLocaleString();
+    let volDisp = (vUnit === "ℓ") ? `${lText}ℓ (${m3Text}㎥)` : `${m3Text}㎥ (${lText}ℓ)`;
+
+    document.getElementById('detailRes').innerHTML = `完了まで: 約${dh}時間${dm}分<br>必要量: ${volDisp} / ${m3Text}t`;
+    return { totalMins, reqM3 };
+  }
+
+  // ========= 同期（KV/DBから読み込み＋ボタン表示） =========
+  async function loadDataFromKV() {
+    const btn = document.getElementById('syncBtn');
+    const gid = document.getElementById('gid').value.trim();
+    const gpw = document.getElementById('gpw').value.trim();
+    if (!gid || !gpw) { alert("IDとパスワードを入力してください"); return; }
+
+    const prevText = btn.innerHTML;
+    btn.innerHTML = "同期中...";
+    btn.disabled = true;
+
+    try {
+      persistCreds();
+
+      const data = await apiFetch("/load");
+
+      if (data?.config) {
+        const c = data.config;
+        document.getElementById('slackUrl').value = c.webhook || "";
+        document.getElementById('facility').value = c.facility || "";
+        document.getElementById('startUser').value = c.startUser || "";
+        document.getElementById('flowRate').value = c.default_flow || "18";
+
+        document.getElementById('at0_on').checked = c.at0 !== false;
+        document.getElementById('m_on').checked = !!c.m_on;
+        document.getElementById('m_val').value = c.m_val || "10";
+        document.getElementById('p_on').checked = !!c.p_on;
+        document.getElementById('p_val').value = c.p_val || "5";
+        document.getElementById('interval_on').checked = !!c.interval_on;
+        document.getElementById('interval_val').value = c.interval_val || "10";
+
+        if (c.L) document.getElementById('L').value = c.L;
+        if (c.W) document.getElementById('W').value = c.W;
+        if (c.D) document.getElementById('D').value = c.D;
+        if (c.manualVol) document.getElementById('manualVol').value = c.manualVol;
+        document.getElementById('currentPer').value = "0";
+
+        if (c.currentMode) setMode(c.currentMode);
+
+        if (c.currentMode === 'time') {
+          document.getElementById('manualHrs').value = "0";
+          document.getElementById('manualMin').value = "0";
+          const now = new Date();
+          document.getElementById('absDate').value = now.toISOString().split('T')[0];
+          document.getElementById('absHour').value = now.getHours();
+          document.getElementById('absMin').value = now.getMinutes();
+        }
+      }
+
+      monitorItems = Array.isArray(data?.pools) ? data.pools : [];
+      updateMonitorList();
+
+      const now = Date.now();
+      localStorage.setItem(STORAGE_LAST_SYNC, String(now));
+      updateSyncStatus(now);
+
+      btn.innerHTML = "✅ 同期完了";
+      btn.style.background = "#2e7d32";
+      btn.style.color = "#fff";
+
+      setTimeout(() => {
         btn.innerHTML = prevText;
+        btn.style.background = "";
+        btn.style.color = "";
         btn.disabled = false;
+      }, 1500);
+
+      uiCalc();
+    } catch (e) {
+      alert("同期失敗: " + e.message);
+      btn.innerHTML = prevText;
+      btn.disabled = false;
+    }
+  }
+
+  // ========= 監視スタート =========
+  async function doStart() {
+    persistCreds();
+
+    const { totalMins, reqM3 } = uiCalc();
+    const limitTime = Date.now() + totalMins * 60000;
+
+    const payload = {
+      id: Date.now(),
+      facility: document.getElementById('facility').value || "未設定施設",
+      startUser: document.getElementById('startUser').value || "未設定者",
+      status: 'active',
+      limitTime: limitTime,
+      totalVolM3: reqM3,
+      webhook: document.getElementById('slackUrl').value,
+      settings: {
+        at0: document.getElementById('at0_on').checked,
+        m: document.getElementById('m_on').checked ? parseInt(document.getElementById('m_val').value) : null,
+        p: document.getElementById('p_on').checked ? parseInt(document.getElementById('p_val').value) : null,
+        interval: document.getElementById('interval_on').checked ? parseInt(document.getElementById('interval_val').value) : null
       }
+    };
+
+    try {
+      await apiFetch("/save", { payload });
+      alert("監視を開始しました");
+      location.reload();
+    } catch (e) {
+      alert(e.message);
     }
+  }
 
+  // ========= 監視一覧描画（NaN/undefined耐性） =========
+  function updateMonitorList() {
+    const listDiv = document.getElementById('monitor-list');
+    listDiv.innerHTML = '';
 
-    function updateMonitorList() {
-        const listDiv = document.getElementById('monitor-list');
-        listDiv.innerHTML = '';
-        const now = new Date();
-        let activeCount = 0;
-    
-        // ソート：監視中を上、次に新しい順
-        monitorItems.sort((a, b) => (a.status === 'active' ? -1 : 1) || b.id - a.id);
-    
-        monitorItems.forEach(item => {
-            const isMon = item.status === 'active';
-            if (isMon) activeCount++;
-            
-            const targetTimeMs = item.limitTimeMs || item.limitTime;
-            const targetDate = new Date(isMon ? targetTimeMs : item.stopTime);
-            const isOver = (isMon && Date.now() > targetTimeMs);
-    
-            // 時刻表示 (例: 14:30)
-            const timeStr = `${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2,'0')}`;
-            // 日付表示 (例: 2/21)
-            const dateStr = `${targetDate.getMonth()+1}/${targetDate.getDate()}`;
-    
-            // --- 水量計算（予測） ---
-            let volHtml = "";
-            if (isMon && item.totalVolM3) {
-                const startMs = new Date(item.created_at).getTime();
-                const totalMs = targetTimeMs - startMs;
-                const elapsedMs = Date.now() - startMs;
-                const progress = Math.min(1, elapsedMs / totalMs);
-                const currentVol = (item.totalVolM3 * progress).toFixed(1);
-                const remainingVol = (item.totalVolM3 - currentVol).toFixed(1);
-                
-                volHtml = `
-                    <div style="margin-top:10px; padding:10px; background:#000; color:#fff; border-radius:6px; border:2px solid #ECB22E;">
-                        <div style="font-size:12px; color:#ccc;">現在水量 / 残り</div>
-                        <div style="font-size:1.6rem; font-weight:900;">
-                            ${currentVol} <span style="font-size:14px;">m³</span> / 
-                            <span style="color:#ff5252;">${remainingVol}</span> <span style="font-size:14px;">m³</span>
-                        </div>
-                    </div>`;
-            }
-    
-            const div = document.createElement('div');
-            const isOpen = isMon || item.isEditing || div.classList.contains('open');
-            div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
-            
-            // 直射日光対策：太い枠線とコントラスト
-            div.style.border = isMon ? "3px solid #000" : "1px solid #ccc";
-            div.style.marginBottom = "12px";
-            div.style.padding = isOpen ? "12px" : "10px 12px";
-    
-            div.onclick = (e) => {
-                if (isMon || item.isEditing || e.target.closest('button') || e.target.closest('input')) return;
-                div.classList.toggle('open');
-                // 再描画せずに表示だけ切り替える
-                const detail = div.querySelector('.detail-area');
-                const simple = div.querySelector('.simple-area');
-                if (div.classList.contains('open')) {
-                    if(detail) detail.style.display = 'block';
-                    if(simple) simple.style.display = 'none';
-                } else {
-                    if(detail) detail.style.display = 'none';
-                    if(simple) simple.style.display = 'flex';
-                }
-            };
-    
-            let html = isOver ? `<div style="background:#d32f2f; color:white; font-size:14px; text-align:center; margin:-12px -12px 10px -12px; padding:5px; font-weight:bold;">⚠️ 超過しています</div>` : '';
-    
-            if (item.isEditing) {
-                // 【修正モード】
-                html += `
-                    <div style="background:#fffbe6; padding:10px; border:2px solid #ECB22E; border-radius:8px;">
-                        <label style="font-weight:bold; font-size:12px;">施設名</label>
-                        <input id="edit-f-${item.id}" style="width:100%; font-size:18px; padding:8px; margin-bottom:10px;" value="${item.facility}">
-                        <label style="font-weight:bold; font-size:12px;">開始担当者</label>
-                        <input id="edit-u-${item.id}" style="width:100%; font-size:18px; padding:8px; margin-bottom:10px;" value="${item.startUser}">
-                        ${!isMon ? `<label style="font-weight:bold; font-size:12px;">終了担当者</label><input id="edit-su-${item.id}" style="width:100%; font-size:18px; padding:8px;" value="${item.stopUser || ''}">` : ''}
-                    </div>`;
-            } else {
-                // 【通常・履歴表示】
-                // 閉じている時の簡易表示
-                html += `
-                    <div class="simple-area" style="display:${isOpen ? 'none' : 'flex'}; justify-content:space-between; align-items:center;">
-                        <b style="font-size:18px; color:#000;">${item.facility}</b>
-                        <span style="font-size:14px; color:#666; font-weight:bold;">${dateStr} ${timeStr} 停止 ▼</span>
-                    </div>`;
-    
-                // 開いている時の詳細表示
-                html += `
-                    <div class="detail-area" style="display:${isOpen ? 'block' : 'none'};">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <b style="font-size:22px; color:#000;">${item.facility}</b>
-                            <span style="font-size:12px; padding:4px 8px; background:${isMon?'#000':'#eee'}; color:${isMon?'#ECB22E':'#666'}; font-weight:bold; border-radius:4px;">
-                                ${isMon ? '給水中' : '停止済 ▲'}
-                            </span>
-                        </div>
-                        
-                        <div style="margin-top:10px; background:#f0f0f0; padding:12px; border-radius:8px; border:1px solid #000;">
-                            <div style="font-size:14px; font-weight:bold; color:#444;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
-                            <div style="font-size:2.4rem; font-weight:900; color:#000; line-height:1.1;">${timeStr}</div>
-                            <div style="font-size:14px; color:#666; font-weight:bold;">${targetDate.getFullYear()}/${dateStr}</div>
-                            
-                            ${volHtml}
-                        </div>
-    
-                        <div style="font-size:14px; color:#000; margin-top:10px; font-weight:bold;">
-                            担当: ${item.startUser}${item.stopUser ? ' → ' + item.stopUser : ''}
-                        </div>
-                    </div>`;
-            }
-    
-            // ボタンエリア
-            if (isMon || item.isEditing || isOpen) {
-                html += `
-                    <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
-                        ${item.isEditing ? 
-                            `<button style="flex:1; padding:12px; font-weight:bold; background:#2196F3; color:white; border:none; border-radius:6px;" onclick="saveEdit(${item.id})">保存</button>` : 
-                            `<button style="flex:1; padding:12px; font-weight:bold; background:#eee; color:#000; border:2px solid #000; border-radius:6px;" onclick="toggleEdit(${item.id})">内容修正</button>`
-                        }
-                        ${isMon ? 
-                            `<button style="flex:1; padding:12px; font-weight:bold; background:#d32f2f; color:white; border:none; border-radius:6px;" onclick="doStop(${item.id})">給水停止</button>` : 
-                            `<button style="flex:1; padding:12px; font-weight:bold; background:#2e7d32; color:white; border:none; border-radius:6px;" onclick="doResume(${item.id})">監視再開</button>`
-                        }
-                        <button style="width:50px; background:#fff; border:2px solid #ccc; border-radius:6px;" onclick="doDelete(${item.id})">🗑️</button>
-                    </div>`;
-            }
-    
-            div.innerHTML = html;
-            listDiv.appendChild(div);
-        });
-    
-        const alertEl = document.getElementById('top-alert');
-        if (alertEl) alertEl.style.display = activeCount > 0 ? 'block' : 'none';
-    }
-    
+    let activeCount = 0;
 
-    function toggleEdit(id) { monitorItems.find(i => i.id === id).isEditing = true; updateMonitorList(); }
-    // --- 修正保存 ---
-    async function saveEdit(id) {
-        const item = monitorItems.find(i => i.id === id);
-        const facility = document.getElementById(`edit-f-${id}`).value;
-        const startUser = document.getElementById(`edit-u-${id}`).value;
-        const stopUser = item.status === 'completed' ? document.getElementById(`edit-su-${id}`).value : "";
+    // 監視中を上、次に新しい順
+    monitorItems.sort((a, b) => ((a?.status === 'active') ? -1 : 1) || ((b?.id || 0) - (a?.id || 0)));
 
-        const body = {
-            gid: document.getElementById('gid').value,
-            gpw: document.getElementById('gpw').value,
-            poolId: id,
-            facility: facility,
-            startUser: startUser,
-            stopUser: stopUser
-        };
+    monitorItems.forEach(item => {
+      const status = item?.status || "unknown";
+      const isMon = status === 'active';
+      if (isMon) activeCount++;
 
-        await fetch(`${WORKER_URL}/update-item`, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(body)
-        });
+      const facility = item?.facility ?? "未設定施設";
+      const startUser = item?.startUser ?? "未設定者";
+      const stopUser = item?.stopUser ?? "";
 
-        item.facility = facility;
-        item.startUser = startUser;
-        if (item.status === 'completed') item.stopUser = stopUser;
-        item.isEditing = false;
-        updateMonitorList();
-    }
-    
-    // --- 停止処理 (ここから) ---
-    async function doStop(id) {
-      // ★リロード前に必ず保存（ここ重要）
-      const gid = document.getElementById('gid')?.value?.trim() || "";
-      const gpw = document.getElementById('gpw')?.value?.trim() || "";
-      if (gid && gpw) {
-        localStorage.setItem('water_gid', gid);
-        localStorage.setItem('water_gpw', gpw);
+      const targetTimeMs = item?.limitTimeMs ?? item?.limitTime ?? null;
+      const stopTimeMs = item?.stopTimeMs ?? item?.stopTime ?? item?.updated_at ?? null;
+
+      const targetDate = safeDate(isMon ? targetTimeMs : stopTimeMs);
+      const isOver = (isMon && targetTimeMs && Date.now() > targetTimeMs);
+
+      const timeStr = targetDate ? `${pad2(targetDate.getHours())}:${pad2(targetDate.getMinutes())}` : `--:--`;
+      const closedHistoryStr = targetDate ? fmtYMDHM(targetDate) : `----/--/-- --:--`;
+
+      // 進捗（水量）計算：created_atが無い/壊れてる場合は出さない
+      let volHtml = "";
+      if (isMon && item?.totalVolM3 && targetTimeMs) {
+        const startCandidate = item?.created_at ?? item?.createdAt ?? item?.startTime ?? item?.id;
+        const startDate = safeDate(startCandidate);
+        const startMs = startDate ? startDate.getTime() : null;
+        if (startMs && isFinite(startMs) && startMs < targetTimeMs) {
+          const totalMs = targetTimeMs - startMs;
+          const elapsedMs = Date.now() - startMs;
+          const progress = Math.max(0, Math.min(1, elapsedMs / totalMs));
+          const total = Number(item.totalVolM3);
+          const currentVol = (total * progress);
+          const remainingVol = Math.max(0, total - currentVol);
+
+          volHtml = `
+            <div style="margin-top:10px; padding:10px; background:#000; color:#fff; border-radius:6px; border:2px solid #ECB22E;">
+              <div style="font-size:12px; color:#ccc;">現在水量 / 残り</div>
+              <div style="font-size:1.6rem; font-weight:900;">
+                ${currentVol.toFixed(1)} <span style="font-size:14px;">m³</span> /
+                <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> <span style="font-size:14px;">m³</span>
+              </div>
+            </div>`;
+        }
       }
-    
-      const stopUser = document.getElementById('startUser')?.value || "未設定者";
-      if (!confirm("給水を停止して記録しますか？")) return;
-    
-      try {
-        await apiFetch("/stop", { poolId: id, stopUser });
-        location.reload();
-      } catch (e) {
-        alert("停止エラー: " + e.message);
+
+      const div = document.createElement('div');
+      const isOpen = isMon || item?.isEditing || div.classList.contains('open');
+      div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
+      div.style.border = isMon ? "3px solid #000" : "1px solid #ccc";
+      div.style.marginBottom = "12px";
+      div.style.padding = isOpen ? "12px" : "10px 12px";
+
+      div.onclick = (e) => {
+        if (isMon || item?.isEditing || e.target.closest('button') || e.target.closest('input')) return;
+        div.classList.toggle('open');
+        const detail = div.querySelector('.detail-area');
+        const simple = div.querySelector('.simple-area');
+        if (div.classList.contains('open')) {
+          if (detail) detail.style.display = 'block';
+          if (simple) simple.style.display = 'none';
+        } else {
+          if (detail) detail.style.display = 'none';
+          if (simple) simple.style.display = 'flex';
+        }
+      };
+
+      let html = "";
+      if (isOver) {
+        html += `<div style="background:#d32f2f; color:white; font-size:14px; text-align:center; margin:-12px -12px 10px -12px; padding:5px; font-weight:bold;">⚠️ 超過しています</div>`;
       }
+
+      if (item?.isEditing) {
+        html += `
+          <div style="background:#fffbe6; padding:10px; border:2px solid #ECB22E; border-radius:8px;">
+            <label style="font-weight:bold; font-size:12px;">施設名</label>
+            <input id="edit-f-${item.id}" style="width:100%; font-size:18px; padding:8px; margin-bottom:10px;" value="${facility}">
+            <label style="font-weight:bold; font-size:12px;">開始担当者</label>
+            <input id="edit-u-${item.id}" style="width:100%; font-size:18px; padding:8px; margin-bottom:10px;" value="${startUser}">
+            ${!isMon ? `<label style="font-weight:bold; font-size:12px;">終了担当者</label>
+              <input id="edit-su-${item.id}" style="width:100%; font-size:18px; padding:8px;" value="${stopUser}">` : ''}
+          </div>`;
+      } else {
+        // 閉じ表示（年も出す）
+        html += `
+          <div class="simple-area" style="display:${isOpen ? 'none' : 'flex'}; justify-content:space-between; align-items:center;">
+            <b style="font-size:18px; color:#000;">${facility}</b>
+            <span style="font-size:14px; color:#666; font-weight:bold;">${closedHistoryStr} ${isMon ? '給水中' : '停止'} ▼</span>
+          </div>`;
+
+        // 詳細
+        html += `
+          <div class="detail-area" style="display:${isOpen ? 'block' : 'none'};">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+              <b style="font-size:22px; color:#000;">${facility}</b>
+              <span style="font-size:12px; padding:4px 8px; background:${isMon ? '#000' : '#eee'}; color:${isMon ? '#ECB22E' : '#666'}; font-weight:bold; border-radius:4px;">
+                ${isMon ? '給水中' : '停止済 ▲'}
+              </span>
+            </div>
+
+            <div style="margin-top:10px; background:#f0f0f0; padding:12px; border-radius:8px; border:1px solid #000;">
+              <div style="font-size:14px; font-weight:bold; color:#444;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
+              <div style="font-size:2.4rem; font-weight:900; color:#000; line-height:1.1;">${timeStr}</div>
+              <div style="font-size:14px; color:#666; font-weight:bold;">${targetDate ? (targetDate.getFullYear()+"/"+(targetDate.getMonth()+1)+"/"+targetDate.getDate()) : "----/--/--"}</div>
+              ${volHtml}
+            </div>
+
+            <div style="font-size:14px; color:#000; margin-top:10px; font-weight:bold;">
+              担当: ${startUser}${stopUser ? ' → ' + stopUser : ''}
+            </div>
+          </div>`;
+      }
+
+      if (isMon || item?.isEditing || isOpen) {
+        html += `
+          <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
+            ${item?.isEditing
+              ? `<button style="flex:1; padding:12px; font-weight:bold; background:#2196F3; color:white; border:none; border-radius:6px;" onclick="saveEdit(${item.id})">保存</button>`
+              : `<button style="flex:1; padding:12px; font-weight:bold; background:#eee; color:#000; border:2px solid #000; border-radius:6px;" onclick="toggleEdit(${item.id})">内容修正</button>`
+            }
+            ${isMon
+              ? `<button style="flex:1; padding:12px; font-weight:bold; background:#d32f2f; color:white; border:none; border-radius:6px;" onclick="doStop(${item.id})">給水停止</button>`
+              : `<button style="flex:1; padding:12px; font-weight:bold; background:#2e7d32; color:white; border:none; border-radius:6px;" onclick="doResume(${item.id})">監視再開</button>`
+            }
+            <button style="width:50px; background:#fff; border:2px solid #ccc; border-radius:6px;" onclick="doDelete(${item.id})">🗑️</button>
+          </div>`;
+      }
+
+      div.innerHTML = html;
+      listDiv.appendChild(div);
+    });
+
+    const alertEl = document.getElementById('top-alert');
+    if (alertEl) alertEl.style.display = activeCount > 0 ? 'block' : 'none';
+  }
+
+  function toggleEdit(id) {
+    const it = monitorItems.find(i => i.id === id);
+    if (!it) return;
+    it.isEditing = true;
+    updateMonitorList();
+  }
+
+  async function saveEdit(id) {
+    persistCreds();
+    const item = monitorItems.find(i => i.id === id);
+    if (!item) return;
+
+    const facility = document.getElementById(`edit-f-${id}`).value;
+    const startUser = document.getElementById(`edit-u-${id}`).value;
+    const stopUser = item.status === 'completed' ? document.getElementById(`edit-su-${id}`).value : "";
+
+    const body = {
+      gid: document.getElementById('gid').value,
+      gpw: document.getElementById('gpw').value,
+      poolId: id,
+      facility,
+      startUser,
+      stopUser
+    };
+
+    await fetch(`${WORKER_URL}/update-item`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+
+    item.facility = facility;
+    item.startUser = startUser;
+    if (item.status === 'completed') item.stopUser = stopUser;
+    item.isEditing = false;
+    updateMonitorList();
+  }
+
+  async function doStop(id) {
+    persistCreds();
+    const stopUser = document.getElementById('startUser')?.value || "未設定者";
+    if (!confirm("給水を停止して記録しますか？")) return;
+
+    try {
+      await apiFetch("/stop", { poolId: id, stopUser });
+      location.reload();
+    } catch (e) {
+      alert("停止エラー: " + e.message);
     }
-    // --- 停止処理 (ここまで) ---
-    
-    // 削除処理
-    async function doDelete(id) {
-        if (!confirm("完全に削除しますか？")) return;
-        try {
-            await apiFetch("/delete", { poolId: id });
-            location.reload();
-        } catch (e) { alert(e.message); }
+  }
+
+  async function doDelete(id) {
+    persistCreds();
+    if (!confirm("完全に削除しますか？")) return;
+    try {
+      await apiFetch("/delete", { poolId: id });
+      location.reload();
+    } catch (e) {
+      alert(e.message);
     }
+  }
 
-
-    setInterval(updateMonitorList, 30000);
-
-async function doResume(id) {
+  async function doResume(id) {
+    persistCreds();
     if (!confirm("このデータの監視を再開しますか？（通知設定も継続されます）")) return;
     try {
-        // status を active に戻す API を叩く
-        await apiFetch("/resume", { poolId: id });
-        alert("監視を再開しました。");
-        location.reload();
+      await apiFetch("/resume", { poolId: id });
+      alert("監視を再開しました。");
+      location.reload();
     } catch (e) {
-        alert("再開エラー: " + e.message);
+      alert("再開エラー: " + e.message);
     }
-}
+  }
 
-    
+  // ========= 初回ロード（1つに統一） =========
+  window.addEventListener('load', async () => {
+    restoreCredsToInputs();
+
+    const last = localStorage.getItem(STORAGE_LAST_SYNC);
+    if (last) updateSyncStatus(Number(last));
+
+    // 保存されたID/PASSがあれば自動同期（監視中が常に見える）
+    const gid = document.getElementById('gid').value.trim();
+    const gpw = document.getElementById('gpw').value.trim();
+    if (gid && gpw) {
+      try {
+        await loadDataFromKV();
+      } catch (_) {}
+    } else {
+      uiCalc();
+    }
+
+    // 30秒ごと更新（描画のみ）
+    setInterval(updateMonitorList, 30000);
+  });
 </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
