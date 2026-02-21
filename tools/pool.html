@@ -51,6 +51,7 @@
     .monitor-item.finished{ padding:10px 12px; cursor:pointer; background:#fcfcfc; border-left-color:#bbb; }
     .monitor-item .detail-area{ display:block; }
     .monitor-item.finished .detail-area{ display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; }
+    .monitor-item.finished:not(.open) .item-btns{ display:none; }
     .monitor-item.finished.open .detail-area{ display:block; }
     .monitor-item.finished .simple-area{ display:flex; }
     .monitor-item.finished.open .simple-area{ display:none; }
@@ -561,6 +562,7 @@
       x.totalVolM3 = (typeof x.totalVolM3 === 'number') ? x.totalVolM3 : Number(x.totalVolM3 || 0);
       if (!Number.isFinite(x.totalVolM3) || x.totalVolM3 < 0) x.totalVolM3 = 0;
       if (!x.settings || typeof x.settings !== 'object') x.settings = {};
+      x.isOpen = !!x.isOpen;   // ←追加
       return x;
     }
 
@@ -601,16 +603,15 @@
         const isEditing = !!item.isEditing;
         
         // 監視中・修正中は常に展開。履歴はクリックで open クラスを切り替え
-        const isOpen = isMon || isEditing || div.classList.contains('open');
+        const isOpen = isMon || isEditing || item.isOpen;
         div.className = `monitor-item ${isMon ? '' : 'finished'} ${isOver ? 'danger-alert' : ''} ${isOpen ? 'open' : ''}`;
     
         // 指示：履歴のみクリックで確実に開閉
         if (!isMon && !isEditing) {
           div.onclick = (e) => {
-            if (e.target.closest('button') || e.target.closest('input')) return;
-            
-            // updateMonitorList() を呼ばずに、直接表示を切り替える
-            div.classList.toggle('open');
+          if (e.target.closest('button') || e.target.closest('input')) return;
+            item.isOpen = !item.isOpen;
+            updateMonitorList();
           };
         }
     
@@ -792,6 +793,7 @@
   </script>
 </body>
 </html>
+
 
 
 
