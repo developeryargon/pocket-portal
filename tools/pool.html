@@ -442,46 +442,65 @@
       document.getElementById('finishDate').innerText = finish.toLocaleDateString('ja-JP', {year:'numeric', month:'2-digit', day:'2-digit', weekday:'short'});
       document.getElementById('finishClock').innerText = finish.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
 
+
       const dh = Math.floor(totalMins / 60);
       const dm = Math.round(totalMins % 60);
-      const m3Text = reqM3.toFixed(1);
-      const lText = Math.round(reqM3 * 1000).toLocaleString();
-      let volDisp = (vUnit === "ℓ") ? `${lText}ℓ (${m3Text}㎥)` : `${m3Text}㎥ (${lText}ℓ)`;
-      document.getElementById('detailRes').innerHTML = `完了まで: 約${dh}時間${dm}分<br>必要量: ${volDisp} / ${m3Text}t`;
+      
+      if (currentMode === 'time') {
+        // ✅ 日時・時間指定は水量表示を出さない
+        document.getElementById('detailRes').innerHTML =
+          `完了まで: 約${dh}時間${dm}分`;
+      } else {
+        const m3Text = reqM3.toFixed(1);
+        const lText = Math.round(reqM3 * 1000).toLocaleString();
+        let volDisp = (vUnit === "ℓ") ? `${lText}ℓ (${m3Text}㎥)` : `${m3Text}㎥ (${lText}ℓ)`;
+      
+        document.getElementById('detailRes').innerHTML =
+          `完了まで: 約${dh}時間${dm}分<br>必要量: ${volDisp} / ${m3Text}t`;
+      }
+
       return { totalMins, reqM3 };
     }
 
+
     async function doStart() {
-      saveCreds();
       const { totalMins, reqM3 } = uiCalc();
       const limitTime = Date.now() + totalMins * 60000;
-
+    
       const payload = {
         id: Date.now(),
-        facility: document.getElementById('facility').value || '未設定施設',
-        startUser: document.getElementById('startUser').value || '未設定者',
+        facility: document.getElementById('facility').value || "未設定施設",
+        startUser: document.getElementById('startUser').value || "未設定者",
         status: 'active',
-        limitTime,
-        totalVolM3: reqM3,
-        webhook: document.getElementById('slackUrl').value || '',
-        inputMode: currentMode,  // 'size' | 'vol' | 'time'
+        limitTime: limitTime,
+        webhook: document.getElementById('slackUrl').value,
+    
+        // ✅ 重要：モードを保存（これがないと日時指定か後で判断できず水量が出る）
+        inputMode: currentMode,
+    
+        // 🔔 通知設定
         settings: {
           at0: document.getElementById('at0_on').checked,
-          m: document.getElementById('m_on').checked ? parseInt(document.getElementById('m_val').value, 10) : null,
-          p: document.getElementById('p_on').checked ? parseInt(document.getElementById('p_val').value, 10) : null,
-          interval: document.getElementById('interval_on').checked ? parseInt(document.getElementById('interval_val').value, 10) : null,
+          m: document.getElementById('m_on').checked ? parseInt(document.getElementById('m_val').value) : null,
+          p: document.getElementById('p_on').checked ? parseInt(document.getElementById('p_val').value) : null,
+          interval: document.getElementById('interval_on').checked ? parseInt(document.getElementById('interval_val').value) : null
         }
       };
-
+    
+      // ✅ 日時・時間指定のときは水量を送らない
+      if (currentMode !== 'time') {
+        payload.totalVolM3 = reqM3;
+      }
+    
       try {
-        await apiFetch('/save', { payload });
-        saveCreds();
-        alert('監視を開始しました');
-        await syncData();
+        await apiFetch("/save", { payload });
+        alert("監視を開始しました");
+        location.reload();
       } catch (e) {
-        alert(e?.message || e);
+        alert(e.message);
       }
     }
+
 
     async function loadDataFromKV() {
       const data = await apiFetch('/load');
@@ -591,7 +610,10 @@
       monitorItems.forEach(item => {
         const isMon = item.status === 'active';
         if (isMon) activeCount++;
-    
+
+        // ✅ 追加：日時・時間指定なら水量ブロックを出さない
+        const isTimeMode = item.inputMode === 'time';
+        
         const targetMs = item.limitTimeMs;
         const isOver = isMon && targetMs && Date.now() > targetMs;
         const displayMs = isMon ? targetMs : (item.stopTimeMs || targetMs);
@@ -666,7 +688,26 @@
                   </div>
                 </div>`;
             }
-    
+
+            let stopVolHtml = '';
+            if (!isMon && !isTimeMode &&
+                Number.isFinite(item.stopVolM3) &&
+                Number.isFinite(item.stopRemainM3) &&
+                Number.isFinite(item.stopMaxM3)) {
+            
+              stopVolHtml = `
+                <div style="background:#111; color:#fff; padding:12px; border-radius:8px; border:2px solid #ccc; margin-top:10px;">
+                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">停止時：注水済 / 残り / 満水</div>
+                  <div style="font-size:1.6rem; font-weight:900;">
+                    ${item.stopVolM3.toFixed(1)} / 
+                    <span style="color:#ff5252;">${item.stopRemainM3.toFixed(1)}</span> / 
+                    ${item.stopMaxM3.toFixed(1)}
+                    <span style="font-size:16px;"> m³</span>
+                  </div>
+                </div>`;
+            }
+
+            
             html += `
               <div class="detail-area">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
@@ -679,6 +720,7 @@
                   <div style="font-size:15px; font-weight:900;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
                   <div style="font-size:2.0rem; font-weight:900; line-height:1; color:#000;">${dateTimeStr}</div>
                   ${volHtml}
+                  ${stopVolHtml}
                 </div>
                 <div style="font-size:16px; color:#000; margin-top:12px; font-weight:900;">
                   担当: ${escapeHtml(item.startUser)}${item.stopUser ? ' → ' + escapeHtml(item.stopUser) : ''}
@@ -751,18 +793,53 @@
       }
     }
 
+    // ===== doStop(id) ここから丸ごと差し替え =====
     async function doStop(id) {
-      saveCreds();
-      const stopUser = document.getElementById('startUser').value || '未設定者';
-      if (!confirm('給水を停止して記録しますか？')) return;
+      const stopUser = document.getElementById('startUser').value || "未設定者";
+      if (!confirm("給水を停止して記録しますか？")) return;
+    
+      // ✅ 対象データ（停止時点の水量を計算する）
+      const item = monitorItems.find(x => x.id === id);
+    
+      // stop時に追加で送る情報
+      const extra = {};
+    
+      // ✅ 日時・時間指定は水量を残さない（送らない）
+      const isTimeMode = (item && item.inputMode === 'time');
+    
+      if (item && !isTimeMode && item.totalVolM3 > 0) {
+        const targetMs = item.limitTimeMs || item.limitTime;
+    
+        const startMs =
+          item.createdAtMs ||
+          (item.created_at ? new Date(item.created_at).getTime() : null);
+    
+        if (targetMs && startMs && targetMs > startMs) {
+          const totalMs = targetMs - startMs;
+          const elapsedMs = Math.max(0, Math.min(totalMs, Date.now() - startMs));
+          const progress = elapsedMs / totalMs;
+    
+          const stopVol = item.totalVolM3 * progress;
+          const stopRemain = Math.max(0, item.totalVolM3 - stopVol);
+    
+          extra.stopVolM3 = Number(stopVol.toFixed(1));
+          extra.stopRemainM3 = Number(stopRemain.toFixed(1));
+          extra.stopMaxM3 = Number(item.totalVolM3.toFixed(1));
+        }
+      }
+    
       try {
-        await apiFetch('/stop', { poolId: id, stopUser });
-        saveCreds();
-        await syncData();
+        await apiFetch("/stop", {
+          poolId: id,
+          stopUser: stopUser,
+          ...extra
+        });
+        location.reload();
       } catch (e) {
-        alert('停止エラー: ' + (e?.message || e));
+        alert("停止エラー: " + e.message);
       }
     }
+    // ===== doStop(id) ここまで =====
 
     async function doResume(id) {
       saveCreds();
@@ -803,6 +880,7 @@
   </script>
 </body>
 </html>
+
 
 
 
