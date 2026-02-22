@@ -682,7 +682,7 @@
               const remainingVol = Math.max(0, item.totalVolM3 - currentVol);
               volHtml = `
                 <div style="background:#000; color:#fff; padding:12px; border-radius:8px; border:2px solid #ECB22E; margin-top:10px;">
-                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">注水済 / 満水まで / 満水</div>
+                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">給水済 / 満水まで / 必要量</div>
                   <div style="font-size:1.8rem; font-weight:900;">
                     ${currentVol.toFixed(1)} / <span style="color:#ff5252;">${remainingVol.toFixed(1)}</span> / ${item.totalVolM3.toFixed(1)} <span style="font-size:16px;">m³</span>
                   </div>
@@ -697,7 +697,7 @@
             
               stopVolHtml = `
                 <div style="background:#111; color:#fff; padding:12px; border-radius:8px; border:2px solid #ccc; margin-top:10px;">
-                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">停止時：注水済 / 残り / 満水</div>
+                  <div style="font-size:14px; color:#ccc; font-weight:900; margin-bottom:5px;">停止時：給水済 / 満水まで / 必要量</div>
                   <div style="font-size:1.6rem; font-weight:900;">
                     ${item.stopVolM3.toFixed(1)} / 
                     <span style="color:#ff5252;">${item.stopRemainM3.toFixed(1)}</span> / 
@@ -725,15 +725,7 @@
                 <div style="font-size:16px; color:#000; margin-top:12px; font-weight:900;">
                   担当: ${escapeHtml(item.startUser)}${item.stopUser ? ' → ' + escapeHtml(item.stopUser) : ''}
                 </div>
-                ${(!isMon && Number.isFinite(item.stopVolM3)) ? `
-                  <div style="margin-top:10px; background:#fff; padding:10px; border-radius:10px; border:2px solid #000;">
-                    <div style="font-size:14px; font-weight:900; color:#444;">停止時点（推定）</div>
-                    <div style="font-size:1.6rem; font-weight:900; color:#000; line-height:1.2;">
-                      ${item.stopVolM3.toFixed(1)} / <span style="color:#d32f2f;">${(item.stopRemainM3 ?? (item.totalVolM3 - item.stopVolM3)).toFixed(1)}</span> / ${item.totalVolM3.toFixed(1)}
-                      <span style="font-size:14px;">m³（現在/残り/MAX）</span>
-                    </div>
-                  </div>
-                ` : ''}
+
               </div>
               <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
                 <button style="flex:1; padding:15px; font-weight:900; background:#eee; color:#000; border:2px solid #000; border-radius:8px;" onclick="toggleEdit(${item.id}); event.stopPropagation();">内容修正</button>
@@ -880,6 +872,7 @@
   </script>
 </body>
 </html>
+
 
 
 
