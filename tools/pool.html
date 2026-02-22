@@ -718,17 +718,19 @@
                   </span>
                 </div>
                 <div style="background:#f0f0f0; padding:15px; border:2px solid #000; border-radius:10px;">
-                  <div style="font-size:15px; font-weight:900;">停止時刻</div>
-                  <div style="font-size:3.5rem; font-weight:900; line-height:1; color:#000;">${timeStr}</div>
-                  <div style="font-size:18px; font-weight:900; color:#444; margin-bottom:10px;">${dateTimeStr}</div>
-                  
-                  ${!isMon && item.limitTimeMs ? `
-                    <div style="border-top:1px dashed #ccc; padding-top:10px; margin-top:5px;">
-                      <div style="font-size:13px; font-weight:900; color:#666;">（停止時の満水予定：${fmtTime(item.limitTimeMs)} / ${fmtDateTime(item.limitTimeMs)}）</div>
+                    <div style="font-size:15px; font-weight:900;">
+                      ${isMon ? '停止予定時刻' : '停止時刻'}
                     </div>
-                  ` : ''}
+                    
+                    <!-- ★冗長表示排除：日時は1行だけ -->
+                    <div style="font-size:28px; font-weight:900; line-height:1.2; color:#000;">
+                      ${dateTimeStr}
+                    </div>
+                  
+
                   
                   ${volHtml}
+                  ${StopVolHtml}
                 </div>
                 <div style="font-size:16px; color:#000; margin-top:12px; font-weight:900;">
                   担当: ${escapeHtml(item.startUser)}${item.stopUser ? ' → ' + escapeHtml(item.stopUser) : ''}
@@ -880,6 +882,7 @@
   </script>
 </body>
 </html>
+
 
 
 
