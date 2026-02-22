@@ -708,8 +708,9 @@
             }
 
             
+            // 【修正箇所】履歴（展開時）の詳細パネル部分
             html += `
-              <div class="detail-area">
+              <div class="detail-area" style="display:${isOpen ? 'block' : 'none'};">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
                   <b style="font-size:24px;">${escapeHtml(item.facility)}</b>
                   <span style="font-size:12px; padding:4px 10px; background:${isMon?'#000':'#eee'}; color:${isMon?'#ECB22E':'#666'}; font-weight:900; border-radius:6px;">
@@ -717,10 +718,17 @@
                   </span>
                 </div>
                 <div style="background:#f0f0f0; padding:15px; border:2px solid #000; border-radius:10px;">
-                  <div style="font-size:15px; font-weight:900;">${isMon ? '満水予定時刻' : '停止時刻'}</div>
-                  <div style="font-size:2.0rem; font-weight:900; line-height:1; color:#000;">${dateTimeStr}</div>
+                  <div style="font-size:15px; font-weight:900;">停止時刻</div>
+                  <div style="font-size:3.5rem; font-weight:900; line-height:1; color:#000;">${timeStr}</div>
+                  <div style="font-size:18px; font-weight:900; color:#444; margin-bottom:10px;">${dateTimeStr}</div>
+                  
+                  ${!isMon && item.limitTimeMs ? `
+                    <div style="border-top:1px dashed #ccc; padding-top:10px; margin-top:5px;">
+                      <div style="font-size:13px; font-weight:900; color:#666;">（停止時の満水予定：${fmtTime(item.limitTimeMs)} / ${fmtDateTime(item.limitTimeMs)}）</div>
+                    </div>
+                  ` : ''}
+                  
                   ${volHtml}
-                  ${stopVolHtml}
                 </div>
                 <div style="font-size:16px; color:#000; margin-top:12px; font-weight:900;">
                   担当: ${escapeHtml(item.startUser)}${item.stopUser ? ' → ' + escapeHtml(item.stopUser) : ''}
@@ -872,6 +880,7 @@
   </script>
 </body>
 </html>
+
 
 
 
