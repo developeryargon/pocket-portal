@@ -464,6 +464,7 @@
         limitTime,
         totalVolM3: reqM3,
         webhook: document.getElementById('slackUrl').value || '',
+        inputMode: currentMode,  // 'size' | 'vol' | 'time'
         settings: {
           at0: document.getElementById('at0_on').checked,
           m: document.getElementById('m_on').checked ? parseInt(document.getElementById('m_val').value, 10) : null,
@@ -650,7 +651,8 @@
           } else {
             // 監視中 または 履歴（展開時）
             let volHtml = '';
-            if (isMon && item.totalVolM3 > 0 && item.createdAtMs && targetMs) {
+            const isTimeMode = (item.inputMode || item.currentMode) === 'time';
+            if (!isTimeMode && isMon && item.totalVolM3 > 0 && item.createdAtMs && targetMs) {
               const totalMs = targetMs - item.createdAtMs;
               const elapsedMs = Math.max(0, Math.min(totalMs, Date.now() - item.createdAtMs));
               const progress = totalMs > 0 ? (elapsedMs / totalMs) : 0;
@@ -681,6 +683,15 @@
                 <div style="font-size:16px; color:#000; margin-top:12px; font-weight:900;">
                   担当: ${escapeHtml(item.startUser)}${item.stopUser ? ' → ' + escapeHtml(item.stopUser) : ''}
                 </div>
+                ${(!isMon && Number.isFinite(item.stopVolM3)) ? `
+                  <div style="margin-top:10px; background:#fff; padding:10px; border-radius:10px; border:2px solid #000;">
+                    <div style="font-size:14px; font-weight:900; color:#444;">停止時点（推定）</div>
+                    <div style="font-size:1.6rem; font-weight:900; color:#000; line-height:1.2;">
+                      ${item.stopVolM3.toFixed(1)} / <span style="color:#d32f2f;">${(item.stopRemainM3 ?? (item.totalVolM3 - item.stopVolM3)).toFixed(1)}</span> / ${item.totalVolM3.toFixed(1)}
+                      <span style="font-size:14px;">m³（現在/残り/MAX）</span>
+                    </div>
+                  </div>
+                ` : ''}
               </div>
               <div class="item-btns" style="display:flex; gap:10px; margin-top:15px;">
                 <button style="flex:1; padding:15px; font-weight:900; background:#eee; color:#000; border:2px solid #000; border-radius:8px;" onclick="toggleEdit(${item.id}); event.stopPropagation();">内容修正</button>
@@ -792,6 +803,7 @@
   </script>
 </body>
 </html>
+
 
 
 
